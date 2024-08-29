@@ -1,0 +1,11 @@
+#mainFrame {
+    -fx-background-color: rgb(49, 46, 43);
+    -fx-max-width: 1920px;
+    -fx-max-height: 1080px;
+    -fx-pref-width: 1920px;
+    -fx-pref-height: 1080px;
+}
+
+BorderPane > .center {
+    -fx-margin: 20px;
+}

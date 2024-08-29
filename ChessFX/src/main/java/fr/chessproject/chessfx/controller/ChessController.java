@@ -5,23 +5,24 @@ import fr.chessproject.chessfx.view.MainFrameController;
 
 public class ChessController {
 
-    private MainFrameController frame;
+    private MainFrameController frameController;
     private final Game game;
 
     public ChessController(Game g) {
         this.game = g;
     }
 
+    public void setFrameController(MainFrameController frameController) {
+        this.frameController = frameController;
+    }
+
     public void initDialog() {
-        frame = new MainFrameController();
-        frame.setDialog(this);
-        frame.initFrame();
-        frame.setVisible(true);
-        frame.resetGUI();
+        frameController.setVisible(true);
+        frameController.resetGUI();
     }
 
     public void enableDebugMode() {
-        frame.enableDebugMode();
+        frameController.enableDebugMode();
     }
 
     public Game getGame() {

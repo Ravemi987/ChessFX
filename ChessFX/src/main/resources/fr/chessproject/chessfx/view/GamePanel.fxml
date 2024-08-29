@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.canvas.Canvas?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
 
-<AnchorPane xmlns:fx="http://javafx.com/fxml" fx:controller="fr.chessproject.chessfx.view.GamePanelController">
-    <Canvas fx:id="gameCanvas" width="960" height="960"/>
-</AnchorPane>
+<Pane fx:id="boardPane" maxHeight="960" maxWidth="960" prefHeight="960.0" prefWidth="960.0" stylesheets="@GamePanelStyle.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fr.chessproject.chessfx.view.GamePanelController">
+    <Canvas fx:id="boardCanvas" cache="true" cacheHint="QUALITY" height="960" width="960" />
+</Pane>

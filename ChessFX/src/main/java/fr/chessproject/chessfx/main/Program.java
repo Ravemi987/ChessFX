@@ -1,9 +1,5 @@
 package fr.chessproject.chessfx.main;
 
-import fr.chessproject.chessfx.controller.ChessController;
-import fr.chessproject.chessfx.model.Game;
-import javafx.application.Platform;
-
 public class Program {
     
     /**
@@ -25,11 +21,11 @@ public class Program {
             debugMode = token.equals("yes") || token.equals("true");
         }
 
-        boolean finalDebugMode = debugMode;
-        Platform.runLater(() -> {
-            ChessController dialog = new ChessController(new Game());
-            dialog.initDialog();
-            if (finalDebugMode) dialog.enableDebugMode();
-        });
+        launchGUI(debugMode, args);
+    }
+
+    private static void launchGUI(boolean debugMode, String[] args) {
+        MainFrame.setDebugMode(debugMode);
+        MainFrame.launch(MainFrame.class, args);
     }
 }
