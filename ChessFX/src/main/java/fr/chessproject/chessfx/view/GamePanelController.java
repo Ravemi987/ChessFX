@@ -155,7 +155,9 @@ public class GamePanelController implements Runnable {
             gc.setStroke(c);
             gc.setLineWidth(width);
             gc.setLineCap(StrokeLineCap.ROUND);
-            gc.strokeRect(col * squareSize,row  * squareSize, squareSize, squareSize);
+
+            double offset = width / 2.0;
+            gc.strokeRect(col * squareSize + offset,row  * squareSize + offset, squareSize - width, squareSize - width);
         }
     }
 
@@ -352,7 +354,10 @@ public class GamePanelController implements Runnable {
 
     public byte getSquareFromPos(int x, int y) {
         int squareSize = (int) (boardCanvas.getWidth() / 8);
-        return (byte) (((byte)(x / squareSize) % 8) + (7 - (byte)(y / squareSize)) * 8);
+        int col = Math.min(7, Math.max(0, x / squareSize));
+        int row = Math.min(7, Math.max(0, 7 - (y / squareSize)));
+        int squareIndex = col % 8 + row * 8;
+        return (byte) squareIndex;
     }
 
     @FXML
