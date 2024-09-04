@@ -24,6 +24,9 @@ public class GamePanelController implements Runnable {
     @FXML
     public Canvas boardCanvas;
 
+//    @FXML
+//    public Pane boardMaskPane;
+
     private ChessController controller;
 
     private static final double TICKS_PER_SECOND = 60.0;
@@ -57,6 +60,7 @@ public class GamePanelController implements Runnable {
     @FXML
     public void initialize() {
         System.out.println("GamePanelController initialized");
+        boardPane.getProperties().put("controller", this);
     }
 
     public void init() {
@@ -67,10 +71,10 @@ public class GamePanelController implements Runnable {
     }
 
     public void setupMouseEvents() {
-        boardPane.setOnMousePressed(this::handleMousePressed);
-        boardPane.setOnMouseDragged(this::handleMouseDragged);
-        boardPane.setOnMouseReleased(this::handleMouseReleased);
-        boardPane.setOnMouseMoved(this::handleMouseMoved);
+        boardCanvas.setOnMousePressed(this::handleMousePressed);
+        boardCanvas.setOnMouseDragged(this::handleMouseDragged);
+        boardCanvas.setOnMouseReleased(this::handleMouseReleased);
+        boardCanvas.setOnMouseMoved(this::handleMouseMoved);
     }
 
     public void startGameThread() {
@@ -123,7 +127,6 @@ public class GamePanelController implements Runnable {
     }
 
     private void updateGameState() {
-        System.out.println(mouseXOnBoard + " " + mouseYOnBoard);
     }
 
     public void loadGraphics() {
@@ -207,6 +210,7 @@ public class GamePanelController implements Runnable {
         int scaledHeight = (int) (squareSize * 1.05);
         imageView.setFitWidth(scaledWidth);
         imageView.setFitHeight(scaledHeight);
+        imageView.setSmooth(true);
         imageView.setPreserveRatio(true);
         gc.drawImage(imageView.getImage(), x, y, scaledWidth, scaledHeight);
     }
@@ -315,13 +319,11 @@ public class GamePanelController implements Runnable {
         int x = (int) absoluteMousePos.getX();
         int y = (int) absoluteMousePos.getY();
 
-        Point2D localPoint = boardCanvas.localToScene(0, 0);
-
         if (inBoardRect(x, absoluteMousePos)) {
-            mouseXOnBoard = (int) (x - localPoint.getX());
+            mouseXOnBoard = x;
         }
         if (inBoardRect(y, absoluteMousePos)) {
-            mouseYOnBoard = (int) (y - localPoint.getY());
+            mouseYOnBoard = y;
         }
     }
 
@@ -344,18 +346,13 @@ public class GamePanelController implements Runnable {
     }
 
     public boolean inBoardRect(int coord, Point2D absoluteMousePos) {
-        Point2D localPoint = boardCanvas.localToScene(0, 0);
-
-        if (coord == (int) absoluteMousePos.getX()) {
-            return localPoint.getX() <= coord && coord <= localPoint.getX() + boardCanvas.getWidth();
-        } else {
-            return localPoint.getY() <= coord && coord <= localPoint.getY() + boardCanvas.getHeight();
-        }
+        return (coord == (int) absoluteMousePos.getX()) ? 0 <= coord && coord <= (int) boardCanvas.getWidth()
+                : 0 <= coord && coord <= (int) boardCanvas.getHeight();
     }
 
     public byte getSquareFromPos(int x, int y) {
         int squareSize = (int) (boardCanvas.getWidth() / 8);
-        return (byte) ((byte) ((x / squareSize) % 8) + (7 - (y / squareSize)) * 8);
+        return (byte) (((byte)(x / squareSize) % 8) + (7 - (byte)(y / squareSize)) * 8);
     }
 
     @FXML
@@ -423,16 +420,14 @@ public class GamePanelController implements Runnable {
 
     @FXML
     private void handleMouseDragged(MouseEvent mouseEvent) {
-        Point2D localPoint = boardCanvas.localToScene(0, 0);
-        updateMousePos(new Point2D(mouseEvent.getX() + localPoint.getX(), mouseEvent.getY() + localPoint.getY()));
+        updateMousePos(new Point2D(mouseEvent.getX(), mouseEvent.getY()));
 
         render();
     }
 
     @FXML
     public void handleMouseMoved(MouseEvent mouseEvent) {
-        Point2D localPoint = boardCanvas.localToScene(0, 0);
-        updateMousePos(new Point2D(mouseEvent.getX() + localPoint.getX(), mouseEvent.getY() + localPoint.getY()));
+        updateMousePos(new Point2D(mouseEvent.getX(), mouseEvent.getY()));
     }
 
     public void setMainController(ChessController controller) {

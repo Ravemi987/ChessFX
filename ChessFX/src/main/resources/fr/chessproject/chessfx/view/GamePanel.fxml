@@ -3,6 +3,7 @@
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.layout.Pane?>
 
-<Pane fx:id="boardPane" maxHeight="960" maxWidth="960" prefHeight="960.0" prefWidth="960.0" stylesheets="@GamePanelStyle.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fr.chessproject.chessfx.view.GamePanelController">
-    <Canvas fx:id="boardCanvas" cache="true" cacheHint="QUALITY" height="960" width="960" />
+<Pane id="boardPane" fx:id="boardPane" maxHeight="980" maxWidth="980" prefHeight="980.0" prefWidth="980.0" stylesheets="@GamePanelStyle.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fr.chessproject.chessfx.view.GamePanelController">
+    <Canvas fx:id="boardCanvas" height="960" width="960" layoutX="10" layoutY="10" />
+    <!-- <Pane fx:id="boardMaskPane"  maxHeight="970" maxWidth="970" prefHeight="970.0" prefWidth="970.0" layoutY="6" layoutX="5" /> -->
 </Pane>

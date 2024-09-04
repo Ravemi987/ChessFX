@@ -23,7 +23,7 @@ public class MainFrame extends Application {
     }
 
     @Override
-    public void start(Stage stage) throws IOException {
+    public void start(Stage primaryStage) throws IOException {
 
         ChessController controller = new ChessController(new Game());
 
@@ -47,9 +47,9 @@ public class MainFrame extends Application {
         }
 
         Scene scene = new Scene(root, 1920, 1080);
-        stage.centerOnScreen();
-        stage.setTitle("Chess");
-        stage.setScene(scene);
-        stage.show();
+        primaryStage.centerOnScreen();
+        primaryStage.setTitle("Chess");
+        primaryStage.setScene(scene);
+        primaryStage.show();
     }
 }

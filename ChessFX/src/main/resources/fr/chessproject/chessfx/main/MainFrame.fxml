@@ -3,4 +3,7 @@
 <?import javafx.scene.layout.BorderPane?>
 
 <BorderPane id="mainFrame" fx:id="mainFrame" prefHeight="1080.0" prefWidth="1920.0" stylesheets="@MainFrameStyle.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fr.chessproject.chessfx.view.MainFrameController">
+    <center>
+        <fx:include fx:id="boardPane" source="../view/GamePanel.fxml" />
+    </center>
 </BorderPane>

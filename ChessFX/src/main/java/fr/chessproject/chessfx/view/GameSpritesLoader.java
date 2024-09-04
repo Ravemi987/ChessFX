@@ -4,9 +4,6 @@ import fr.chessproject.chessfx.model.Piece;
 
 import javafx.scene.SnapshotParameters;
 import javafx.scene.image.*;
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;

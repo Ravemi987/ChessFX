@@ -15,6 +15,9 @@ public class MainFrameController {
     @FXML
     public BorderPane mainFrame;
 
+    @FXML
+    public Pane boardPane;
+
     private ChessController controller;
 
     private GamePanelController gamePanelController;
@@ -26,38 +29,16 @@ public class MainFrameController {
     @FXML
     public void initialize() {
         System.out.println("MainFrameController initialized");
-    }
-
-    @FXML
-    private void handleMouseMoved(MouseEvent mouseEvent) {
-        gamePanelController.updateMousePos(new Point2D(mouseEvent.getX(), mouseEvent.getY()));
+        gamePanelController = (GamePanelController) boardPane.getProperties().get("controller");
     }
 
     public void init() {
-        loadGamePanelController();
-        setupMouseEvents();
         gamePanelController.init();
-    }
-
-    public void setupMouseEvents() {
-        mainFrame.setOnMouseMoved(this::handleMouseMoved);
     }
 
     public void setMainController(ChessController chessController) {
         this.controller = chessController;
-    }
-
-    public void loadGamePanelController() {
-        try {
-            FXMLLoader gamePanelLoader = new FXMLLoader(getClass().getResource("/fr/chessproject/chessfx/view/GamePanel.fxml"));
-            gamePanelLoader.load();
-            gamePanelController = gamePanelLoader.getController();
-            gamePanelController.setMainController(controller);
-            Pane gamePanel = gamePanelLoader.getRoot();
-            mainFrame.setCenter(gamePanel);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        gamePanelController.setMainController(controller);
     }
 
     public void setVisible(boolean visible) {

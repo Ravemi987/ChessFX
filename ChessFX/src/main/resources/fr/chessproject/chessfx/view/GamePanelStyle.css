@@ -1,7 +1,17 @@
 #boardPane {
-    -fx-background-color: white;
+    -fx-background-color: rgb(38, 37, 34);
     -fx-background-radius: 10px;
 }
 
+/*
+#boardMaskPane {
+    -fx-background-color: transparent;
+    -fx-border-color: green;
+    -fx-border-width: 3px;
+    -fx-border-radius: 10px;
+}
+ */
+
 #boardCanvas {
+    -fx-background-color: rgb(38, 37, 34);
 }
