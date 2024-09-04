@@ -3,12 +3,14 @@ package fr.chessproject.chessfx.view;
 import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.model.*;
 
+import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
@@ -16,7 +18,7 @@ import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
-public class GamePanelController implements Runnable {
+public class GamePanelController {
 
     @FXML
     public Pane boardPane;
@@ -24,14 +26,16 @@ public class GamePanelController implements Runnable {
     @FXML
     public Canvas boardCanvas;
 
-//    @FXML
-//    public Pane boardMaskPane;
+    @FXML
+    public Pane boardMaskPane;
 
     private ChessController controller;
 
-    private static final double TICKS_PER_SECOND = 60.0;
+    private static final double TICKS_PER_SECOND = 250.0;
     private static final double NS_PER_TICK = 1_000_000_000 / TICKS_PER_SECOND;
-    private boolean running = false;
+    private long lastUpdate = 0;
+    private boolean renderNeeded = true;
+
     private GameSpritesLoader spritesLoader;
     private WritableImage staticBoardImage;
 
@@ -67,48 +71,44 @@ public class GamePanelController implements Runnable {
         loadGraphics();
         render();
         setupMouseEvents();
-        //startGameThread();
+        startGameLoop();
     }
 
     public void setupMouseEvents() {
-        boardCanvas.setOnMousePressed(this::handleMousePressed);
-        boardCanvas.setOnMouseDragged(this::handleMouseDragged);
-        boardCanvas.setOnMouseReleased(this::handleMouseReleased);
-        boardCanvas.setOnMouseMoved(this::handleMouseMoved);
+        boardMaskPane.setOnMousePressed(this::handleMousePressed);
+        boardMaskPane.setOnMouseDragged(this::handleMouseDragged);
+        boardMaskPane.setOnMouseReleased(this::handleMouseReleased);
+        boardMaskPane.setOnMouseMoved(this::handleMouseMoved);
     }
 
-    public void startGameThread() {
-        if (running) return;
+    private void startGameLoop() {
+        AnimationTimer gameLoop = new AnimationTimer() {
 
-        running = true;
-        Thread mainThread = new Thread(this);
-        mainThread.start();
-    }
+            double delta = 0;
 
-    // GameLoop
+            @Override
+            public void handle(long now) {
+                delta += (now - lastUpdate) / NS_PER_TICK;
+                lastUpdate = now;
 
-    @Override
-    public void run() {
-        long lastUpdate = System.nanoTime();
-        double delta = 0;
-        long timer = System.currentTimeMillis();
+                while (delta >= 1) {
+                    updateGameState();
+                    delta--;
+                }
 
-        while (running) {
-            long currentUpdate = System.nanoTime();
-            delta += (currentUpdate - lastUpdate) / NS_PER_TICK;
-            lastUpdate = currentUpdate;
+                if (renderNeeded) {
+                    render();
+                    renderNeeded = false;
+                }
 
-            while (delta >= 1) {
-                updateGameState();
-                delta--;
+//                if (now - lastUpdate >= NS_PER_TICK) {
+//                    updateGameState();
+//                    render();
+//                    lastUpdate = now;
+//                }
             }
-
-            render(); //here if needed;
-
-            if (System.currentTimeMillis() - timer > 1000) {
-                timer += 1000;
-            }
-        }
+        };
+        gameLoop.start();
     }
 
     private void render() {
@@ -381,11 +381,15 @@ public class GamePanelController implements Runnable {
         undragPiece();
         previousSelectedPiece = selectedPiece;
 
-        render();
+        renderNeeded = true;
     }
 
     @FXML
     private void handleMousePressed(MouseEvent mouseEvent) {
+        if (mouseEvent.getButton() != MouseButton.PRIMARY) {
+            return;
+        }
+
         int clickedSquare = getSquareFromPos(mouseXOnBoard, mouseYOnBoard);
         Position pos = controller.getGame().getPosition();
         if (!Square.isEmpty((byte) clickedSquare, pos.getOccupied())) {
@@ -420,14 +424,14 @@ public class GamePanelController implements Runnable {
             }
         }
 
-        render();
+        renderNeeded = true;
     }
 
     @FXML
     private void handleMouseDragged(MouseEvent mouseEvent) {
         updateMousePos(new Point2D(mouseEvent.getX(), mouseEvent.getY()));
 
-        render();
+        renderNeeded = true;
     }
 
     @FXML

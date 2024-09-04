@@ -5,5 +5,5 @@
 
 <Pane id="boardPane" fx:id="boardPane" maxHeight="980" maxWidth="980" prefHeight="980.0" prefWidth="980.0" stylesheets="@GamePanelStyle.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fr.chessproject.chessfx.view.GamePanelController">
     <Canvas fx:id="boardCanvas" height="960" width="960" layoutX="10" layoutY="10" />
-    <!-- <Pane fx:id="boardMaskPane"  maxHeight="970" maxWidth="970" prefHeight="970.0" prefWidth="970.0" layoutY="6" layoutX="5" /> -->
+    <Pane fx:id="boardMaskPane"  maxHeight="968" maxWidth="968" prefHeight="968.0" prefWidth="968.0" layoutY="6" layoutX="6" />
 </Pane>

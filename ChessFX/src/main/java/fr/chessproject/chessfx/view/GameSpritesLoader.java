@@ -30,7 +30,7 @@ public class GameSpritesLoader {
         Image piecesImage = null;
 
         try {
-            piecesImage = new Image(Objects.requireNonNull(ClassLoader.getSystemResourceAsStream("Chess_Pieces_Sprite.png")), 0, 0, true, true);
+            piecesImage = new Image(Objects.requireNonNull(ClassLoader.getSystemResourceAsStream("Chess_Pieces_Sprite_Small.png")), 0, 0, true, true);
         } catch (Exception e) {
             System.err.println("Failed to load pieces sprites");
             System.exit(1);
