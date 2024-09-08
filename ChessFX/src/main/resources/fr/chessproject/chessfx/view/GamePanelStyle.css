@@ -7,7 +7,7 @@
     -fx-background-color: transparent;
     -fx-border-color: rgb(38, 37, 34);
     -fx-border-width: 4px;
-    -fx-border-radius: 10px;
+    -fx-border-radius: 5px;
 }
 
 #boardCanvas {

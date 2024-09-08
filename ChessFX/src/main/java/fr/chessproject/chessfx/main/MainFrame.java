@@ -39,7 +39,6 @@ public class MainFrame extends Application {
         System.out.println("ChessController set in MainFrameController");
         frameController.init();
 
-
         controller.initDialog();
 
         if (debugMode) {

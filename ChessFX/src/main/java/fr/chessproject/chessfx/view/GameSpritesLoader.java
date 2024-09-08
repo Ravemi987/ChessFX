@@ -39,22 +39,11 @@ public class GameSpritesLoader {
     }
 
     private Image setPieceSprite(int pieceIndex, int row, int squareSize) {
-        Image sprite = new WritableImage(piecesImage.getPixelReader(), pieceIndex * pieceSpriteScale, row * pieceSpriteScale, pieceSpriteScale, pieceSpriteScale);
-        ImageView imageView = new ImageView(sprite);
-        imageView.setFitWidth(squareSize);
-        imageView.setFitHeight(squareSize);
-        imageView.setSmooth(true);
-        imageView.setPreserveRatio(true);
-        SnapshotParameters params = new SnapshotParameters();
-        params.setFill(javafx.scene.paint.Color.TRANSPARENT);
-        return imageView.snapshot(params, null);
+        return new WritableImage(piecesImage.getPixelReader(), pieceIndex * pieceSpriteScale,
+                row * pieceSpriteScale, pieceSpriteScale, pieceSpriteScale);
     }
 
     public Image getPieceSprite(int piece) {
         return pieceSpritesMap.get(piece);
-    }
-
-    public Image getPiecesImage() {
-        return piecesImage;
     }
 }

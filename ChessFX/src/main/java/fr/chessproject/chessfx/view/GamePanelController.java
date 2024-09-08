@@ -8,7 +8,6 @@ import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -39,6 +38,7 @@ public class GamePanelController {
     private GameSpritesLoader spritesLoader;
     private WritableImage staticBoardImage;
 
+    private boolean isSquareColored[];
     private int selectedPiece;
     private int previousSelectedPiece;
     private int draggedPiece;
@@ -50,6 +50,10 @@ public class GamePanelController {
 
     public GamePanelController() {
         System.out.println("GamePanelController created");
+
+        isSquareColored = new boolean[64];
+        for (int i = 0; i < 64; i++) {isSquareColored[i] = false;}
+
         controller = null;
         selectedPiece = -1;
         previousSelectedPiece = -1;
@@ -100,12 +104,6 @@ public class GamePanelController {
                     render();
                     renderNeeded = false;
                 }
-
-//                if (now - lastUpdate >= NS_PER_TICK) {
-//                    updateGameState();
-//                    render();
-//                    lastUpdate = now;
-//                }
             }
         };
         gameLoop.start();
@@ -120,6 +118,7 @@ public class GamePanelController {
         showLastMove(gc);
         showValidMoves(gc);
         drawPieces(gc);
+
         if (dragging) {
             showHover(gc);
             draggerUpdateBlit(gc);
@@ -151,7 +150,7 @@ public class GamePanelController {
                 c = Color.rgb(229, 213, 201);
             }
 
-            double width = 3.7;
+            double width = 5.7;
             gc.setStroke(c);
             gc.setLineWidth(width);
             gc.setLineCap(StrokeLineCap.ROUND);
@@ -207,14 +206,10 @@ public class GamePanelController {
 
     private void drawSelectedPiece(GraphicsContext gc, byte piece, int x, int y) {
         int squareSize = (int) (boardCanvas.getWidth() / 8);
-        ImageView imageView = new ImageView(spritesLoader.getPieceSprite(piece));
         int scaledWidth = (int) (squareSize * 1.05);
         int scaledHeight = (int) (squareSize * 1.05);
-        imageView.setFitWidth(scaledWidth);
-        imageView.setFitHeight(scaledHeight);
-        imageView.setSmooth(true);
-        imageView.setPreserveRatio(true);
-        gc.drawImage(imageView.getImage(), x, y, scaledWidth, scaledHeight);
+
+        gc.drawImage(spritesLoader.getPieceSprite(piece), x, y, scaledWidth, scaledHeight);
     }
 
     private void drawPieces(GraphicsContext gc) {
@@ -253,17 +248,18 @@ public class GamePanelController {
 
     private void drawCoordinates(GraphicsContext gc) {
         int squareSize = (int) (boardCanvas.getWidth() / 8);
+        double fontSize = 24;
 
-        gc.setFont(new Font("Arial", 18));
+        gc.setFont(new Font("Arial", fontSize));
 
         for (int row = 0; row < 8; row++) {
             gc.setFill(((row % 2) == 0) ? Color.rgb(181, 136, 99) : Color.rgb(240, 217, 181));
-            gc.fillText(String.valueOf(8 - row), 10, row * squareSize + 20);
+            gc.fillText(String.valueOf(8 - row), 10, row * squareSize + fontSize);
         }
 
         for (int col = 0; col < 8; col++) {
             gc.setFill(((col % 2) == 0) ? Color.rgb(240, 217, 181) : Color.rgb(181, 136, 99));
-            gc.fillText(String.valueOf((char) ('a' + col)), col * squareSize + (squareSize - 20), boardCanvas.getHeight() - 10);
+            gc.fillText(String.valueOf((char) ('a' + col)), col * squareSize + (squareSize - fontSize), boardCanvas.getHeight() - (fontSize / 2));
         }
     }
 
@@ -294,8 +290,8 @@ public class GamePanelController {
 
             int row = 7 - (i / 8);
             int col = (i % 8);
-            int x = (int) (col * squareSize + (double) squareSize / 2 - textWidth / 2);
-            int y = (int) (row * squareSize + (double) squareSize / 2 + textHeight / 4);
+            int x = (int) (col * squareSize + squareSize / 2 - textWidth / 2);
+            int y = (int) (row * squareSize + squareSize / 2 + textHeight / 4);
             gc.fillText(String.valueOf(bit), x, y);
         }
     }
@@ -360,12 +356,26 @@ public class GamePanelController {
         return (byte) squareIndex;
     }
 
+    private Color getBoardSquareColor(int row, int col) {
+        return ((row + col) % 2 == 0 ) ? Color.rgb(240, 217, 181) : Color.rgb(181, 136, 99);
+    }
+
     @FXML
     private void handleMouseReleased(MouseEvent mouseEvent) {
-        int releasedSquare = getSquareFromPos(mouseXOnBoard, mouseYOnBoard);
+        if (mouseEvent.getButton() == MouseButton.PRIMARY) {
+            handleLeftMouseReleased();
+        } else {
+            handleRightMouseReleased();
+        }
+
+        renderNeeded = true;
+    }
+
+    private void handleLeftMouseReleased() {
+        int sq = getSquareFromPos(mouseXOnBoard, mouseYOnBoard);
         Position pos = controller.getGame().getPosition();
-        if (!Square.isEmpty((byte) releasedSquare, controller.getGame().getPosition().getOccupied())) {
-            releasePiece = releasedSquare;
+        if (!Square.isEmpty((byte) sq, controller.getGame().getPosition().getOccupied())) {
+            releasePiece = sq;
         } else {
             releasePiece = -1;
         }
@@ -373,15 +383,20 @@ public class GamePanelController {
         if (previousSelectedPiece != -1 && releasePiece == previousSelectedPiece && clickedPiece == previousSelectedPiece) {
             unselectPiece();
         } else if (selectedPiece != -1) {
-            Move mv = new Move((byte) selectedPiece, (byte) releasedSquare, pos.pieceBitboardOnSquare((byte) selectedPiece), pos.pieceColorOnSquare((byte) selectedPiece));
+            Move mv = new Move((byte) selectedPiece, (byte) sq, pos.pieceBitboardOnSquare((byte) selectedPiece), pos.pieceColorOnSquare((byte) selectedPiece));
             Move validMove = controller.getGame().checkMove(mv);
             if (validMove != null) controller.getGame().playMove(validMove);
         }
 
         undragPiece();
         previousSelectedPiece = selectedPiece;
+    }
 
-        renderNeeded = true;
+    private void handleRightMouseReleased() {
+        if (dragging) {
+            unselectPiece();
+            undragPiece();
+        }
     }
 
     @FXML
