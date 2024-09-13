@@ -31,16 +31,6 @@ public class Piece {
     private static final int noWe = 6;
     private static final int north = 7;
 
-    /* Max moves count */
-
-    public static final int bishopMovesMax = 13;
-    public static final int kingMovesMax = 10;
-    public static final int knightMovesMax = 8;
-    public static final int rookMovesMax = 14;
-    public static final int queenMovesMax = 27;
-    public static final int pawnMovesMax = 12;
-
-
     /* Pre-computation arrays */
 
     //private final long[][] rayAttacks = new long[8][64];

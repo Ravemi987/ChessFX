@@ -79,7 +79,7 @@ public class Move {
 
     public boolean isCapture() {
         return getCapturedPiece() != 0;
-    };
+    }
 
     @Override
     public String toString() {

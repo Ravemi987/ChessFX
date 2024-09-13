@@ -30,9 +30,16 @@ public class GamePanelController {
 
     private ChessController controller;
 
-    private static final double TICKS_PER_SECOND = 250.0;
+    private int mouseEventsCount = 0;
+    private long lastEventCheck = System.nanoTime();
+
+    private static final double NS_PER_SECOND = 1_000_000_000.0;
+    private static final double TICKS_PER_SECOND = 60.0;
     private static final double NS_PER_TICK = 1_000_000_000 / TICKS_PER_SECOND;
     private long lastUpdate = 0;
+    private long lastFPSUpdate = 0; // Pour le calcul des FPS
+    private int frames = 0; // Nombre de frames rendues dans la seconde actuelle
+    private int currentFPS = 0; // Le nombre de FPS actuel
     private boolean renderNeeded = true;
 
     private GameSpritesLoader spritesLoader;
@@ -85,28 +92,61 @@ public class GamePanelController {
         boardMaskPane.setOnMouseMoved(this::handleMouseMoved);
     }
 
+    private void checkMouseEventRate() {
+        long now = System.nanoTime();
+        if (now - lastEventCheck >= NS_PER_SECOND) {
+            double eventsPerSecond = (double) mouseEventsCount / (now - lastEventCheck) * NS_PER_SECOND;
+            //System.out.println("Mouse events per second: " + eventsPerSecond);
+            mouseEventsCount = 0;
+            lastEventCheck = now;
+        }
+    }
+
     private void startGameLoop() {
         AnimationTimer gameLoop = new AnimationTimer() {
 
+            long lastUpdate = System.nanoTime();
             double delta = 0;
 
             @Override
             public void handle(long now) {
-                delta += (now - lastUpdate) / NS_PER_TICK;
-                lastUpdate = now;
-
-                while (delta >= 1) {
+                if (now - lastUpdate >= NS_PER_TICK) {
                     updateGameState();
-                    delta--;
+                    lastUpdate = now;
                 }
 
-                if (renderNeeded) {
-                    render();
-                    renderNeeded = false;
+//                long currentUpdate = System.nanoTime();
+//                delta += (currentUpdate - lastUpdate) / NS_PER_TICK;
+//                lastUpdate = currentUpdate;
+//
+//                while (delta >= 1) {
+//                    updateGameState();
+//                    render();
+//                    delta--;
+//                }
+
+                tryRender();
+
+                frames++;
+
+                if (now - lastFPSUpdate >= NS_PER_SECOND) {
+                    currentFPS = frames;
+                    frames = 0;
+                    lastFPSUpdate = now;
+                    //System.out.println("FPS: " + currentFPS);
                 }
+
+                checkMouseEventRate();
             }
         };
         gameLoop.start();
+    }
+
+    private void tryRender() {
+        if (renderNeeded) {
+            render();
+            renderNeeded = false;
+        }
     }
 
     private void render() {
@@ -374,7 +414,7 @@ public class GamePanelController {
     private void handleLeftMouseReleased() {
         int sq = getSquareFromPos(mouseXOnBoard, mouseYOnBoard);
         Position pos = controller.getGame().getPosition();
-        if (!Square.isEmpty((byte) sq, controller.getGame().getPosition().getOccupied())) {
+        if (Square.isOccupied((byte) sq, controller.getGame().getPosition().getOccupied())) {
             releasePiece = sq;
         } else {
             releasePiece = -1;
@@ -407,7 +447,7 @@ public class GamePanelController {
 
         int clickedSquare = getSquareFromPos(mouseXOnBoard, mouseYOnBoard);
         Position pos = controller.getGame().getPosition();
-        if (!Square.isEmpty((byte) clickedSquare, pos.getOccupied())) {
+        if (Square.isOccupied((byte) clickedSquare, pos.getOccupied())) {
             if (selectedPiece != -1 && pos.pieceColorOnSquare((byte) clickedSquare) != pos.pieceColorOnSquare((byte) selectedPiece)) {
                 Move mv = new Move((byte) selectedPiece, (byte) clickedSquare, pos.pieceBitboardOnSquare((byte) selectedPiece), pos.pieceColorOnSquare((byte) selectedPiece));
                 Move validMove = controller.getGame().checkMove(mv);
@@ -444,6 +484,7 @@ public class GamePanelController {
 
     @FXML
     private void handleMouseDragged(MouseEvent mouseEvent) {
+        mouseEventsCount++;
         updateMousePos(new Point2D(mouseEvent.getX(), mouseEvent.getY()));
 
         renderNeeded = true;
@@ -451,6 +492,7 @@ public class GamePanelController {
 
     @FXML
     public void handleMouseMoved(MouseEvent mouseEvent) {
+        mouseEventsCount++;
         updateMousePos(new Point2D(mouseEvent.getX(), mouseEvent.getY()));
     }
 

@@ -20,8 +20,8 @@ public class Square {
     public static final byte F8 = 61;
     public static final byte G1 = 6;
     public static final byte G8 = 62;
-    public static byte H1 = 7;
-    public static byte H8 = 63;
+    public static final byte H1 = 7;
+    public static final byte H8 = 63;
 
     /* Files masks */
 
@@ -37,6 +37,10 @@ public class Square {
 
     public static long bitboardForSquare(byte sq) {
         return 0x1L << sq;
+    }
+
+    public static boolean isOccupied(byte sq, long occ) {
+        return ((0x1L << sq) & occ) != 0;
     }
 
     public static boolean isEmpty(byte sq, long occ) {

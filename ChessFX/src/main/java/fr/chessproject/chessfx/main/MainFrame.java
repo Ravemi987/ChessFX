@@ -2,14 +2,11 @@ package fr.chessproject.chessfx.main;
 
 import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.model.Game;
-import fr.chessproject.chessfx.view.GamePanelController;
 import fr.chessproject.chessfx.view.MainFrameController;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
