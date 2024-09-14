@@ -25,27 +25,40 @@ import java.util.Map;
 
 public class GamePanelController {
 
+    // Panes
+
     @FXML
     public Pane boardPane;
+    @FXML
+    public Pane boardMaskPane;
+
+    //Canvas
 
     @FXML
     public Canvas boardCanvas;
-
     @FXML
-    public Pane boardMaskPane;
+    public Canvas coordsCanvas;
+    @FXML
+    public Canvas piecesCanvas;
+    @FXML
+    public Canvas draggingCanvas;
+    @FXML
+    public Canvas coloredSquaresCanvas;
+    @FXML
+    public Canvas drawingCanvas;
 
     private ChessController controller;
 
     private final Map<Byte, Image> resizedPieceSprites = new HashMap<>();
 
-    private static final double TICKS_PER_SECOND = 100.0;
+    private static final double TICKS_PER_SECOND = 250.0;
     private static final double NS_PER_TICK = 1_000_000_000 / TICKS_PER_SECOND;
-    private boolean renderNeeded = true;
 
     private GameSpritesLoader spritesLoader;
     private WritableImage staticBoardImage;
+    private WritableImage staticCoordsImage;
 
-    private boolean isSquareColored[];
+    private boolean[] isSquareColored;
     private int selectedPiece;
     private int previousSelectedPiece;
     private int draggedPiece;
@@ -59,7 +72,6 @@ public class GamePanelController {
         System.out.println("GamePanelController created");
 
         isSquareColored = new boolean[64];
-        for (int i = 0; i < 64; i++) {isSquareColored[i] = false;}
 
         controller = null;
         selectedPiece = -1;
@@ -80,7 +92,9 @@ public class GamePanelController {
 
     public void init() {
         loadGraphics();
-        render();
+        renderBoard();
+        renderCoordinates();
+        renderPieces();
         setupMouseEvents();
         startGameLoop();
     }
@@ -120,36 +134,53 @@ public class GamePanelController {
             public void handle(long now) {
                 if (now - lastUpdate >= NS_PER_TICK) {
                     updateGameState();
+                    renderDragging();
                     lastUpdate = now;
                 }
-
-                tryRender();
             }
         };
         gameLoop.start();
     }
 
-    private void tryRender() {
-        if (renderNeeded) {
-            render();
-            renderNeeded = false;
-        }
-    }
-
-    private void render() {
+    private void renderBoard() {
         GraphicsContext gc = boardCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, boardCanvas.getWidth(), boardCanvas.getHeight());
         gc.drawImage(staticBoardImage, 0, 0);
+    }
 
+    private void renderCoordinates() {
+        GraphicsContext gc = coordsCanvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, coordsCanvas.getWidth(), coordsCanvas.getHeight());
+        gc.drawImage(staticCoordsImage, 0, 0);
+    }
+
+    private void renderColoredSquares() {
+        GraphicsContext gc = coloredSquaresCanvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, coloredSquaresCanvas.getWidth(), coloredSquaresCanvas.getHeight());
         showSelectedPiece(gc);
         showLastMove(gc);
         showValidMoves(gc);
-        drawPieces(gc);
+    }
 
+    private void renderPieces() {
+        GraphicsContext gc = piecesCanvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, piecesCanvas.getWidth(), piecesCanvas.getHeight());
+        drawPieces(gc);
+    }
+
+    private void renderDragging() {
+        GraphicsContext gc = draggingCanvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, draggingCanvas.getWidth(), draggingCanvas.getHeight());
         if (dragging) {
             showHover(gc);
             draggerUpdateBlit(gc);
         }
+    }
+
+    private void render() {
+        renderColoredSquares();
+        renderPieces();
+        renderDragging();
     }
 
     private void updateGameState() {
@@ -159,6 +190,7 @@ public class GamePanelController {
         int squareSize = (int) ((boardCanvas.getWidth()) / 8);
         spritesLoader = new GameSpritesLoader(squareSize);
         initializeStaticBoardImage();
+        initializeStaticCoordsImage();
         precalculatePieceSprites();
     }
 
@@ -253,18 +285,6 @@ public class GamePanelController {
         }
     }
 
-    private void drawLastMovedPiece(GraphicsContext gc) {
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
-        Move lastMove = controller.getGame().getLastMove();
-        Position pos = controller.getGame().getPosition();
-        if (lastMove != null) {
-            int fromRow = 7 - lastMove.getFrom() / 8, toRow = 7 - lastMove.getTo() / 8;
-            int fromCol = lastMove.getFrom() % 8, toCol = lastMove.getTo() % 8;
-            gc.clearRect(fromCol * squareSize, fromRow * squareSize, squareSize, squareSize);
-            drawPiece(gc, pos.pieceOnSquare(lastMove.getTo()), toCol * squareSize, toRow * squareSize);
-        }
-    }
-
     private void draggerUpdateBlit(GraphicsContext gc) {
         int squareSize = (int) (boardCanvas.getWidth() / 8);
         Position position = controller.getGame().getPosition();
@@ -334,9 +354,25 @@ public class GamePanelController {
         gc.setImageSmoothing(true);
 
         drawBoard(gc);
-        drawCoordinates(gc);
 
         tempCanvas.snapshot(null, staticBoardImage);
+    }
+
+    private void initializeStaticCoordsImage() {
+        int width = (int) coordsCanvas.getWidth();
+        int height = (int) coordsCanvas.getHeight();
+
+        staticCoordsImage = new WritableImage(width, height);
+        Canvas tempCanvas = new Canvas(width, height);
+        GraphicsContext gc = tempCanvas.getGraphicsContext2D();
+
+        gc.setImageSmoothing(true);
+
+        drawCoordinates(gc);
+
+        SnapshotParameters params = new SnapshotParameters();
+        params.setFill(Color.TRANSPARENT);
+        tempCanvas.snapshot(params, staticCoordsImage);
     }
 
     public void updateMousePos(Point2D absoluteMousePos) {
@@ -383,8 +419,27 @@ public class GamePanelController {
         return (byte) squareIndex;
     }
 
-    private Color getBoardSquareColor(int row, int col) {
-        return ((row + col) % 2 == 0 ) ? Color.rgb(240, 217, 181) : Color.rgb(181, 136, 99);
+    private void clearDrawingCanvas() {
+        GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+        gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+        isSquareColored = new boolean[64];
+    }
+
+    private void drawOnCanvas() {
+        GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
+        int squareSize = (int) (drawingCanvas.getWidth() / 8);
+
+        int square = getSquareFromPos(mouseXOnBoard, mouseYOnBoard);
+        isSquareColored[square] = !isSquareColored[square];
+        int row = 7 - square / 8;
+        int col = square % 8;
+
+        if (isSquareColored[square]) {
+            gc.setFill((row + col) % 2 == 0 ? Color.rgb(113, 217, 100) : Color.rgb(50, 200, 100));
+            gc.fillRect(col * squareSize, row * squareSize, squareSize, squareSize);
+        } else {
+            gc.clearRect(col * squareSize, row * squareSize, squareSize, squareSize);
+        }
     }
 
     @FXML
@@ -394,8 +449,6 @@ public class GamePanelController {
         } else {
             handleRightMouseReleased();
         }
-
-        renderNeeded = true;
     }
 
     private void handleLeftMouseReleased() {
@@ -417,12 +470,17 @@ public class GamePanelController {
 
         undragPiece();
         previousSelectedPiece = selectedPiece;
+
+        render();
     }
 
     private void handleRightMouseReleased() {
         if (dragging) {
             unselectPiece();
             undragPiece();
+            render();
+        } else {
+            drawOnCanvas();
         }
     }
 
@@ -466,14 +524,13 @@ public class GamePanelController {
             }
         }
 
-        renderNeeded = true;
+        clearDrawingCanvas();
+        render();
     }
 
     @FXML
     private void handleMouseDragged(MouseEvent mouseEvent) {
         updateMousePos(new Point2D(mouseEvent.getX(), mouseEvent.getY()));
-
-        renderNeeded = true;
     }
 
     @FXML

@@ -10,6 +10,6 @@
     -fx-border-radius: 5px;
 }
 
-#boardCanvas {
-    -fx-background-color: rgb(38, 37, 34);
+.canvas-style {
+    -fx-background-color: transparent;
 }
