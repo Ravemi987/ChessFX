@@ -6,8 +6,11 @@ import fr.chessproject.chessfx.model.*;
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -16,6 +19,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class GamePanelController {
 
@@ -30,16 +36,10 @@ public class GamePanelController {
 
     private ChessController controller;
 
-    private int mouseEventsCount = 0;
-    private long lastEventCheck = System.nanoTime();
+    private final Map<Byte, Image> resizedPieceSprites = new HashMap<>();
 
-    private static final double NS_PER_SECOND = 1_000_000_000.0;
-    private static final double TICKS_PER_SECOND = 60.0;
+    private static final double TICKS_PER_SECOND = 100.0;
     private static final double NS_PER_TICK = 1_000_000_000 / TICKS_PER_SECOND;
-    private long lastUpdate = 0;
-    private long lastFPSUpdate = 0; // Pour le calcul des FPS
-    private int frames = 0; // Nombre de frames rendues dans la seconde actuelle
-    private int currentFPS = 0; // Le nombre de FPS actuel
     private boolean renderNeeded = true;
 
     private GameSpritesLoader spritesLoader;
@@ -85,6 +85,25 @@ public class GamePanelController {
         startGameLoop();
     }
 
+    private void precalculatePieceSprites() {
+        int squareSize = (int) (boardCanvas.getWidth() / 8);
+        int scaledWidth = (int) (squareSize * 1.05);
+
+        for (byte piece = Piece.WHITE_KING; piece <= Piece.BLACK_PAWN; piece++) {
+            ImageView imageView = new ImageView(spritesLoader.getPieceSprite(piece));
+            imageView.setFitWidth(scaledWidth);
+            imageView.setFitHeight(scaledWidth);
+            imageView.setSmooth(true);
+            imageView.setPreserveRatio(true);
+
+            SnapshotParameters params = new SnapshotParameters();
+            params.setFill(Color.TRANSPARENT);
+            Image snapshot = imageView.snapshot(params, null);
+
+            resizedPieceSprites.put(piece, snapshot);
+        }
+    }
+
     public void setupMouseEvents() {
         boardMaskPane.setOnMousePressed(this::handleMousePressed);
         boardMaskPane.setOnMouseDragged(this::handleMouseDragged);
@@ -92,21 +111,10 @@ public class GamePanelController {
         boardMaskPane.setOnMouseMoved(this::handleMouseMoved);
     }
 
-    private void checkMouseEventRate() {
-        long now = System.nanoTime();
-        if (now - lastEventCheck >= NS_PER_SECOND) {
-            double eventsPerSecond = (double) mouseEventsCount / (now - lastEventCheck) * NS_PER_SECOND;
-            //System.out.println("Mouse events per second: " + eventsPerSecond);
-            mouseEventsCount = 0;
-            lastEventCheck = now;
-        }
-    }
-
     private void startGameLoop() {
         AnimationTimer gameLoop = new AnimationTimer() {
 
             long lastUpdate = System.nanoTime();
-            double delta = 0;
 
             @Override
             public void handle(long now) {
@@ -115,28 +123,7 @@ public class GamePanelController {
                     lastUpdate = now;
                 }
 
-//                long currentUpdate = System.nanoTime();
-//                delta += (currentUpdate - lastUpdate) / NS_PER_TICK;
-//                lastUpdate = currentUpdate;
-//
-//                while (delta >= 1) {
-//                    updateGameState();
-//                    render();
-//                    delta--;
-//                }
-
                 tryRender();
-
-                frames++;
-
-                if (now - lastFPSUpdate >= NS_PER_SECOND) {
-                    currentFPS = frames;
-                    frames = 0;
-                    lastFPSUpdate = now;
-                    //System.out.println("FPS: " + currentFPS);
-                }
-
-                checkMouseEventRate();
             }
         };
         gameLoop.start();
@@ -172,6 +159,7 @@ public class GamePanelController {
         int squareSize = (int) ((boardCanvas.getWidth()) / 8);
         spritesLoader = new GameSpritesLoader(squareSize);
         initializeStaticBoardImage();
+        precalculatePieceSprites();
     }
 
     private void showHover(GraphicsContext gc) {
@@ -245,11 +233,10 @@ public class GamePanelController {
     }
 
     private void drawSelectedPiece(GraphicsContext gc, byte piece, int x, int y) {
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
-        int scaledWidth = (int) (squareSize * 1.05);
-        int scaledHeight = (int) (squareSize * 1.05);
-
-        gc.drawImage(spritesLoader.getPieceSprite(piece), x, y, scaledWidth, scaledHeight);
+        Image image = resizedPieceSprites.get(piece);
+        if (image != null) {
+            gc.drawImage(image, x, y);
+        }
     }
 
     private void drawPieces(GraphicsContext gc) {
@@ -484,7 +471,6 @@ public class GamePanelController {
 
     @FXML
     private void handleMouseDragged(MouseEvent mouseEvent) {
-        mouseEventsCount++;
         updateMousePos(new Point2D(mouseEvent.getX(), mouseEvent.getY()));
 
         renderNeeded = true;
@@ -492,7 +478,6 @@ public class GamePanelController {
 
     @FXML
     public void handleMouseMoved(MouseEvent mouseEvent) {
-        mouseEventsCount++;
         updateMousePos(new Point2D(mouseEvent.getX(), mouseEvent.getY()));
     }
 
