@@ -81,6 +81,10 @@ public class Move {
         return getCapturedPiece() != 0;
     }
 
+    public boolean isPromotion() {
+        return getPromotedPiece() != 0;
+    }
+
     @Override
     public String toString() {
         return "from=" + getFrom() + " to=" + getTo() + " mPiece=" + getPiece() + " color=" + getColor()

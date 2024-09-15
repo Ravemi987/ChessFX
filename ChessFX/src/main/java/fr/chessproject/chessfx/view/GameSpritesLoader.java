@@ -2,7 +2,10 @@ package fr.chessproject.chessfx.view;
 
 import fr.chessproject.chessfx.model.Piece;
 
+import javafx.scene.SnapshotParameters;
 import javafx.scene.image.*;
+import javafx.scene.paint.Color;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -41,6 +44,26 @@ public class GameSpritesLoader {
         return new WritableImage(piecesImage.getPixelReader(), pieceIndex * pieceSpriteScale,
                 row * pieceSpriteScale, pieceSpriteScale, pieceSpriteScale);
     }
+
+//private Image setPieceSprite(int pieceIndex, int row, int squareSize) {
+//    // Crée un WritableImage en découpant l'image source des pièces
+//    Image sprite = new WritableImage(piecesImage.getPixelReader(), pieceIndex * pieceSpriteScale,
+//            row * pieceSpriteScale, pieceSpriteScale, pieceSpriteScale);
+//
+//    // Crée un ImageView avec l'image découpée
+//    ImageView imageView = new ImageView(sprite);
+//
+//    // Ajuste les dimensions de l'ImageView
+//    imageView.setFitWidth(squareSize);
+//    imageView.setFitHeight(squareSize);
+//    imageView.setSmooth(true); // Applique un rendu lissé
+//    imageView.setPreserveRatio(true); // Préserve le ratio de l'image
+//
+//    // Capture une image redimensionnée de l'ImageView
+//    SnapshotParameters params = new SnapshotParameters();
+//    params.setFill(Color.TRANSPARENT); // Fond transparent pour éviter d'ajouter des bordures
+//    return imageView.snapshot(params, null); // Retourne l'image redimensionnée
+//}
 
     public Image getPieceSprite(int piece) {
         return pieceSpritesMap.get(piece);

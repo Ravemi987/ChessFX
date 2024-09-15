@@ -20,7 +20,9 @@ import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class GamePanelController {
@@ -51,7 +53,7 @@ public class GamePanelController {
 
     private final Map<Byte, Image> resizedPieceSprites = new HashMap<>();
 
-    private static final double TICKS_PER_SECOND = 250.0;
+    private static final double TICKS_PER_SECOND = 120;
     private static final double NS_PER_TICK = 1_000_000_000 / TICKS_PER_SECOND;
 
     private GameSpritesLoader spritesLoader;
@@ -128,7 +130,7 @@ public class GamePanelController {
     private void startGameLoop() {
         AnimationTimer gameLoop = new AnimationTimer() {
 
-            long lastUpdate = System.nanoTime();
+            long lastUpdate = 0;
 
             @Override
             public void handle(long now) {
@@ -145,13 +147,15 @@ public class GamePanelController {
     private void renderBoard() {
         GraphicsContext gc = boardCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, boardCanvas.getWidth(), boardCanvas.getHeight());
-        gc.drawImage(staticBoardImage, 0, 0);
+        //gc.drawImage(staticBoardImage, 0, 0);
+        drawBoard(gc);
     }
 
     private void renderCoordinates() {
         GraphicsContext gc = coordsCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, coordsCanvas.getWidth(), coordsCanvas.getHeight());
-        gc.drawImage(staticCoordsImage, 0, 0);
+        //gc.drawImage(staticCoordsImage, 0, 0);
+        drawCoordinates(gc);
     }
 
     private void renderColoredSquares() {
@@ -189,9 +193,9 @@ public class GamePanelController {
     public void loadGraphics() {
         int squareSize = (int) ((boardCanvas.getWidth()) / 8);
         spritesLoader = new GameSpritesLoader(squareSize);
-        initializeStaticBoardImage();
-        initializeStaticCoordsImage();
-        precalculatePieceSprites();
+//        initializeStaticBoardImage();
+//        initializeStaticCoordsImage();
+        //precalculatePieceSprites();
     }
 
     private void showHover(GraphicsContext gc) {
@@ -229,7 +233,7 @@ public class GamePanelController {
                 if (mv.getFrom() == selectedPiece) {
                     int row = 7 - mv.getTo() / 8;
                     int col = mv.getTo() % 8;
-                    gc.setFill(((row + col) % 2 == 0 ) ? Color.rgb(234, 106, 106) : Color.rgb(248, 100, 100));
+                    gc.setFill(((row + col) % 2 == 0 ) ? Color.rgb(235, 121, 99) : Color.rgb(225, 105, 84));
                     gc.fillRect(col * squareSize,row  * squareSize, squareSize, squareSize);
                 }
             }
@@ -242,9 +246,9 @@ public class GamePanelController {
             int squareSize = (int) (boardCanvas.getWidth() / 8);
             int fromRow = 7 - lastMove.getFrom() / 8, toRow = 7 - lastMove.getTo() / 8;
             int fromCol = lastMove.getFrom() % 8, toCol = lastMove.getTo() % 8;
-            gc.setFill(((fromRow + fromCol) % 2 == 0 ) ? Color.rgb(218, 196, 49) : Color.rgb(235, 191, 73));
+            gc.setFill(((fromRow + fromCol) % 2 == 0 ) ? Color.rgb(246, 235, 114) : Color.rgb(220, 195, 75));
             gc.fillRect(fromCol * squareSize,fromRow  * squareSize, squareSize, squareSize);
-            gc.setFill(((toRow + toCol) % 2 == 0 ) ? Color.rgb(218, 196, 49) : Color.rgb(235, 191, 73));
+            gc.setFill(((toRow + toCol) % 2 == 0 ) ? Color.rgb(246, 235, 114) : Color.rgb(220, 195, 75));
             gc.fillRect(toCol * squareSize,toRow  * squareSize, squareSize, squareSize);
         }
     }
@@ -254,7 +258,7 @@ public class GamePanelController {
         if (selectedPiece != -1) {
             int row = 7 - selectedPiece / 8;
             int col = selectedPiece % 8;
-            gc.setFill(((row + col) % 2 == 0 ) ? Color.rgb(218, 196, 49) : Color.rgb(235, 191, 73));
+            gc.setFill(((row + col) % 2 == 0 ) ? Color.rgb(246, 235, 114) : Color.rgb(220, 195, 75));
             gc.fillRect(col * squareSize,row  * squareSize, squareSize, squareSize);
         }
     }
@@ -264,11 +268,19 @@ public class GamePanelController {
         gc.drawImage(spritesLoader.getPieceSprite(piece), x, y, squareSize, squareSize);
     }
 
+//    private void drawSelectedPiece(GraphicsContext gc, byte piece, int x, int y) {
+//        Image image = resizedPieceSprites.get(piece);
+//        if (image != null) {
+//            gc.drawImage(image, x, y);
+//        }
+//    }
+
     private void drawSelectedPiece(GraphicsContext gc, byte piece, int x, int y) {
-        Image image = resizedPieceSprites.get(piece);
-        if (image != null) {
-            gc.drawImage(image, x, y);
-        }
+        int squareSize = (int) (boardCanvas.getWidth() / 8);
+        int scaledWidth = (int) (squareSize * 1.05);
+        int scaledHeight = (int) (squareSize * 1.05);
+
+        gc.drawImage(spritesLoader.getPieceSprite(piece), x, y, scaledWidth, scaledHeight);
     }
 
     private void drawPieces(GraphicsContext gc) {
@@ -375,15 +387,14 @@ public class GamePanelController {
         tempCanvas.snapshot(params, staticCoordsImage);
     }
 
-    public void updateMousePos(Point2D absoluteMousePos) {
+    public void updateMousePos(double absX, double abY) {
+        int x = (int) absX;
+        int y = (int) abY;
 
-        int x = (int) absoluteMousePos.getX();
-        int y = (int) absoluteMousePos.getY();
-
-        if (inBoardRect(x, absoluteMousePos)) {
+        if (inBoardRect(x)) {
             mouseXOnBoard = x;
         }
-        if (inBoardRect(y, absoluteMousePos)) {
+        if (inBoardRect(y)) {
             mouseYOnBoard = y;
         }
     }
@@ -406,9 +417,8 @@ public class GamePanelController {
         selectedPiece = -1;
     }
 
-    public boolean inBoardRect(int coord, Point2D absoluteMousePos) {
-        return (coord == (int) absoluteMousePos.getX()) ? 0 <= coord && coord <= (int) boardCanvas.getWidth()
-                : 0 <= coord && coord <= (int) boardCanvas.getHeight();
+    public boolean inBoardRect(int coord) {
+        return  0 <= coord && coord <= (int) boardCanvas.getWidth();
     }
 
     public byte getSquareFromPos(int x, int y) {
@@ -436,10 +446,16 @@ public class GamePanelController {
 
         if (isSquareColored[square]) {
             gc.setFill((row + col) % 2 == 0 ? Color.rgb(113, 217, 100) : Color.rgb(50, 200, 100));
-            gc.fillRect(col * squareSize, row * squareSize, squareSize, squareSize);
         } else {
-            gc.clearRect(col * squareSize, row * squareSize, squareSize, squareSize);
+            gc.setFill(((row + col) % 2 == 0 ) ? Color.rgb(240, 217, 181) : Color.rgb(181, 136, 99));
         }
+        gc.fillRect(col * squareSize, row * squareSize, squareSize, squareSize);
+    }
+
+    private void resetSelection() {
+        unselectPiece();
+        undragPiece();
+        previousSelectedPiece = -1;
     }
 
     @FXML
@@ -465,7 +481,10 @@ public class GamePanelController {
         } else if (selectedPiece != -1) {
             Move mv = new Move((byte) selectedPiece, (byte) sq, pos.pieceBitboardOnSquare((byte) selectedPiece), pos.pieceColorOnSquare((byte) selectedPiece));
             Move validMove = controller.getGame().checkMove(mv);
-            if (validMove != null) controller.getGame().playMove(validMove);
+            if (validMove != null) {
+                controller.getGame().playMove(validMove);
+                unselectPiece();
+            }
         }
 
         undragPiece();
@@ -475,9 +494,8 @@ public class GamePanelController {
     }
 
     private void handleRightMouseReleased() {
-        if (dragging) {
-            unselectPiece();
-            undragPiece();
+        if (dragging || selectedPiece != -1) {
+            resetSelection();
             render();
         } else {
             drawOnCanvas();
@@ -530,12 +548,12 @@ public class GamePanelController {
 
     @FXML
     private void handleMouseDragged(MouseEvent mouseEvent) {
-        updateMousePos(new Point2D(mouseEvent.getX(), mouseEvent.getY()));
+        updateMousePos(mouseEvent.getX(), mouseEvent.getY());
     }
 
     @FXML
     public void handleMouseMoved(MouseEvent mouseEvent) {
-        updateMousePos(new Point2D(mouseEvent.getX(), mouseEvent.getY()));
+        updateMousePos(mouseEvent.getX(), mouseEvent.getY());
     }
 
     public void setMainController(ChessController controller) {

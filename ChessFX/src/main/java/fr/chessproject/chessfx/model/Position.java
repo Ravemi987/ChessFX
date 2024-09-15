@@ -95,46 +95,63 @@ public class Position {
 
     /* Generate Moves methods */
 
-    public void generatePieceMoves(MoveList mvList, long moveBB, byte sqFrom, int pieceBB, int colorBB) {
+    public void generatePieceMoves(MoveList mvList, long moveBB, byte sqFrom, byte pieceBB, byte colorBB) {
         while(moveBB != 0) {
             long piece = Long.lowestOneBit(moveBB);
             moveBB &= ~piece;
             byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
-            Move mv = new Move(sqFrom, sqTo, (byte) pieceBB, (byte) colorBB);
+            Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB);
             mvList.addMove(mv);
         }
     }
 
-    public void generatePieceCaptures(MoveList mvList, long moveBB, byte sqFrom, int pieceBB, int colorBB) {
+    public void generatePieceCaptures(MoveList mvList, long moveBB, byte sqFrom, byte pieceBB, byte colorBB) {
         while(moveBB != 0) {
             long piece = Long.lowestOneBit(moveBB);
             moveBB &= ~piece;
             byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
-            Move mv = new Move(sqFrom, sqTo, (byte) pieceBB, (byte) colorBB, pieceBitboardOnSquare(sqTo), (byte) ((colorBB+1)%2));
+            Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, pieceBitboardOnSquare(sqTo), (byte) ((colorBB+1)%2));
             mvList.addMove(mv);
         }
     }
 
-    public void generatePawnMoves(MoveList mvList, long moveBB, int offset, int pieceBB, int colorBB) {
+    public void generatePawnMoves(MoveList mvList, long moveBB, int offset, int promotionRow, byte pieceBB, byte colorBB) {
         while(moveBB != 0) {
             long piece = Long.lowestOneBit(moveBB);
             moveBB &= ~piece;
             byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
             byte sqFrom = (byte) (sqTo + offset);
-            Move mv = new Move(sqFrom, sqTo, (byte) pieceBB, (byte) colorBB);
-            mvList.addMove(mv);
+
+            if (sqTo / 8 == promotionRow) {
+                generatePromotionMoves(mvList, sqFrom, sqTo, pieceBB, colorBB);
+            } else {
+                Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB);
+                mvList.addMove(mv);
+            }
         }
     }
 
-    public void generatePawnCaptures(MoveList mvList, long moveBB, int offset, int pieceBB, int colorBB) {
+    public void generatePawnCaptures(MoveList mvList, long moveBB, int offset, int promotionRow, byte pieceBB, byte colorBB) {
         while(moveBB != 0) {
             long piece = Long.lowestOneBit(moveBB);
             moveBB &= ~piece;
             byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
             byte sqFrom = (byte) (sqTo + offset);
-            Move mv = new Move(sqFrom, sqTo, (byte) pieceBB, (byte) colorBB, pieceBitboardOnSquare(sqTo), (byte) ((colorBB+1)%2));
-            mvList.addMove(mv);
+
+            if (sqTo / 8 == promotionRow) {
+                generatePromotionMoves(mvList, sqFrom, sqTo, pieceBB, colorBB);
+            } else {
+                Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, pieceBitboardOnSquare(sqTo), (byte) ((colorBB+1)%2));
+                mvList.addMove(mv);
+            }
         }
+    }
+
+    public void generatePromotionMoves(MoveList mvList, byte sqFrom, byte sqTo, byte pieceBB, byte colorBB) {
+        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, (byte) 0, (byte) 0, queens));
+        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, (byte) 0, (byte) 0, rooks));
+        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, (byte) 0, (byte) 0, knights));
+        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, (byte) 0, (byte) 0, bishops));
     }
 
 
@@ -147,10 +164,10 @@ public class Position {
         long captureLeft = (piecesBitboard & Square.NOT_A_FILE) << 7 & piecesBB[blackPieces]; // north-west
         long captureRight = (piecesBitboard & Square.NOT_H_FILE) << 9 & piecesBB[blackPieces]; // north-east
 
-        generatePawnMoves(mvList, singlePush, -8, pawns, whitePieces);
-        generatePawnMoves(mvList, doublePush, -16, pawns, whitePieces);
-        generatePawnCaptures(mvList, captureLeft, -7, pawns, whitePieces);
-        generatePawnCaptures(mvList, captureRight, -9, pawns, whitePieces);
+        generatePawnMoves(mvList, singlePush, -8, 7, pawns, whitePieces);
+        generatePawnMoves(mvList, doublePush, -16, 7, pawns, whitePieces);
+        generatePawnCaptures(mvList, captureLeft, -7, 7, pawns, whitePieces);
+        generatePawnCaptures(mvList, captureRight, -9, 7, pawns, whitePieces);
     }
 
     public void blackPawnMoves(MoveList mvList) {
@@ -160,10 +177,10 @@ public class Position {
         long captureLeft = (piecesBitboard & Square.NOT_H_FILE) >> 7 & piecesBB[whitePieces];  // south-west
         long captureRight = (piecesBitboard & Square.NOT_A_FILE) >> 9 & piecesBB[whitePieces]; // south-east
 
-        generatePawnMoves(mvList, singlePush, 8, pawns, blackPieces);
-        generatePawnMoves(mvList, doublePush, 16, pawns, blackPieces);
-        generatePawnCaptures(mvList, captureLeft, 7, pawns, blackPieces);
-        generatePawnCaptures(mvList, captureRight, 9, pawns, blackPieces);
+        generatePawnMoves(mvList, singlePush, 8, 0, pawns, blackPieces);
+        generatePawnMoves(mvList, doublePush, 16, 0, pawns, blackPieces);
+        generatePawnCaptures(mvList, captureLeft, 7, 0, pawns, blackPieces);
+        generatePawnCaptures(mvList, captureRight, 9, 0, pawns, blackPieces);
 
     }
 
@@ -566,7 +583,14 @@ public class Position {
         long toBB = 0x1L << move.getTo();
         long fromToBB = fromBB ^ toBB;
 
-        if (move.isCapture()) {
+        if (move.isPromotion()) {
+            piecesBB[pawns] ^= fromBB;
+            piecesBB[move.getPromotedPiece()] ^= toBB;
+            piecesBB[whitePieces] ^= fromToBB;
+            occupied ^= fromToBB;
+            empty ^= fromToBB;
+            return;
+        } else if (move.isCapture()) {
             piecesBB[move.getCapturedPiece()] ^= toBB;
             piecesBB[move.getCapturedColor()] ^= toBB;
             occupied ^= fromBB;
@@ -583,14 +607,21 @@ public class Position {
     }
 
     public void makeBlackMove(Move move) {
-        if (isBlackShortCastling(move)) {playBlackCastling(true); return;}
-        if (isBlackLongCastling(move)) {playBlackCastling(false); return;}
+        if (isBlackShortCastling(move)) {playBlackCastling(true);return;}
+        if (isBlackLongCastling(move)) {playBlackCastling(false);return;}
 
         long fromBB = 0x1L << move.getFrom();
         long toBB = 0x1L << move.getTo();
         long fromToBB = fromBB ^ toBB;
 
-        if (move.isCapture()) {
+        if (move.isPromotion()) {
+            piecesBB[pawns] ^= fromBB;
+            piecesBB[move.getPromotedPiece()] ^= toBB;
+            piecesBB[blackPieces] ^= fromToBB;
+            occupied ^= fromToBB;
+            empty ^= fromToBB;
+            return;
+        } else if (move.isCapture()) {
             piecesBB[move.getCapturedPiece()] ^= toBB;
             piecesBB[move.getCapturedColor()] ^= toBB;
             occupied ^= fromBB;
@@ -669,7 +700,14 @@ public class Position {
         long toBB = 0x1L << move.getTo();
         long fromToBB = fromBB ^ toBB;
 
-        if (move.isCapture()) {
+        if (move.isPromotion()) {
+            piecesBB[pawns] ^= fromBB;
+            piecesBB[move.getPromotedPiece()] ^= toBB;
+            piecesBB[whitePieces] ^= fromToBB;
+            occupied ^= fromToBB;
+            empty ^= fromToBB;
+            return;
+        } else if (move.isCapture()) {
             piecesBB[move.getCapturedPiece()] ^= toBB;
             piecesBB[move.getCapturedColor()] ^= toBB;
             occupied ^= fromBB;
@@ -691,7 +729,14 @@ public class Position {
         long toBB = 0x1L << move.getTo();
         long fromToBB = fromBB ^ toBB;
 
-        if (move.isCapture()) {
+        if (move.isPromotion()) {
+            piecesBB[pawns] ^= fromBB;
+            piecesBB[move.getPromotedPiece()] ^= toBB;
+            piecesBB[blackPieces] ^= fromToBB;
+            occupied ^= fromToBB;
+            empty ^= fromToBB;
+            return;
+        } else if (move.isCapture()) {
             piecesBB[move.getCapturedPiece()] ^= toBB;
             piecesBB[move.getCapturedColor()] ^= toBB;
             occupied ^= fromBB;
