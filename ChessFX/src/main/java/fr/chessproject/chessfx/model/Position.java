@@ -24,6 +24,7 @@ public class Position {
     public boolean isAllowedWhiteLongCastle;
 
     public boolean isWhiteSideToPlay;
+    public byte enPassantSquare;
 
     private final long[] piecesBB;
     private long occupied;
@@ -34,16 +35,9 @@ public class Position {
         piecesBB = new long[9];
         occupied = empty = 0x0L;
         isWhiteSideToPlay = true;
+        enPassantSquare = -1;
         isAllowedBlackShortCastle = isAllowedBlackLongCastle = isAllowedWhiteShortCastle = isAllowedWhiteLongCastle = true;
         moveStateHistory = new Stack<>();
-    }
-
-    public long getBlackKing() {
-        return piecesBB[blackKing];
-
-    }
-    public long getWhiteKing() {
-        return piecesBB[whiteKing];
     }
 
     public long getOccupied() {
@@ -123,7 +117,7 @@ public class Position {
             byte sqFrom = (byte) (sqTo + offset);
 
             if (sqTo / 8 == promotionRow) {
-                generatePromotionMoves(mvList, sqFrom, sqTo, pieceBB, colorBB);
+                generatePromotionMoves(mvList, sqFrom, sqTo, pieceBB, colorBB, (byte) 0, (byte) 0);
             } else {
                 Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB);
                 mvList.addMove(mv);
@@ -137,21 +131,42 @@ public class Position {
             moveBB &= ~piece;
             byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
             byte sqFrom = (byte) (sqTo + offset);
+            byte cPieceBB = pieceBitboardOnSquare(sqTo);
+            byte cColorBB = (byte) ((colorBB+1)%2);
 
             if (sqTo / 8 == promotionRow) {
-                generatePromotionMoves(mvList, sqFrom, sqTo, pieceBB, colorBB);
+                generatePromotionMoves(mvList, sqFrom, sqTo, pieceBB, colorBB, cPieceBB, cColorBB);
             } else {
-                Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, pieceBitboardOnSquare(sqTo), (byte) ((colorBB+1)%2));
+                Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, cPieceBB, cColorBB);
                 mvList.addMove(mv);
             }
         }
     }
 
-    public void generatePromotionMoves(MoveList mvList, byte sqFrom, byte sqTo, byte pieceBB, byte colorBB) {
-        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, (byte) 0, (byte) 0, queens));
-        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, (byte) 0, (byte) 0, rooks));
-        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, (byte) 0, (byte) 0, knights));
-        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, (byte) 0, (byte) 0, bishops));
+    public void generatePromotionMoves(MoveList mvList, byte sqFrom, byte sqTo,
+                                       byte pieceBB, byte colorBB, byte cPiece, byte cColor) {
+        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, queens));
+        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, rooks));
+        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, knights));
+        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, bishops));
+    }
+
+    public void generateEnPassantMoves(MoveList mvList, int eastOffset, int westOffset, int enPassantOffset, byte colorBB) {
+        if (enPassantSquare == -1) return;
+
+        byte enemyPawnSquare = (byte) (enPassantSquare + enPassantOffset);
+
+        byte eastSquare = (byte) (enPassantSquare + eastOffset);
+        if (((0x1L << eastSquare) & piecesBB[colorBB]) != 0) {
+            mvList.addMove(new Move(eastSquare, enPassantSquare, pawns, colorBB, pawns,
+                    (byte) ((colorBB+1)%2), (byte) 0, enemyPawnSquare));
+        }
+
+        byte westSquare = (byte) (enPassantSquare + westOffset);
+        if (((0x1L << westSquare) & piecesBB[colorBB]) != 0) {
+            mvList.addMove(new Move(westSquare, enPassantSquare, pawns, colorBB, pawns,
+                    (byte) ((colorBB+1)%2), (byte) 0, enemyPawnSquare));
+        }
     }
 
 
@@ -168,6 +183,7 @@ public class Position {
         generatePawnMoves(mvList, doublePush, -16, 7, pawns, whitePieces);
         generatePawnCaptures(mvList, captureLeft, -7, 7, pawns, whitePieces);
         generatePawnCaptures(mvList, captureRight, -9, 7, pawns, whitePieces);
+        generateEnPassantMoves(mvList, -7, -9, -8, whitePieces);
     }
 
     public void blackPawnMoves(MoveList mvList) {
@@ -181,7 +197,7 @@ public class Position {
         generatePawnMoves(mvList, doublePush, 16, 0, pawns, blackPieces);
         generatePawnCaptures(mvList, captureLeft, 7, 0, pawns, blackPieces);
         generatePawnCaptures(mvList, captureRight, 9, 0, pawns, blackPieces);
-
+        generateEnPassantMoves(mvList, 9, 7, 8, blackPieces);
     }
 
     /* ==== Knights moves ==== */
@@ -575,6 +591,19 @@ public class Position {
         }
     }
 
+    public void makeMove(Move move) {
+        moveStateHistory.push(new MoveState(this));
+        if (isWhiteSideToPlay) makeWhiteMove(move); else makeBlackMove(move);
+
+        if (move.getPiece() == pawns && move.isDoublePawnPush()) {
+            enPassantSquare = (byte) ((move.getFrom() + move.getTo()) / 2);
+        } else {
+            enPassantSquare = -1;
+        }
+
+        isWhiteSideToPlay = !isWhiteSideToPlay;
+    }
+
     public void makeWhiteMove(Move move) {
         if (isWhiteShortCastling(move)) {playWhiteCastling(true); return;}
         if (isWhiteLongCastling(move)) {playWhiteCastling(false); return;}
@@ -591,10 +620,18 @@ public class Position {
             empty ^= fromToBB;
             return;
         } else if (move.isCapture()) {
-            piecesBB[move.getCapturedPiece()] ^= toBB;
-            piecesBB[move.getCapturedColor()] ^= toBB;
-            occupied ^= fromBB;
-            empty ^= fromBB;
+            if (move.isEnPassant()) {
+                long epBB = 0x1L << move.getEnPassant();
+                piecesBB[pawns] ^= epBB;
+                piecesBB[blackPieces] ^= epBB;
+                occupied ^= epBB ^ fromToBB;
+                empty ^= epBB ^ fromToBB;
+            } else {
+                piecesBB[move.getCapturedPiece()] ^= toBB;
+                piecesBB[move.getCapturedColor()] ^= toBB;
+                occupied ^= fromBB;
+                empty ^= fromBB;
+            }
         } else {
             occupied ^= fromToBB;
             empty ^= fromToBB;
@@ -622,10 +659,19 @@ public class Position {
             empty ^= fromToBB;
             return;
         } else if (move.isCapture()) {
-            piecesBB[move.getCapturedPiece()] ^= toBB;
-            piecesBB[move.getCapturedColor()] ^= toBB;
-            occupied ^= fromBB;
-            empty ^= fromBB;
+            if (move.isEnPassant()) {
+                System.out.println(move.getEnPassant());
+                long epBB = 0x1L << move.getEnPassant();
+                piecesBB[pawns] ^= epBB;
+                piecesBB[whitePieces] ^= epBB;
+                occupied ^= epBB ^ fromToBB;
+                empty ^= epBB ^ fromToBB;
+            } else {
+                piecesBB[move.getCapturedPiece()] ^= toBB;
+                piecesBB[move.getCapturedColor()] ^= toBB;
+                occupied ^= fromBB;
+                empty ^= fromBB;
+            }
         } else {
             occupied ^= fromToBB;
             empty ^= fromToBB;
@@ -636,12 +682,6 @@ public class Position {
 
         updateBlackCastlingRights(move);
 
-    }
-
-    public void makeMove(Move move) {
-        moveStateHistory.push(new MoveState(this));
-        if (isWhiteSideToPlay) makeWhiteMove(move); else makeBlackMove(move);
-        isWhiteSideToPlay = !isWhiteSideToPlay;
     }
 
     private void undoBlackCastling(boolean isShort) {
@@ -708,10 +748,18 @@ public class Position {
             empty ^= fromToBB;
             return;
         } else if (move.isCapture()) {
-            piecesBB[move.getCapturedPiece()] ^= toBB;
-            piecesBB[move.getCapturedColor()] ^= toBB;
-            occupied ^= fromBB;
-            empty ^= fromBB;
+            if (move.isEnPassant()) {
+                long epBB = 0x1L << move.getEnPassant();
+                piecesBB[pawns] ^= epBB;
+                piecesBB[blackPieces] ^= epBB;
+                occupied ^= epBB ^ fromToBB;
+                empty ^= epBB ^ fromToBB;
+            } else {
+                piecesBB[move.getCapturedPiece()] ^= toBB;
+                piecesBB[move.getCapturedColor()] ^= toBB;
+                occupied ^= fromBB;
+                empty ^= fromBB;
+            }
         } else {
             occupied ^= fromToBB;
             empty ^= fromToBB;
@@ -737,10 +785,18 @@ public class Position {
             empty ^= fromToBB;
             return;
         } else if (move.isCapture()) {
-            piecesBB[move.getCapturedPiece()] ^= toBB;
-            piecesBB[move.getCapturedColor()] ^= toBB;
-            occupied ^= fromBB;
-            empty ^= fromBB;
+            if (move.isEnPassant()) {
+                long epBB = 0x1L << move.getEnPassant();
+                piecesBB[pawns] ^= epBB;
+                piecesBB[whitePieces] ^= epBB;
+                occupied ^= epBB ^ fromToBB;
+                empty ^= epBB ^ fromToBB;
+            } else {
+                piecesBB[move.getCapturedPiece()] ^= toBB;
+                piecesBB[move.getCapturedColor()] ^= toBB;
+                occupied ^= fromBB;
+                empty ^= fromBB;
+            }
         } else {
             occupied ^= fromToBB;
             empty ^= fromToBB;
@@ -755,6 +811,11 @@ public class Position {
         newPos.occupied = pos.occupied;
         newPos.empty = pos.empty;
         newPos.isWhiteSideToPlay = pos.isWhiteSideToPlay;
+        newPos.enPassantSquare = pos.enPassantSquare;
+        newPos.isAllowedWhiteShortCastle = pos.isAllowedWhiteShortCastle;
+        newPos.isAllowedWhiteLongCastle = pos.isAllowedWhiteLongCastle;
+        newPos.isAllowedBlackShortCastle = pos.isAllowedBlackShortCastle;
+        newPos.isAllowedBlackLongCastle = pos.isAllowedBlackLongCastle;
 
         System.arraycopy(pos.piecesBB, 0, newPos.piecesBB, 0, pos.piecesBB.length);
 

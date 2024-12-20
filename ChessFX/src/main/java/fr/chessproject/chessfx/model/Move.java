@@ -4,6 +4,11 @@ public class Move {
 
     private final int moveData;
 
+    /*
+    | 6 bits | 6 bits | 4 bits | 1 bit | 4 bits | 1 bit | 4 bits | 6 bits | = 32 bits
+    | from   | to     | piece  | color | cPiece | cColor| promoted| enPassant |
+     */
+
     /* Constructeur complet */
     public Move(byte from, byte to, byte piece, byte color, byte cPiece, byte cColor, byte promoted, byte enPassant) {
         this.moveData = (from & 0x3F) |
@@ -13,7 +18,7 @@ public class Move {
                 ((cPiece & 0x0F) << 17) |
                 ((cColor & 0x01) << 21) |
                 ((promoted & 0x0F) << 22) |
-                ((enPassant & 0x03) << 26);
+                ((enPassant & 0x3F) << 26);
     }
 
     /* Constructeur partiel déplacement simple */
@@ -74,7 +79,7 @@ public class Move {
     }
 
     public byte getEnPassant() {
-        return (byte) ((moveData >> 26) & 0x03);
+        return (byte) ((moveData >> 26) & 0x3F);
     }
 
     public boolean isCapture() {
@@ -85,10 +90,20 @@ public class Move {
         return getPromotedPiece() != 0;
     }
 
+    public boolean isEnPassant() {
+        return getEnPassant() != 0;
+    }
+
+    /* Pre: isPawn(getPiece()) */
+    public boolean isDoublePawnPush() {
+        return Math.abs(getFrom() - getTo()) == 16;
+    }
+
     @Override
     public String toString() {
         return "from=" + getFrom() + " to=" + getTo() + " mPiece=" + getPiece() + " color=" + getColor()
-                + " cPiece=" + getCapturedPiece() + " cColor=" + getCapturedColor();
+                + " cPiece=" + getCapturedPiece() + " cColor=" + getCapturedColor() + " promoted=" + getPromotedPiece()
+                + " enPassant=" + getEnPassant();
     }
 
     public boolean equals(Move mv) {
