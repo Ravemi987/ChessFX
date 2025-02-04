@@ -57,7 +57,6 @@ public class ParallelPerftExecutor {
         int count = moveList.getMvCount();
         long nodes = 0;
 
-
         for (int i = 0; i < count; i++) {
             nodes += perftRec(pos, moveList.getMove(i), depth - 1);
         }
