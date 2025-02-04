@@ -613,11 +613,21 @@ public class Position {
         long fromToBB = fromBB ^ toBB;
 
         if (move.isPromotion()) {
-            piecesBB[pawns] ^= fromBB;
-            piecesBB[move.getPromotedPiece()] ^= toBB;
-            piecesBB[whitePieces] ^= fromToBB;
-            occupied ^= fromToBB;
-            empty ^= fromToBB;
+            if (move.isCapture()) {
+                piecesBB[move.getCapturedPiece()] ^= toBB;
+                piecesBB[move.getCapturedColor()] ^= toBB;
+                occupied ^= fromBB;
+                empty ^= fromBB;
+                piecesBB[pawns] ^= fromBB;
+                piecesBB[move.getPromotedPiece()] ^= toBB;
+                piecesBB[move.getColor()] ^= fromToBB;
+            } else {
+                occupied ^= fromToBB;
+                empty ^= fromToBB;
+                piecesBB[pawns] ^= fromBB;
+                piecesBB[move.getPromotedPiece()] ^= toBB;
+                piecesBB[move.getColor()] ^= fromToBB;
+            }
             return;
         } else if (move.isCapture()) {
             if (move.isEnPassant()) {
@@ -652,11 +662,21 @@ public class Position {
         long fromToBB = fromBB ^ toBB;
 
         if (move.isPromotion()) {
-            piecesBB[pawns] ^= fromBB;
-            piecesBB[move.getPromotedPiece()] ^= toBB;
-            piecesBB[blackPieces] ^= fromToBB;
-            occupied ^= fromToBB;
-            empty ^= fromToBB;
+            if (move.isCapture()) {
+                piecesBB[pawns] ^= fromBB;
+                piecesBB[move.getPromotedPiece()] ^= toBB;
+                piecesBB[move.getCapturedPiece()] ^= toBB;
+                piecesBB[move.getCapturedColor()] ^= toBB;
+                occupied ^= fromBB;
+                empty ^= fromBB;
+                piecesBB[move.getColor()] ^= fromToBB;
+            } else {
+                occupied ^= fromToBB;
+                empty ^= fromToBB;
+                piecesBB[pawns] ^= fromBB;
+                piecesBB[move.getPromotedPiece()] ^= toBB;
+                piecesBB[move.getColor()] ^= fromToBB;
+            }
             return;
         } else if (move.isCapture()) {
             if (move.isEnPassant()) {

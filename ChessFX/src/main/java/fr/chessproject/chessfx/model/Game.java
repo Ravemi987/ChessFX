@@ -9,8 +9,8 @@ public class Game {
 
     public Game() {
         currentPos = new Position();
-        currentPos.loadFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        //currentPos.loadFEN("2n1p1k1/3P4/8/8/8/8/5p2/2K1Q1R1 w - - 0 1");
+        //currentPos.loadFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        currentPos.loadFEN("2n1p1k1/3P4/8/8/8/8/5p2/2K1Q1R1 w - - 0 1");
         validMoves = currentPos.generatePseudoLegalMoves();
         lastMove = null;
     }
