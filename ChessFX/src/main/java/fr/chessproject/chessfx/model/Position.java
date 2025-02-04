@@ -612,24 +612,7 @@ public class Position {
         long toBB = 0x1L << move.getTo();
         long fromToBB = fromBB ^ toBB;
 
-        if (move.isPromotion()) {
-            if (move.isCapture()) {
-                piecesBB[move.getCapturedPiece()] ^= toBB;
-                piecesBB[move.getCapturedColor()] ^= toBB;
-                occupied ^= fromBB;
-                empty ^= fromBB;
-                piecesBB[pawns] ^= fromBB;
-                piecesBB[move.getPromotedPiece()] ^= toBB;
-                piecesBB[move.getColor()] ^= fromToBB;
-            } else {
-                occupied ^= fromToBB;
-                empty ^= fromToBB;
-                piecesBB[pawns] ^= fromBB;
-                piecesBB[move.getPromotedPiece()] ^= toBB;
-                piecesBB[move.getColor()] ^= fromToBB;
-            }
-            return;
-        } else if (move.isCapture()) {
+        if (move.isCapture()) {
             if (move.isEnPassant()) {
                 long epBB = 0x1L << move.getEnPassant();
                 piecesBB[pawns] ^= epBB;
@@ -647,7 +630,13 @@ public class Position {
             empty ^= fromToBB;
         }
 
-        piecesBB[move.getPiece()] ^= fromToBB;
+        if (move.isPromotion()) {
+            piecesBB[pawns] ^= fromBB;
+            piecesBB[move.getPromotedPiece()] ^= toBB;
+        } else {
+            piecesBB[move.getPiece()] ^= fromToBB;
+        }
+
         piecesBB[move.getColor()] ^= fromToBB;
 
         updateWhiteCastlingRights(move);
@@ -661,26 +650,8 @@ public class Position {
         long toBB = 0x1L << move.getTo();
         long fromToBB = fromBB ^ toBB;
 
-        if (move.isPromotion()) {
-            if (move.isCapture()) {
-                piecesBB[pawns] ^= fromBB;
-                piecesBB[move.getPromotedPiece()] ^= toBB;
-                piecesBB[move.getCapturedPiece()] ^= toBB;
-                piecesBB[move.getCapturedColor()] ^= toBB;
-                occupied ^= fromBB;
-                empty ^= fromBB;
-                piecesBB[move.getColor()] ^= fromToBB;
-            } else {
-                occupied ^= fromToBB;
-                empty ^= fromToBB;
-                piecesBB[pawns] ^= fromBB;
-                piecesBB[move.getPromotedPiece()] ^= toBB;
-                piecesBB[move.getColor()] ^= fromToBB;
-            }
-            return;
-        } else if (move.isCapture()) {
+        if (move.isCapture()) {
             if (move.isEnPassant()) {
-                System.out.println(move.getEnPassant());
                 long epBB = 0x1L << move.getEnPassant();
                 piecesBB[pawns] ^= epBB;
                 piecesBB[whitePieces] ^= epBB;
@@ -697,7 +668,13 @@ public class Position {
             empty ^= fromToBB;
         }
 
-        piecesBB[move.getPiece()] ^= fromToBB;
+        if (move.isPromotion()) {
+            piecesBB[pawns] ^= fromBB;
+            piecesBB[move.getPromotedPiece()] ^= toBB;
+        } else {
+            piecesBB[move.getPiece()] ^= fromToBB;
+        }
+
         piecesBB[move.getColor()] ^= fromToBB;
 
         updateBlackCastlingRights(move);
