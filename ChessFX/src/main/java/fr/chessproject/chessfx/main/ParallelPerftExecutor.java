@@ -10,7 +10,7 @@ import java.util.concurrent.Executors;
 public class ParallelPerftExecutor {
     private final Position currentPosition;
 
-    private final int nThreads = 4;
+    private final int nThreads = 8;
 
     public ParallelPerftExecutor(String fen) {
         currentPosition = new Position();
@@ -96,6 +96,6 @@ public class ParallelPerftExecutor {
 
     public static void main(String[] args) {
         ParallelPerftExecutor pft = new ParallelPerftExecutor("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        pft.runPerft(7);
+        pft.runPerft(6);
     }
 }

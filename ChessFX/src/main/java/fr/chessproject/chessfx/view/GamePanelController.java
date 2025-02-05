@@ -268,13 +268,6 @@ public class GamePanelController {
         gc.drawImage(spritesLoader.getPieceSprite(piece), x, y, squareSize, squareSize);
     }
 
-//    private void drawSelectedPiece(GraphicsContext gc, byte piece, int x, int y) {
-//        Image image = resizedPieceSprites.get(piece);
-//        if (image != null) {
-//            gc.drawImage(image, x, y);
-//        }
-//    }
-
     private void drawSelectedPiece(GraphicsContext gc, byte piece, int x, int y) {
         int squareSize = (int) (boardCanvas.getWidth() / 8);
         int scaledWidth = (int) (squareSize * 1.05);
