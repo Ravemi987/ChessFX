@@ -273,6 +273,18 @@ public class Piece {
         return kingAttacksTableStatic[square];
     }
 
+    public static long whitePawnAttacks(byte square) {
+        long bb = Square.bitboardForSquare(square);
+        return (bb & Square.NOT_A_FILE) << 7 |
+                (bb & Square.NOT_H_FILE) << 9;
+    }
+
+    public static long blackPawnAttacks(byte square) {
+        long bb = Square.bitboardForSquare(square);
+        return (bb & Square.NOT_H_FILE) >> 7 |
+                (bb & Square.NOT_A_FILE) >> 9;
+    }
+
 
     public static byte fromChar(char chr) {
         int index = " KQBNRPkqbnrp".indexOf(chr);

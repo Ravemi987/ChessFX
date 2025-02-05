@@ -6,6 +6,7 @@ public class MoveState {
     boolean isAllowedBlackShortCastle;
     boolean isAllowedBlackLongCastle;
     boolean isWhiteSideToPlay;
+    byte enPassantSquare;
 
     public MoveState(Position position) {
         this.isAllowedWhiteShortCastle = position.isAllowedWhiteShortCastle;
@@ -13,5 +14,6 @@ public class MoveState {
         this.isAllowedBlackShortCastle = position.isAllowedBlackShortCastle;
         this.isAllowedBlackLongCastle = position.isAllowedBlackLongCastle;
         this.isWhiteSideToPlay = position.isWhiteSideToPlay;
+        this.enPassantSquare = position.enPassantSquare;
     }
 }

@@ -44,6 +44,15 @@ public class Position {
         return occupied;
     }
 
+    public byte getKingSquare(byte color) {
+        long kingBB = piecesBB[color == 0 ? whiteKing : blackKing];
+        return (byte) Long.numberOfTrailingZeros(kingBB);
+    }
+
+    public byte getOpponentColor(byte color) {
+        return (byte) ((color + 1) % 2);
+    }
+
     public void loadFEN(String fen) {
         String[] fenTab = fen.split(" ");
         boardFromFEN(fenTab[0]);
@@ -87,6 +96,56 @@ public class Position {
         if (piece == Piece.BLACK_KING) piecesBB[blackKing] |= pos;
     }
 
+    public boolean isSquareAttacked(byte sq, byte colorIdx) {
+        long Knights = piecesBB[colorIdx] & piecesBB[knights];
+        if ((Knights != 0) && (Knights & Piece.knightAttacks(sq)) != 0) return true;
+
+        long Pawns = piecesBB[colorIdx] & piecesBB[pawns];
+        if ((Pawns != 0) && (Pawns & (colorIdx == 0 ?
+                Piece.whitePawnAttacks(sq) : Piece.blackPawnAttacks(sq))) != 0) return true;
+
+        long Rooks = piecesBB[colorIdx] & piecesBB[rooks];
+        long rookAttacks = 0L;
+        boolean isRooksComputed = false;
+        if (Rooks != 0) {
+            rookAttacks = Piece.rookAttacks(occupied, sq);
+            if ((Rooks & rookAttacks) != 0) return true;
+            isRooksComputed = true;
+        }
+
+        long Bishops = piecesBB[colorIdx] & piecesBB[bishops];
+        long bishopAttacks = 0L;
+        boolean isBishopComputed = false;
+        if (Bishops != 0) {
+            bishopAttacks = Piece.bishopAttacks(occupied, sq);
+            if ((Bishops & bishopAttacks) != 0) return true;
+            isBishopComputed = true;
+        }
+
+        long Queens = piecesBB[colorIdx] & piecesBB[queens];
+        if (Queens != 0) {
+            if (!isRooksComputed) rookAttacks = Piece.rookAttacks(occupied, sq);
+            if (!isBishopComputed) bishopAttacks = Piece.bishopAttacks(occupied, sq);
+            if ((Queens & (rookAttacks | bishopAttacks)) != 0) return true;
+        }
+        return ((piecesBB[colorIdx == 0 ? whiteKing : blackKing] & Piece.kingAttacks(sq)) != 0);
+    }
+
+    public boolean checkKingSafety(Move mv) {
+        byte color = mv.getColor();
+        boolean isKingSafe = true;
+
+        if (color == 0) {makeWhiteMove(mv);} else makeBlackMove(mv);
+
+        if (isSquareAttacked(getKingSquare(color), getOpponentColor(color))) {
+            isKingSafe = false;
+        }
+
+        if (color == 0) {unmakeMoveWhite(mv);} else unmakeMoveBlack(mv);
+
+        return isKingSafe;
+    }
+
     /* Generate Moves methods */
 
     public void generatePieceMoves(MoveList mvList, long moveBB, byte sqFrom, byte pieceBB, byte colorBB) {
@@ -95,7 +154,9 @@ public class Position {
             moveBB &= ~piece;
             byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
             Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB);
-            mvList.addMove(mv);
+            if (checkKingSafety(mv)) {
+                mvList.addMove(mv);
+            }
         }
     }
 
@@ -104,8 +165,10 @@ public class Position {
             long piece = Long.lowestOneBit(moveBB);
             moveBB &= ~piece;
             byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
-            Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, pieceBitboardOnSquare(sqTo), (byte) ((colorBB+1)%2));
-            mvList.addMove(mv);
+            Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, pieceBitboardOnSquare(sqTo), getOpponentColor(colorBB));
+            if (checkKingSafety(mv)) {
+                mvList.addMove(mv);
+            }
         }
     }
 
@@ -120,7 +183,9 @@ public class Position {
                 generatePromotionMoves(mvList, sqFrom, sqTo, pieceBB, colorBB, (byte) 0, (byte) 0);
             } else {
                 Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB);
-                mvList.addMove(mv);
+                if (checkKingSafety(mv)) {
+                    mvList.addMove(mv);
+                }
             }
         }
     }
@@ -132,13 +197,15 @@ public class Position {
             byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
             byte sqFrom = (byte) (sqTo + offset);
             byte cPieceBB = pieceBitboardOnSquare(sqTo);
-            byte cColorBB = (byte) ((colorBB+1)%2);
+            byte cColorBB = getOpponentColor(colorBB);
 
             if (sqTo / 8 == promotionRow) {
                 generatePromotionMoves(mvList, sqFrom, sqTo, pieceBB, colorBB, cPieceBB, cColorBB);
             } else {
                 Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, cPieceBB, cColorBB);
-                mvList.addMove(mv);
+                if (checkKingSafety(mv)) {
+                    mvList.addMove(mv);
+                }
             }
         }
     }
@@ -155,17 +222,24 @@ public class Position {
         if (enPassantSquare == -1) return;
 
         byte enemyPawnSquare = (byte) (enPassantSquare + enPassantOffset);
+        Move mv;
 
         byte eastSquare = (byte) (enPassantSquare + eastOffset);
         if (((0x1L << eastSquare) & piecesBB[colorBB]) != 0) {
-            mvList.addMove(new Move(eastSquare, enPassantSquare, pawns, colorBB, pawns,
-                    (byte) ((colorBB+1)%2), (byte) 0, enemyPawnSquare));
+            mv = new Move(eastSquare, enPassantSquare, pawns, colorBB, pawns,
+                    getOpponentColor(colorBB), (byte) 0, enemyPawnSquare);
+            if (checkKingSafety(mv)) {
+                mvList.addMove(mv);
+            }
         }
 
         byte westSquare = (byte) (enPassantSquare + westOffset);
         if (((0x1L << westSquare) & piecesBB[colorBB]) != 0) {
-            mvList.addMove(new Move(westSquare, enPassantSquare, pawns, colorBB, pawns,
-                    (byte) ((colorBB+1)%2), (byte) 0, enemyPawnSquare));
+            mv = new Move(westSquare, enPassantSquare, pawns, colorBB, pawns,
+                    getOpponentColor(colorBB), (byte) 0, enemyPawnSquare);
+            if (checkKingSafety(mv)) {
+                mvList.addMove(mv);
+            }
         }
     }
 
@@ -720,6 +794,7 @@ public class Position {
             isAllowedWhiteShortCastle = previousState.isAllowedWhiteShortCastle;
             isAllowedWhiteLongCastle = previousState.isAllowedWhiteLongCastle;
             isWhiteSideToPlay = previousState.isWhiteSideToPlay;
+            enPassantSquare = previousState.enPassantSquare;
         }
         return previousState;
     }
