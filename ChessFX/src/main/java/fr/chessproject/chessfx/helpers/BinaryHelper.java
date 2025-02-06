@@ -12,11 +12,11 @@ public class BinaryHelper {
     }
 
     public static byte bitScanForward(long b) {
-        return (b != 0) ? (byte)Long.numberOfTrailingZeros(Long.lowestOneBit(b)) : 0;
+        return (b != 0) ? (byte)Long.numberOfTrailingZeros(b) : -1;
     }
 
     public static byte bitScanReverse(long b) {
-        return (b != 0) ? (byte)(63 - Long.numberOfLeadingZeros(Long.highestOneBit(b))) : 0;
+        return (b != 0) ? (byte)(63 - Long.numberOfLeadingZeros(b)) : -1;
     }
 
     public static byte bitScan(long b, boolean isNegativeDir) {
