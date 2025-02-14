@@ -96,6 +96,53 @@ public class Position {
         if (piece == Piece.BLACK_KING) piecesBB[blackKing] |= pos;
     }
 
+    public int checkCount(byte sq, byte colorIdx) {
+        int count = 0;
+        long attackers;
+
+        long Knights = piecesBB[colorIdx] & piecesBB[knights];
+
+        if (Knights != 0) {
+            attackers = Knights & Piece.knightAttacks(sq);
+            if ((count += Long.bitCount(attackers)) >= 2) return count;
+        }
+
+        long Pawns = piecesBB[colorIdx] & piecesBB[pawns];
+        if (Pawns != 0) {
+            attackers = Pawns & (colorIdx == 0 ? Piece.whitePawnAttacks(sq) : Piece.blackPawnAttacks(sq));
+            if ((count += Long.bitCount(attackers)) >= 2) return count;
+        }
+
+        long Rooks = piecesBB[colorIdx] & piecesBB[rooks];
+        long rookAttacks = 0L;
+        boolean isRooksComputed = false;
+        if (Rooks != 0) {
+            rookAttacks = Piece.rookAttacks(occupied, sq);
+            attackers = Rooks & rookAttacks;
+            if ((count += Long.bitCount(attackers)) >= 2) return count;
+            isRooksComputed = true;
+        }
+
+        long Bishops = piecesBB[colorIdx] & piecesBB[bishops];
+        long bishopAttacks = 0L;
+        boolean isBishopComputed = false;
+        if (Bishops != 0) {
+            bishopAttacks = Piece.bishopAttacks(occupied, sq);
+            attackers = Bishops & bishopAttacks;
+            if ((count += Long.bitCount(attackers)) >= 2) return count;
+            isBishopComputed = true;
+        }
+
+        long Queens = piecesBB[colorIdx] & piecesBB[queens];
+        if (Queens != 0) {
+            if (!isRooksComputed) rookAttacks = Piece.rookAttacks(occupied, sq);
+            if (!isBishopComputed) bishopAttacks = Piece.bishopAttacks(occupied, sq);
+            attackers = Queens & (rookAttacks | bishopAttacks);
+            if ((count += Long.bitCount(attackers)) >= 2) return count;
+        }
+        return count;
+    }
+
     public boolean isSquareAttacked(byte sq, byte colorIdx) {
         long Knights = piecesBB[colorIdx] & piecesBB[knights];
         if ((Knights != 0) && (Knights & Piece.knightAttacks(sq)) != 0) return true;
@@ -343,30 +390,46 @@ public class Position {
     }
 
     private void generateBlackShortCastling(MoveList mvList) {
-        if (isAllowedBlackShortCastle && Square.isEmpty(Square.F8, occupied) && Square.isEmpty(Square.G8, occupied)) {
+        if (isAllowedBlackShortCastle
+                && Square.isEmpty(Square.F8, occupied)
+                && Square.isEmpty(Square.G8, occupied)
+                && (!isSquareAttacked(Square.F8, whitePieces))
+                && (!isSquareAttacked(Square.G8, whitePieces))) {
             Move mv = new Move(Square.E8, Square.G8, blackKing, blackPieces);
             mvList.addMove(mv);
         }
     }
 
     private void generateBlackLongCastling(MoveList mvList) {
-        if (isAllowedBlackLongCastle && Square.isEmpty(Square.B8, occupied) && Square.isEmpty(Square.C8, occupied)
-                && Square.isEmpty(Square.D8, occupied)) {
+        if (isAllowedBlackLongCastle
+                && Square.isEmpty(Square.B8, occupied)
+                && Square.isEmpty(Square.C8, occupied)
+                && Square.isEmpty(Square.D8, occupied)
+                && (!isSquareAttacked(Square.C8, whitePieces))
+                && (!isSquareAttacked(Square.D8, whitePieces))) {
             Move mv = new Move(Square.E8, Square.C8, blackKing, blackPieces);
             mvList.addMove(mv);
         }
     }
 
     private void generateWhiteShortCastling(MoveList mvList) {
-        if (isAllowedWhiteShortCastle && Square.isEmpty(Square.F1, occupied) && Square.isEmpty(Square.G1, occupied)) {
+        if (isAllowedWhiteShortCastle
+                && Square.isEmpty(Square.F1, occupied)
+                && Square.isEmpty(Square.G1, occupied)
+                && (!isSquareAttacked(Square.F1, blackPieces))
+                && (!isSquareAttacked(Square.G1, blackPieces))) {
             Move mv = new Move(Square.E1, Square.G1, whiteKing, whitePieces);
             mvList.addMove(mv);
         }
     }
 
     private void generateWhiteLongCastling(MoveList mvList) {
-        if (isAllowedWhiteLongCastle && Square.isEmpty(Square.B1, occupied) && Square.isEmpty(Square.C1, occupied)
-                && Square.isEmpty(Square.D1, occupied)) {
+        if (isAllowedWhiteLongCastle
+                && Square.isEmpty(Square.B1, occupied)
+                && Square.isEmpty(Square.C1, occupied)
+                && Square.isEmpty(Square.D1, occupied)
+                && (!isSquareAttacked(Square.C1, blackPieces))
+                && (!isSquareAttacked(Square.D1, blackPieces))) {
             Move mv = new Move(Square.E1, Square.C1, whiteKing, whitePieces);
             mvList.addMove(mv);
         }
@@ -488,11 +551,14 @@ public class Position {
 
     /* ==== Pseudo-legal moves ==== */
 
-    public MoveList whitesPseudoLegalMoves() {
+    public MoveList whitesLegalMoves() {
         MoveList whitesLegalMoves = new MoveList();
 
-        whitePawnMoves(whitesLegalMoves);
+        int count = checkCount(getKingSquare(whitePieces), blackPieces);
         whiteKingMoves(whitesLegalMoves);
+        if (count > 1) return whitesLegalMoves;
+
+        whitePawnMoves(whitesLegalMoves);
         whiteKnightMoves(whitesLegalMoves);
         whiteBishopMoves(whitesLegalMoves);
         whiteRookMoves(whitesLegalMoves);
@@ -501,11 +567,14 @@ public class Position {
         return whitesLegalMoves;
     }
 
-    public MoveList blacksPseudoLegalMoves() {
+    public MoveList blacksLegalMoves() {
         MoveList blacksLegalMoves = new MoveList();
 
-        blackPawnMoves(blacksLegalMoves);
+        int count = checkCount(getKingSquare(blackPieces), whitePieces);
         blackKingMoves(blacksLegalMoves);
+        if (count > 1) return blacksLegalMoves;
+
+        blackPawnMoves(blacksLegalMoves);
         blackKnightMoves(blacksLegalMoves);
         blackBishopMoves(blacksLegalMoves);
         blackRookMoves(blacksLegalMoves);
@@ -514,8 +583,8 @@ public class Position {
         return blacksLegalMoves;
     }
 
-    public MoveList generatePseudoLegalMoves() {
-        return isWhiteSideToPlay ? whitesPseudoLegalMoves() : blacksPseudoLegalMoves();
+    public MoveList generateLegalMoves() {
+        return isWhiteSideToPlay ? whitesLegalMoves() : blacksLegalMoves();
     }
 
     public byte pieceBitboardOnSquare(byte sq) {
@@ -752,7 +821,6 @@ public class Position {
         piecesBB[move.getColor()] ^= fromToBB;
 
         updateBlackCastlingRights(move);
-
     }
 
     private void undoBlackCastling(boolean isShort) {

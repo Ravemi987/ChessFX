@@ -18,7 +18,7 @@ public class ParallelPerftExecutor {
     }
 
     public long perft(int depth) {
-        MoveList moveList = currentPosition.generatePseudoLegalMoves();
+        MoveList moveList = currentPosition.generateLegalMoves();
         int count = moveList.getMvCount();
         long nodes = 0;
 
@@ -52,7 +52,7 @@ public class ParallelPerftExecutor {
 
         pos.makeMove(mv);
 
-        var moveList = pos.generatePseudoLegalMoves();
+        var moveList = pos.generateLegalMoves();
 
         int count = moveList.getMvCount();
         long nodes = 0;

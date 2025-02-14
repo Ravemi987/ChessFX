@@ -14,7 +14,7 @@ public class Perft {
     }
 
     public long perft(int depth) {
-        MoveList moveList = currentPosition.generatePseudoLegalMoves();
+        MoveList moveList = currentPosition.generateLegalMoves();
 
         int count = moveList.getMvCount();
         long nodes = 0;
@@ -32,7 +32,7 @@ public class Perft {
 
         currentPosition.makeMove(mv);
 
-        var moveList = currentPosition.generatePseudoLegalMoves();
+        var moveList = currentPosition.generateLegalMoves();
 
         int count = moveList.getMvCount();
         long nodes = 0;
