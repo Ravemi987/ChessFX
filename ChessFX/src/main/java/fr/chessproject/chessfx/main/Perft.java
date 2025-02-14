@@ -4,13 +4,44 @@ import fr.chessproject.chessfx.model.Move;
 import fr.chessproject.chessfx.model.MoveList;
 import fr.chessproject.chessfx.model.Position;
 
-public class Perft {
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+public class Perft {
     private final Position currentPosition;
 
     public Perft(String fen) {
         currentPosition = new Position();
         currentPosition.loadFEN(fen);
+    }
+
+    public long parallelPerft(int depth, int nbThreads) {
+        MoveList moveList = currentPosition.generateLegalMoves();
+        int count = moveList.getMvCount();
+        long nodes = 0;
+
+        try (ExecutorService executor = Executors.newFixedThreadPool(nbThreads)) {
+            long[] results = new long[count];
+
+            for (int i = 0; i < count; i++) {
+
+                final int index = i;
+
+                executor.submit(() -> {
+                    Position positionCopy = Position.copy(currentPosition);
+                    results[index] = perftRec(positionCopy, moveList.getMove(index), depth);
+                });
+            }
+
+            executor.shutdown();
+            while (!executor.isTerminated()) {}
+
+            for (long result : results) {
+                nodes += result;
+            }
+        }
+
+        return nodes;
     }
 
     public long perft(int depth) {
@@ -20,33 +51,34 @@ public class Perft {
         long nodes = 0;
 
         for (int i = 0; i < count; i++) {
-            nodes += perft(moveList.getMove(i), depth);
+            nodes += perftRec(currentPosition, moveList.getMove(i), depth);
         }
         return nodes;
     }
 
-    public long perft(Move mv, int depth) {
+    public static long perftRec(Position pos, Move mv, int depth) {
 
-        if (depth < 2)
-            return 1;
+        if (depth < 2) return 1;
 
-        currentPosition.makeMove(mv);
+        pos.makeMove(mv);
 
-        var moveList = currentPosition.generateLegalMoves();
+        var moveList = pos.generateLegalMoves();
 
         int count = moveList.getMvCount();
         long nodes = 0;
 
         for (int i = 0; i < count; i++) {
-            nodes += perft(moveList.getMove(i), depth - 1);
+            nodes += perftRec(pos, moveList.getMove(i), depth - 1);
         }
 
-        currentPosition.unmakeMove(mv);
+        pos.unmakeMove(mv);
 
         return nodes;
     }
 
-    public void runPerft(int maxDepth) {
+    public void runPerft(int maxDepth, boolean parallel, int nbThreads) {
+        System.out.printf("Number of processors currently available : %d \n\n",Runtime.getRuntime().availableProcessors());
+
         long totalNodes = 0;
         long nodes;
 
@@ -55,7 +87,7 @@ public class Perft {
             System.out.printf("%-10s %-15s %-15s\n","depth", "nodes", "totalnodes");
 
             long startTime = System.nanoTime();
-            nodes = perft(depth);
+            nodes = !parallel ? perft(depth) : parallelPerft(depth, nbThreads);
             long endTime = System.nanoTime();
 
             long elapsedTime = endTime - startTime;
@@ -74,6 +106,6 @@ public class Perft {
 
     public static void main(String[] args) {
         Perft pft = new Perft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        pft.runPerft(3);
+        pft.runPerft(6, true, 12);
     }
 }

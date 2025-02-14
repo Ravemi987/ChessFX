@@ -101,9 +101,15 @@ public class Move {
 
     @Override
     public String toString() {
-        return "from=" + getFrom() + " to=" + getTo() + " mPiece=" + getPiece() + " color=" + getColor()
-                + " cPiece=" + getCapturedPiece() + " cColor=" + getCapturedColor() + " promoted=" + getPromotedPiece()
-                + " enPassant=" + getEnPassant();
+        int fromRow = 1 + getFrom() / 8;
+        int toRow = 1 + getTo() / 8;
+        int fromCol = getFrom() % 8;
+        int toCol = getTo() % 8;
+//        return Character.toString('a' + fromRow) + fromCol
+//                + Character.toString('a' + (toRow + 1)) + toCol;
+        return Character.toString('a' + fromCol) + fromRow
+                + Character.toString('a' + toCol) + toRow;
+
     }
 
     public boolean equals(Move mv) {

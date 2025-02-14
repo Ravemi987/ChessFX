@@ -33,6 +33,7 @@ public class Game {
         currentPos.makeMove(mv);
         validMoves = currentPos.generateLegalMoves();
         lastMove = mv;
+        System.out.println(mv);
     }
 
     public Move getLastMove() {
