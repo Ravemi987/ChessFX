@@ -85,6 +85,6 @@ public class Divide {
 
     public static void main(String[] args) {
         Divide d = new Divide("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        d.runDivide(6, true, 12);
+        d.runDivide(4, true, 12);
     }
 }
