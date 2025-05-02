@@ -105,8 +105,6 @@ public class Move {
         int toRow = 1 + getTo() / 8;
         int fromCol = getFrom() % 8;
         int toCol = getTo() % 8;
-//        return Character.toString('a' + fromRow) + fromCol
-//                + Character.toString('a' + (toRow + 1)) + toCol;
         return Character.toString('a' + fromCol) + fromRow
                 + Character.toString('a' + toCol) + toRow;
 

@@ -71,7 +71,7 @@ public class GamePanelController {
     private int mouseYOnBoard;
 
     public GamePanelController() {
-        System.out.println("GamePanelController created");
+        //System.out.println("GamePanelController created");
 
         isSquareColored = new boolean[64];
 
@@ -88,7 +88,7 @@ public class GamePanelController {
 
     @FXML
     public void initialize() {
-        System.out.println("GamePanelController initialized");
+        //System.out.println("GamePanelController initialized");
         boardPane.getProperties().put("controller", this);
     }
 
@@ -99,6 +99,10 @@ public class GamePanelController {
         renderPieces();
         setupMouseEvents();
         startGameLoop();
+    }
+
+    public void refreshBoard() {
+        render();
     }
 
     private void precalculatePieceSprites() {

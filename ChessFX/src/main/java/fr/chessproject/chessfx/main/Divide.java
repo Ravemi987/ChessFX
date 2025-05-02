@@ -11,6 +11,7 @@ import static fr.chessproject.chessfx.main.Perft.perftRec;
 
 public class Divide {
     private final Position currentPosition;
+    private final int MAXDEPTH = 7;
 
     public Divide(String fen) {
         currentPosition = new Position();
@@ -66,11 +67,17 @@ public class Divide {
         return res;
     }
 
-    public void runDivide(int depth, boolean parallel, int nbThreads) {
+    public void runDivide(int depth, int nbThreads) {
+        int currentProcessorsNumber = Runtime.getRuntime().availableProcessors();
+        if (depth > MAXDEPTH || nbThreads > currentProcessorsNumber) {
+            System.out.println("Invalid argument: currently " + currentProcessorsNumber + " processors available.");
+            return;
+        }
+
         long nodes;
 
         long startTime = System.nanoTime();
-        nodes = !parallel ? divide(depth) : parallelDivide(depth, nbThreads);
+        nodes = nbThreads <= 1 ? divide(depth) : parallelDivide(depth, nbThreads);
         long endTime = System.nanoTime();
 
         long elapsedTime = endTime - startTime;
@@ -84,7 +91,7 @@ public class Divide {
         }
 
     public static void main(String[] args) {
-        Divide d = new Divide("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        d.runDivide(4, true, 12);
+        Divide divide = new Divide("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        divide.runDivide(6, 12);
     }
 }

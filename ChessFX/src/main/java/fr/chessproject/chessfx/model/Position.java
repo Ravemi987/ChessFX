@@ -28,19 +28,23 @@ public class Position {
     public int halfMoveClock;
     public int fullMoveCounter;
 
-    private final long[] piecesBB;
+    private long[] piecesBB;
     private long occupied;
     private long empty;
-    private final Stack<MoveState> moveStateHistory;
+    private Stack<MoveState> moveStateHistory;
 
     public Position() {
-        piecesBB = new long[9];
+        reset();
+    }
+
+    public void reset() {
+        this.piecesBB = new long[9];
         occupied = empty = 0x0L;
         isWhiteSideToPlay = true;
         enPassantSquare = -1;
         halfMoveClock = 0;
         fullMoveCounter = 1;
-        isAllowedBlackShortCastle = isAllowedBlackLongCastle = isAllowedWhiteShortCastle = isAllowedWhiteLongCastle = false;
+        isAllowedBlackShortCastle = isAllowedBlackLongCastle = isAllowedWhiteShortCastle = isAllowedWhiteLongCastle = true;
         moveStateHistory = new Stack<>();
     }
 
@@ -61,9 +65,9 @@ public class Position {
 
     public void loadFEN(String fen) {
         String[] fenArr = fen.split(" ");
-        if (fenArr.length > 6) {
-            System.err.println("Invalid FEN");
-            System.exit(-1);
+        if (fenArr.length < 4 || fenArr.length > 6) {
+            System.out.println("Invalid FEN");
+            return;
         }
         int returnCode = 0;
 
@@ -71,12 +75,14 @@ public class Position {
         returnCode += setSideToMove(fenArr[1]);
         returnCode += setCastlingCapabilities(fenArr[2]);
         returnCode += setEpTargetSquare(fenArr[3]);
-        returnCode += setHalfmoveClock(fenArr[4]);
-        returnCode += setFullmoveCounter(fenArr[5]);
+
+        if (fenArr.length > 4) {
+            returnCode += setHalfmoveClock(fenArr[4]);
+            returnCode += setFullmoveCounter(fenArr[5]);
+        }
 
         if (returnCode != 0) {
-            System.err.println("Invalid FEN");
-            System.exit(-1);
+            System.out.println("Invalid FEN");
         }
     }
 
@@ -333,13 +339,13 @@ public class Position {
         byte color = mv.getColor();
         boolean isKingSafe = true;
 
-        if (color == 0) {makeWhiteMove(mv);} else makeBlackMove(mv);
+        makeMove(mv);
 
         if (isSquareAttacked(getKingSquare(color), getOpponentColor(color))) {
             isKingSafe = false;
         }
 
-        if (color == 0) {unmakeMoveWhite(mv);} else unmakeMoveBlack(mv);
+        unmakeMove(mv);
 
         return isKingSafe;
     }

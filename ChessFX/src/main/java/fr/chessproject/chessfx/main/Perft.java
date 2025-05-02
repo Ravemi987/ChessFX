@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 
 public class Perft {
     private final Position currentPosition;
+    private final int MAXDEPTH = 7;
 
     public Perft(String fen) {
         currentPosition = new Position();
@@ -76,8 +77,12 @@ public class Perft {
         return nodes;
     }
 
-    public void runPerft(int maxDepth, boolean parallel, int nbThreads) {
-        System.out.printf("Number of processors currently available : %d \n\n",Runtime.getRuntime().availableProcessors());
+    public void runPerft(int maxDepth, int nbThreads) {
+        int currentProcessorsNumber = Runtime.getRuntime().availableProcessors();
+        if (maxDepth > MAXDEPTH || nbThreads > currentProcessorsNumber) {
+            System.out.println("Invalid argument: currently " + currentProcessorsNumber + " processors available.");
+            return;
+        }
 
         long totalNodes = 0;
         long nodes;
@@ -87,7 +92,7 @@ public class Perft {
             System.out.printf("%-10s %-15s %-15s\n","depth", "nodes", "totalnodes");
 
             long startTime = System.nanoTime();
-            nodes = !parallel ? perft(depth) : parallelPerft(depth, nbThreads);
+            nodes = nbThreads <= 1 ? perft(depth) : parallelPerft(depth, nbThreads);
             long endTime = System.nanoTime();
 
             long elapsedTime = endTime - startTime;
@@ -106,6 +111,6 @@ public class Perft {
 
     public static void main(String[] args) {
         Perft pft = new Perft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        pft.runPerft(6, true, 12);
+        pft.runPerft(6, 12);
     }
 }
