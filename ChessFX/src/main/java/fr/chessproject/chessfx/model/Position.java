@@ -339,13 +339,13 @@ public class Position {
         byte color = mv.getColor();
         boolean isKingSafe = true;
 
-        makeMove(mv);
+        if (color == 0) makeWhiteMoveBitboardOnly(mv); else makeBlackMoveBitboardOnly(mv);
 
         if (isSquareAttacked(getKingSquare(color), getOpponentColor(color))) {
             isKingSafe = false;
         }
 
-        unmakeMove(mv);
+        if (color == 0) unmakeMoveWhite(mv); else unmakeMoveBlack(mv);
 
         return isKingSafe;
     }
@@ -807,7 +807,7 @@ public class Position {
 
     /* ################### MAKEMOVE AND UNMAKEMOVE ################### */
 
-    private void playBlackCastling(boolean isShort) {
+    private void playBlackCastlingBitboardOnly(boolean isShort) {
         long kingFrom = Square.bitboardForSquare(Square.E8);
         long kingTo = Square.bitboardForSquare(isShort ? Square.G8 : Square.C8);
         long rookFrom = Square.bitboardForSquare(isShort ? Square.H8 : Square.A8);
@@ -820,12 +820,9 @@ public class Position {
         piecesBB[blackPieces] ^= kingFromToBB ^ rookFromToBB;
         piecesBB[rooks] ^= rookFromToBB;
         piecesBB[blackKing] ^= kingFromToBB;
-
-        isAllowedBlackShortCastle = false;
-        isAllowedBlackLongCastle = false;
     }
 
-    private void playWhiteCastling(boolean isShort) {
+    private void playWhiteCastlingBitboardOnly(boolean isShort) {
         long kingFrom = Square.bitboardForSquare(Square.E1);
         long kingTo = Square.bitboardForSquare(isShort ? Square.G1 : Square.C1);
         long rookFrom = Square.bitboardForSquare(isShort ? Square.H1 : Square.A1);
@@ -838,9 +835,6 @@ public class Position {
         piecesBB[whitePieces] ^= kingFromToBB ^ rookFromToBB;
         piecesBB[rooks] ^= rookFromToBB;
         piecesBB[whiteKing] ^= kingFromToBB;
-
-        isAllowedWhiteShortCastle = false;
-        isAllowedWhiteLongCastle = false;
     }
 
     private void updateWhiteCastlingRights(Move move) {
@@ -904,9 +898,9 @@ public class Position {
         isWhiteSideToPlay = !isWhiteSideToPlay;
     }
 
-    public void makeWhiteMove(Move move) {
-        if (isWhiteShortCastling(move)) {playWhiteCastling(true); return;}
-        if (isWhiteLongCastling(move)) {playWhiteCastling(false); return;}
+    public void makeWhiteMoveBitboardOnly(Move move) {
+        if (isWhiteShortCastling(move)) {playWhiteCastlingBitboardOnly(true); return;}
+        if (isWhiteLongCastling(move)) {playWhiteCastlingBitboardOnly(false); return;}
 
         long fromBB = 0x1L << move.getFrom();
         long toBB = 0x1L << move.getTo();
@@ -938,13 +932,22 @@ public class Position {
         }
 
         piecesBB[move.getColor()] ^= fromToBB;
+    }
 
+    public void makeWhiteMove(Move move) {
+        makeWhiteMoveBitboardOnly(move);
+
+        if (isWhiteShortCastling(move) || isWhiteLongCastling(move)) {
+            isAllowedWhiteShortCastle = false;
+            isAllowedWhiteLongCastle = false;
+            return;
+        }
         updateWhiteCastlingRights(move);
     }
 
-    public void makeBlackMove(Move move) {
-        if (isBlackShortCastling(move)) {playBlackCastling(true);return;}
-        if (isBlackLongCastling(move)) {playBlackCastling(false);return;}
+    public void makeBlackMoveBitboardOnly(Move move) {
+        if (isBlackShortCastling(move)) {playBlackCastlingBitboardOnly(true);return;}
+        if (isBlackLongCastling(move)) {playBlackCastlingBitboardOnly(false);return;}
 
         long fromBB = 0x1L << move.getFrom();
         long toBB = 0x1L << move.getTo();
@@ -976,6 +979,16 @@ public class Position {
         }
 
         piecesBB[move.getColor()] ^= fromToBB;
+    }
+
+    public void makeBlackMove(Move move) {
+        makeBlackMoveBitboardOnly(move);
+
+        if (isBlackShortCastling(move) || isBlackLongCastling(move)) {
+            isAllowedBlackShortCastle = false;
+            isAllowedBlackLongCastle = false;
+            return;
+        }
 
         updateBlackCastlingRights(move);
     }
