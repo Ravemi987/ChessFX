@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="ff8303b9-09bf-445d-8f74-8a6b1b222e7c" name="Changes" comment="" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="module-info" />
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 7
+}</component>
+  <component name="ProjectId" id="2l9n05AngDkltd23XITJU1zsBJS" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
+    &quot;Application.MainFrame.executor&quot;: &quot;Run&quot;,
+    &quot;Application.ParallelPerft.executor&quot;: &quot;Profiler#1&quot;,
+    &quot;Application.ParallelPerftExecutor.executor&quot;: &quot;Profiler#1&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Admin_Remi/Documents/GitHub/Chess&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;SDKs&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RunManager" selected="Application.Main">
+    <configuration name="Main" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="fr.chessproject.chessfx.main.Program" />
+      <module name="ChessFX" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="MainFrame" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="fr.chessproject.chessfx.main.MainFrame" />
+      <module name="ChessFX" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="fr.chessproject.chessfx.main.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ParallelPerft" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="fr.chessproject.chessfx.main.ParallelPerft" />
+      <module name="ChessFX" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="fr.chessproject.chessfx.main.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="ParallelPerftExecutor" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="fr.chessproject.chessfx.main.ParallelPerftExecutor" />
+      <module name="ChessFX" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="fr.chessproject.chessfx.main.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Application.ParallelPerftExecutor" />
+        <item itemvalue="Application.ParallelPerft" />
+        <item itemvalue="Application.MainFrame" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-b114ca120d71-intellij.indexing.shared.core-IU-242.21829.142" />
+        <option value="bundled-js-predefined-d6986cc7102b-7c0b70fcd90d-JavaScript-IU-242.21829.142" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ff8303b9-09bf-445d-8f74-8a6b1b222e7c" name="Changes" comment="" />
+      <created>1724600933472</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1724600933472</updated>
+      <workItem from="1724600934610" duration="944000" />
+      <workItem from="1724601921549" duration="423000" />
+      <workItem from="1724602555957" duration="534000" />
+      <workItem from="1724603728609" duration="6447000" />
+      <workItem from="1724610337108" duration="8000" />
+      <workItem from="1724610351136" duration="284000" />
+      <workItem from="1724754589578" duration="16342000" />
+      <workItem from="1724776317069" duration="9537000" />
+      <workItem from="1724787418653" duration="371000" />
+      <workItem from="1724789027865" duration="84000" />
+      <workItem from="1724789153519" duration="57000" />
+      <workItem from="1724838856399" duration="19558000" />
+      <workItem from="1724865226759" duration="1578000" />
+      <workItem from="1724867116808" duration="51000" />
+      <workItem from="1724867174293" duration="101000" />
+      <workItem from="1724930535629" duration="453000" />
+      <workItem from="1724944080371" duration="8034000" />
+      <workItem from="1724952474662" duration="851000" />
+      <workItem from="1725020162465" duration="1053000" />
+      <workItem from="1725125457683" duration="99000" />
+      <workItem from="1725382736391" duration="2653000" />
+      <workItem from="1725385443136" duration="7000" />
+      <workItem from="1725456773086" duration="8216000" />
+      <workItem from="1725538430990" duration="1369000" />
+      <workItem from="1725617063064" duration="8399000" />
+      <workItem from="1725651243620" duration="133000" />
+      <workItem from="1725699400019" duration="244000" />
+      <workItem from="1725700986506" duration="3288000" />
+      <workItem from="1725704408256" duration="134000" />
+      <workItem from="1725793963735" duration="1380000" />
+      <workItem from="1725812935766" duration="74000" />
+      <workItem from="1725814162408" duration="1697000" />
+      <workItem from="1725815890464" duration="7000" />
+      <workItem from="1725820473864" duration="273000" />
+      <workItem from="1725820764977" duration="17000" />
+      <workItem from="1725903374206" duration="4228000" />
+      <workItem from="1725977612829" duration="2765000" />
+      <workItem from="1726151700232" duration="16645000" />
+      <workItem from="1726173097377" duration="9000" />
+      <workItem from="1726237427935" duration="1835000" />
+      <workItem from="1726239299802" duration="10000" />
+      <workItem from="1726239317562" duration="17000" />
+      <workItem from="1726239567103" duration="64000" />
+      <workItem from="1726239638078" duration="7000" />
+      <workItem from="1726239656465" duration="7000" />
+      <workItem from="1726240247011" duration="12000" />
+      <workItem from="1726261126369" duration="633000" />
+      <workItem from="1726261793213" duration="12000" />
+      <workItem from="1726261813370" duration="22000" />
+      <workItem from="1726262225155" duration="88000" />
+      <workItem from="1726305372113" duration="155000" />
+      <workItem from="1726305552706" duration="7561000" />
+      <workItem from="1726315433589" duration="4738000" />
+      <workItem from="1726329245670" duration="1439000" />
+      <workItem from="1726338784305" duration="1287000" />
+      <workItem from="1726390679017" duration="6241000" />
+      <workItem from="1726415060087" duration="7906000" />
+      <workItem from="1726423168225" duration="1000" />
+      <workItem from="1726424060717" duration="5865000" />
+      <workItem from="1726834426928" duration="92000" />
+      <workItem from="1726834532195" duration="12000" />
+      <workItem from="1726834562726" duration="43000" />
+      <workItem from="1726834615052" duration="32000" />
+      <workItem from="1727361417113" duration="123000" />
+      <workItem from="1728120119827" duration="119000" />
+      <workItem from="1728120352042" duration="37000" />
+      <workItem from="1728120399915" duration="27000" />
+      <workItem from="1729934590329" duration="734000" />
+      <workItem from="1731233722157" duration="159000" />
+      <workItem from="1734035075147" duration="66000" />
+      <workItem from="1734035156088" duration="21000" />
+      <workItem from="1734035202016" duration="3000" />
+      <workItem from="1734713723144" duration="839000" />
+      <workItem from="1734714612324" duration="16000" />
+      <workItem from="1734798167069" duration="166000" />
+      <workItem from="1734798483384" duration="437000" />
+      <workItem from="1734799075427" duration="466000" />
+      <workItem from="1734799600969" duration="17000" />
+      <workItem from="1734799630738" duration="4000" />
+      <workItem from="1734799672618" duration="150000" />
+      <workItem from="1734887036089" duration="52000" />
+      <workItem from="1734887390608" duration="4000" />
+      <workItem from="1736026853424" duration="92000" />
+      <workItem from="1737655382224" duration="48000" />
+      <workItem from="1738494655637" duration="236000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="XDebuggerManager">
+    <pin-to-top-manager>
+      <pinned-members>
+        <PinnedItemInfo parentTag="javafx.geometry.Point2D" memberName="x" />
+      </pinned-members>
+    </pin-to-top-manager>
+  </component>
+</project>
