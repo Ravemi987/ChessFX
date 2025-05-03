@@ -10,10 +10,12 @@ import java.util.concurrent.Executors;
 public class Perft {
     private final Position currentPosition;
     private final int MAXDEPTH = 7;
+    private String fen;
 
     public Perft(String fen) {
         currentPosition = new Position();
         currentPosition.loadFEN(fen);
+        this.fen = fen;
     }
 
     public long parallelPerft(int depth, int nbThreads) {
@@ -29,7 +31,8 @@ public class Perft {
                 final int index = i;
 
                 executor.submit(() -> {
-                    Position positionCopy = Position.copy(currentPosition);
+                    Position positionCopy = new Position();
+                    positionCopy.loadFEN(fen);
                     results[index] = perftRec(positionCopy, moveList.getMove(index), depth);
                 });
             }

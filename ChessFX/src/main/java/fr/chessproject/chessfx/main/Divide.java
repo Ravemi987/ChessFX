@@ -12,10 +12,12 @@ import static fr.chessproject.chessfx.main.Perft.perftRec;
 public class Divide {
     private final Position currentPosition;
     private final int MAXDEPTH = 7;
+    private String fen;
 
     public Divide(String fen) {
         currentPosition = new Position();
         currentPosition.loadFEN(fen);
+        this.fen = fen;
     }
 
     public long parallelDivide(int depth, int nbThreads) {
@@ -31,7 +33,8 @@ public class Divide {
                 final int index = i;
 
                 executor.submit(() -> {
-                    Position positionCopy = Position.copy(currentPosition);
+                    Position positionCopy = new Position();
+                    positionCopy.loadFEN(fen);
                     results[index] = divide(positionCopy, moveList.getMove(index), depth);
                 });
             }
@@ -54,7 +57,9 @@ public class Divide {
         long nodes = 0;
 
         for (int i = 0; i < count; i++) {
-            nodes += divide(currentPosition, moveList.getMove(i), depth);
+            Position positionCopy = new Position();
+            positionCopy.loadFEN(fen);
+            nodes += divide(positionCopy, moveList.getMove(i), depth);
         }
 
         return nodes;
@@ -91,7 +96,7 @@ public class Divide {
         }
 
     public static void main(String[] args) {
-        Divide divide = new Divide("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        divide.runDivide(6, 12);
+        Divide divide = new Divide("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R4RK1 b kq - 0 1");
+        divide.runDivide(2, 1);
     }
 }

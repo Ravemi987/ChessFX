@@ -44,7 +44,7 @@ public class Position {
         enPassantSquare = -1;
         halfMoveClock = 0;
         fullMoveCounter = 1;
-        isAllowedBlackShortCastle = isAllowedBlackLongCastle = isAllowedWhiteShortCastle = isAllowedWhiteLongCastle = true;
+        isAllowedBlackShortCastle = isAllowedBlackLongCastle = isAllowedWhiteShortCastle = isAllowedWhiteLongCastle = false;
         moveStateHistory = new Stack<>();
     }
 
@@ -302,18 +302,24 @@ public class Position {
 
     public boolean isSquareAttacked(byte sq, byte colorIdx) {
         long Knights = piecesBB[colorIdx] & piecesBB[knights];
-        if ((Knights != 0) && (Knights & Piece.knightAttacks(sq)) != 0) return true;
+        if ((Knights != 0) && (Knights & Piece.knightAttacks(sq)) != 0) {
+            return true;
+        }
 
         long Pawns = piecesBB[colorIdx] & piecesBB[pawns];
         if ((Pawns != 0) && (Pawns & (colorIdx == 1 ?
-                Piece.whitePawnAttacks(sq) : Piece.blackPawnAttacks(sq))) != 0) return true;
+                Piece.whitePawnAttacks(sq) : Piece.blackPawnAttacks(sq))) != 0)  {
+            return true;
+        }
 
         long Rooks = piecesBB[colorIdx] & piecesBB[rooks];
         long rookAttacks = 0L;
         boolean isRooksComputed = false;
         if (Rooks != 0) {
             rookAttacks = Piece.rookAttacks(occupied, sq);
-            if ((Rooks & rookAttacks) != 0) return true;
+            if ((Rooks & rookAttacks) != 0) {
+                return true;
+            }
             isRooksComputed = true;
         }
 
@@ -322,7 +328,9 @@ public class Position {
         boolean isBishopComputed = false;
         if (Bishops != 0) {
             bishopAttacks = Piece.bishopAttacks(occupied, sq);
-            if ((Bishops & bishopAttacks) != 0) return true;
+            if ((Bishops & bishopAttacks) != 0) {
+                return true;
+            }
             isBishopComputed = true;
         }
 
@@ -330,7 +338,9 @@ public class Position {
         if (Queens != 0) {
             if (!isRooksComputed) rookAttacks = Piece.rookAttacks(occupied, sq);
             if (!isBishopComputed) bishopAttacks = Piece.bishopAttacks(occupied, sq);
-            if ((Queens & (rookAttacks | bishopAttacks)) != 0) return true;
+            if ((Queens & (rookAttacks | bishopAttacks)) != 0) {
+                return true;
+            }
         }
         return ((piecesBB[colorIdx == 0 ? whiteKing : blackKing] & Piece.kingAttacks(sq)) != 0);
     }
@@ -416,7 +426,9 @@ public class Position {
 
     public void generatePromotionMoves(MoveList mvList, byte sqFrom, byte sqTo,
                                        byte pieceBB, byte colorBB, byte cPiece, byte cColor) {
-        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, queens));
+        Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, queens);
+        if (!checkKingSafety(mv)) return;
+        mvList.addMove(mv);
         mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, rooks));
         mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, knights));
         mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, bishops));
@@ -891,6 +903,7 @@ public class Position {
     }
 
     public void makeMove(Move move) {
+        moveStateHistory.push(new MoveState(this));
         if (isWhiteSideToPlay) makeWhiteMove(move); else makeBlackMove(move);
 
         if (move.getPiece() == pawns && move.isDoublePawnPush()) {
@@ -898,8 +911,6 @@ public class Position {
         } else {
             enPassantSquare = -1;
         }
-
-        moveStateHistory.push(new MoveState(this));
 
         isWhiteSideToPlay = !isWhiteSideToPlay;
     }
@@ -1032,19 +1043,19 @@ public class Position {
         MoveState previousState = null;
         if (!moveStateHistory.isEmpty()) {
             previousState = moveStateHistory.pop();
-            isAllowedBlackShortCastle = previousState.isAllowedBlackShortCastle;
-            isAllowedBlackLongCastle = previousState.isAllowedBlackLongCastle;
-            isAllowedWhiteShortCastle = previousState.isAllowedWhiteShortCastle;
-            isAllowedWhiteLongCastle = previousState.isAllowedWhiteLongCastle;
-            isWhiteSideToPlay = previousState.isWhiteSideToPlay;
-            enPassantSquare = previousState.enPassantSquare;
+            this.isAllowedBlackShortCastle = previousState.isAllowedBlackShortCastle;
+            this.isAllowedBlackLongCastle = previousState.isAllowedBlackLongCastle;
+            this.isAllowedWhiteShortCastle = previousState.isAllowedWhiteShortCastle;
+            this.isAllowedWhiteLongCastle = previousState.isAllowedWhiteLongCastle;
+            this.isWhiteSideToPlay = previousState.isWhiteSideToPlay;
+            this.enPassantSquare = previousState.enPassantSquare;
         }
         return previousState;
     }
 
     public void unmakeMove(Move move) {
-        MoveState previousState = restaureMoveState();
-        if (previousState.isWhiteSideToPlay) unmakeMoveWhite(move); else unmakeMoveBlack(move);
+        if (!isWhiteSideToPlay) unmakeMoveWhite(move); else unmakeMoveBlack(move);
+        restaureMoveState();
     }
 
     public void unmakeMoveWhite(Move move) {
@@ -1130,7 +1141,12 @@ public class Position {
         newPos.isAllowedBlackShortCastle = pos.isAllowedBlackShortCastle;
         newPos.isAllowedBlackLongCastle = pos.isAllowedBlackLongCastle;
 
-        System.arraycopy(pos.piecesBB, 0, newPos.piecesBB, 0, pos.piecesBB.length);
+        newPos.piecesBB = pos.piecesBB.clone();
+
+        newPos.moveStateHistory = new Stack<>();
+        for (MoveState ms : pos.moveStateHistory) {
+            newPos.moveStateHistory.push(new MoveState(ms));
+        }
 
         return newPos;
     }
