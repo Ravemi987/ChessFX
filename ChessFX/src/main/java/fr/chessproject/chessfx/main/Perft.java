@@ -9,7 +9,6 @@ import java.util.concurrent.Executors;
 
 public class Perft {
     private final Position currentPosition;
-    private final int MAXDEPTH = 7;
     private String fen;
 
     public Perft(String fen) {
@@ -82,7 +81,7 @@ public class Perft {
 
     public void runPerft(int maxDepth, int nbThreads) {
         int currentProcessorsNumber = Runtime.getRuntime().availableProcessors();
-        if (maxDepth > MAXDEPTH || nbThreads > currentProcessorsNumber) {
+        if (nbThreads > currentProcessorsNumber) {
             System.out.println("Invalid argument: currently " + currentProcessorsNumber + " processors available.");
             return;
         }
@@ -114,6 +113,6 @@ public class Perft {
 
     public static void main(String[] args) {
         Perft pft = new Perft("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        pft.runPerft(6, 12);
+        pft.runPerft(7, 12);
     }
 }

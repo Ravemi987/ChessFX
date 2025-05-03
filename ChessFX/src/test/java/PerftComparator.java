@@ -72,8 +72,9 @@ public class PerftComparator {
 
     public static void main(String[] args) {
         try {
-            List<MovePerft> mine = readPerftFile("/home/rairiau/Documents/Github/ChessFX/ChessFX/src/test/java/perft_engine.txt");
-            List<MovePerft> stockfish = readPerftFile("/home/rairiau/Documents/Github/ChessFX/ChessFX/src/test/java/perft_stockfish.txt");
+            // /home/rairiau/Documents/Github/ChessFX/ChessFX/src/test/java/
+            List<MovePerft> mine = readPerftFile("C:\\Users\\Admin_Remi\\Documents\\GitHub\\ChessFX\\ChessFX\\src\\test\\java\\perft_engine.txt");
+            List<MovePerft> stockfish = readPerftFile("C:\\Users\\Admin_Remi\\Documents\\GitHub\\ChessFX\\ChessFX\\src\\test\\java\\perft_stockfish.txt");
             comparePerft(mine, stockfish);
         } catch (IOException e) {
             e.printStackTrace();

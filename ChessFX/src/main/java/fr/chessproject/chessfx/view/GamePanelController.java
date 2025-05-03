@@ -335,7 +335,7 @@ public class GamePanelController {
         gc.setFont(new Font("Arial", squareSize / 2));
 
         for (int i = 0; i < 64; i++) {
-            char bit = ((bitboard >> i) & 1) == 1 ? '1' : '0';
+            char bit = ((bitboard >>> i) & 1) == 1 ? '1' : '0';
 
             gc.setFill((bit == '0') ? Color.rgb(70, 57, 57) : Color.rgb(194, 181, 45));
 

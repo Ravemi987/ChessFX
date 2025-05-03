@@ -266,7 +266,7 @@ public class Position {
 
         long Pawns = piecesBB[colorIdx] & piecesBB[pawns];
         if (Pawns != 0) {
-            attackers = Pawns & (colorIdx == 0 ? Piece.whitePawnAttacks(sq) : Piece.blackPawnAttacks(sq));
+            attackers = Pawns & (colorIdx == 0 ? Piece.blackPawnAttacks(sq) : Piece.whitePawnAttacks(sq));
             if ((count += Long.bitCount(attackers)) >= 2) return count;
         }
 
