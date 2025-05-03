@@ -62,7 +62,7 @@ public class Divide {
 
     public long divide(Position pos, Move mv, int depth) {
         long res = perftRec(pos, mv, depth);
-        System.out.printf("%-10s %10d%n", mv.toString(), res);
+        System.out.printf("%s: %d%n", mv.toString(), res);
 
         return res;
     }

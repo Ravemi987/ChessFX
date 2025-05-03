@@ -58,8 +58,12 @@ public class ChessController implements CommandListenerObserver {
         System.out.println(game.getFen());
     }
 
-    private void handleSetPosCommand(String fen) {
-        game.setFen(fen);
+    private void handleSetPosCommand(String s) {
+        if (s.equals("startpos")) {
+            game.setFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        } else {
+            game.setFen(s);
+        }
         frameController.updateBoard();
     }
 

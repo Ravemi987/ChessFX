@@ -24,4 +24,9 @@ public class MoveList {
     public int getMvCount() {
         return mvCount;
     }
+
+    @Override
+    public String toString() {
+        return moves.toString();
+    }
 }
