@@ -1,5 +1,7 @@
 package fr.chessproject.chessfx.main;
 
+import fr.chessproject.chessfx.model.CommandListener;
+
 public class Program {
     
     /**
@@ -7,13 +9,11 @@ public class Program {
      */
     public static void main(String[] args) {
 
-        // Verification des arguments du programme
         if (args.length > 1) {
             System.err.println("Usage: java Main.java DEBUG=[yes/no/true/false]");
             System.exit(1);
         }
 
-        // Par defaut ou en cas d'erreur, le programme ne sera pas execute en mode debug
         boolean debugMode = false;
 
         if (args.length == 1) {
@@ -21,11 +21,24 @@ public class Program {
             debugMode = token.equals("yes") || token.equals("true");
         }
 
-        launchGUI(debugMode, args);
+        CommandListener cmdListener = launchCLI(debugMode, args);
+        launchGUI(cmdListener, debugMode, args);
     }
 
-    private static void launchGUI(boolean debugMode, String[] args) {
+    private static void launchGUI(CommandListener cmdListener, boolean debugMode, String[] args) {
+        MainFrame.setCommandListener(cmdListener);
         MainFrame.setDebugMode(debugMode);
         MainFrame.launch(MainFrame.class, args);
+    }
+
+    private static CommandListener launchCLI(boolean debugMode, String[] args) {
+        if (!debugMode) return null;
+
+        CommandListener commandListener = new CommandListener();
+        Thread commandThread = new Thread(commandListener);
+        commandThread.setDaemon(true);
+        commandThread.start();
+
+        return commandListener;
     }
 }

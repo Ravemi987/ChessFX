@@ -68,7 +68,7 @@ public class Piece {
                     0x0002040004020000L, 0x0005080008050000L, 0x000A1100110A0000L, 0x0014220022140000L, 0x0028440044280000L, 0x0050880088500000L, 0x00A0100010A00000L, 0x0040200020400000L,
                     0x0204000402000000L, 0x0508000805000000L, 0x0A1100110A000000L, 0x1422002214000000L, 0x2844004428000000L, 0x5088008850000000L, 0xA0100010A0000000L, 0x4020002040000000L,
                     0x0400040200000000L, 0x0800080500000000L, 0x1100110A00000000L, 0x2200221400000000L, 0x4400442800000000L, 0x8800885000000000L, 0x100010A000000000L, 0x2000204000000000L,
-                    0x0004020000000000L, 0x0008050000000000L, 0x00110A0000000000L, 0x0022140000000000L, 0x0044280000000000L, 0x0088500000000000L, 0x0010A00000000000L, 0xFFFFC00000000000L
+                    0x0004020000000000L, 0x0008050000000000L, 0x00110A0000000000L, 0x0022140000000000L, 0x0044280000000000L, 0x0088500000000000L, 0x0010A00000000000L, 0x0020400000000000L
             };
 
 
@@ -213,7 +213,7 @@ public class Piece {
         long bitboard = 0L;
         long pos = Square.bitboardForSquare(square);
         bitboard |= (pos & Square.NOT_GH_FILES) << 10 | (pos & Square.NOT_H_FILE) << 17 | (pos & Square.NOT_AB_FILES) << 6 | (pos & Square.NOT_A_FILE) << 15;
-        bitboard |= (pos & Square.NOT_GH_FILES) >> 6 | (pos & Square.NOT_H_FILE) >> 15  | (pos & Square.NOT_AB_FILES) >> 10 | (pos & Square.NOT_A_FILE) >> 17 ;
+        bitboard |= (pos & Square.NOT_GH_FILES) >>> 6 | (pos & Square.NOT_H_FILE) >>> 15  | (pos & Square.NOT_AB_FILES) >>> 10 | (pos & Square.NOT_A_FILE) >>> 17 ;
         return bitboard;
     }
 
@@ -271,6 +271,18 @@ public class Piece {
 
     public static long kingAttacks(byte square) {
         return kingAttacksTableStatic[square];
+    }
+
+    public static long whitePawnAttacks(byte square) {
+        long bb = Square.bitboardForSquare(square);
+        return (bb & Square.NOT_A_FILE) << 7 |
+                (bb & Square.NOT_H_FILE) << 9;
+    }
+
+    public static long blackPawnAttacks(byte square) {
+        long bb = Square.bitboardForSquare(square);
+        return (bb & Square.NOT_H_FILE) >>> 7 |
+                (bb & Square.NOT_A_FILE) >>> 9;
     }
 
 

@@ -55,31 +55,31 @@ public class Move {
     }
 
     public byte getTo() {
-        return (byte) ((moveData >> 6) & 0x3F);
+        return (byte) ((moveData >>> 6) & 0x3F);
     }
 
     public byte getPiece() {
-        return (byte) ((moveData >> 12) & 0x0F);
+        return (byte) ((moveData >>> 12) & 0x0F);
     }
 
     public byte getColor() {
-        return (byte) ((moveData >> 16) & 0x01);
+        return (byte) ((moveData >>> 16) & 0x01);
     }
 
     public byte getCapturedPiece() {
-        return (byte) ((moveData >> 17) & 0x0F);
+        return (byte) ((moveData >>> 17) & 0x0F);
     }
 
     public byte getCapturedColor() {
-        return (byte) ((moveData >> 21) & 0x01);
+        return (byte) ((moveData >>> 21) & 0x01);
     }
 
     public byte getPromotedPiece() {
-        return (byte) ((moveData >> 22) & 0x0F);
+        return (byte) ((moveData >>> 22) & 0x0F);
     }
 
     public byte getEnPassant() {
-        return (byte) ((moveData >> 26) & 0x3F);
+        return (byte) ((moveData >>> 26) & 0x3F);
     }
 
     public boolean isCapture() {
@@ -101,9 +101,13 @@ public class Move {
 
     @Override
     public String toString() {
-        return "from=" + getFrom() + " to=" + getTo() + " mPiece=" + getPiece() + " color=" + getColor()
-                + " cPiece=" + getCapturedPiece() + " cColor=" + getCapturedColor() + " promoted=" + getPromotedPiece()
-                + " enPassant=" + getEnPassant();
+        int fromRow = 1 + getFrom() / 8;
+        int toRow = 1 + getTo() / 8;
+        int fromCol = getFrom() % 8;
+        int toCol = getTo() % 8;
+        return Character.toString('a' + fromCol) + fromRow
+                + Character.toString('a' + toCol) + toRow;
+
     }
 
     public boolean equals(Move mv) {

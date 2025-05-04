@@ -25,18 +25,26 @@ public class Position {
 
     public boolean isWhiteSideToPlay;
     public byte enPassantSquare;
+    public int halfMoveClock;
+    public int fullMoveCounter;
 
-    private final long[] piecesBB;
+    private long[] piecesBB;
     private long occupied;
     private long empty;
-    private final Stack<MoveState> moveStateHistory;
+    private Stack<MoveState> moveStateHistory;
 
     public Position() {
-        piecesBB = new long[9];
+        reset();
+    }
+
+    public void reset() {
+        this.piecesBB = new long[9];
         occupied = empty = 0x0L;
         isWhiteSideToPlay = true;
         enPassantSquare = -1;
-        isAllowedBlackShortCastle = isAllowedBlackLongCastle = isAllowedWhiteShortCastle = isAllowedWhiteLongCastle = true;
+        halfMoveClock = 0;
+        fullMoveCounter = 1;
+        isAllowedBlackShortCastle = isAllowedBlackLongCastle = isAllowedWhiteShortCastle = isAllowedWhiteLongCastle = false;
         moveStateHistory = new Stack<>();
     }
 
@@ -44,12 +52,41 @@ public class Position {
         return occupied;
     }
 
-    public void loadFEN(String fen) {
-        String[] fenTab = fen.split(" ");
-        boardFromFEN(fenTab[0]);
+    public byte getKingSquare(byte color) {
+        long kingBB = piecesBB[color == 0 ? whiteKing : blackKing];
+        return (byte) Long.numberOfTrailingZeros(kingBB);
     }
 
-    public void boardFromFEN(String fenBoard) {
+    public byte getOpponentColor(byte color) {
+        return (byte) ((color + 1) % 2);
+    }
+
+    /* ################### FEN ################### */
+
+    public void loadFEN(String fen) {
+        String[] fenArr = fen.split(" ");
+        if (fenArr.length < 4 || fenArr.length > 6) {
+            System.out.println("Invalid FEN");
+            return;
+        }
+        int returnCode = 0;
+
+        returnCode += setBoardFromFEN(fenArr[0]);
+        returnCode += setSideToMove(fenArr[1]);
+        returnCode += setCastlingCapabilities(fenArr[2]);
+        returnCode += setEpTargetSquare(fenArr[3]);
+
+        if (fenArr.length > 4) {
+            returnCode += setHalfmoveClock(fenArr[4]);
+            returnCode += setFullmoveCounter(fenArr[5]);
+        }
+
+        if (returnCode != 0) {
+            System.out.println("Invalid FEN");
+        }
+    }
+
+    public int setBoardFromFEN(String fenBoard) {
         int row = 7, col = 0;
 
         for (char c : fenBoard.toCharArray()) {
@@ -62,6 +99,9 @@ public class Position {
                 byte sq = (byte) (row * 8 + col);
                 long pos = Square.bitboardForSquare(sq);
                 byte piece = Piece.fromChar(c);
+                if (piece == Piece.NONE) {
+                    return -1;
+                }
 
                 if (Piece.isWhite(piece))
                     piecesBB[whitePieces] |= pos;
@@ -75,19 +115,252 @@ public class Position {
         }
         occupied = piecesBB[whitePieces] | piecesBB[blackPieces];
         empty = ~occupied;
+
+        return 0;
     }
 
     public void addPieceToBitboard(byte piece, long pos) {
         if (Piece.isPawn(piece)) piecesBB[pawns] |= pos;
-        if (Piece.isKnight(piece)) piecesBB[knights] |= pos;
-        if (Piece.isBishop(piece)) piecesBB[bishops] |= pos;
-        if (Piece.isRook(piece)) piecesBB[rooks] |= pos;
-        if (Piece.isQueen(piece)) piecesBB[queens] |= pos;
-        if (piece == Piece.WHITE_KING) piecesBB[whiteKing] |= pos;
-        if (piece == Piece.BLACK_KING) piecesBB[blackKing] |= pos;
+        else if (Piece.isKnight(piece)) piecesBB[knights] |= pos;
+        else if (Piece.isBishop(piece)) piecesBB[bishops] |= pos;
+        else if (Piece.isRook(piece)) piecesBB[rooks] |= pos;
+        else if (Piece.isQueen(piece)) piecesBB[queens] |= pos;
+        else if (piece == Piece.WHITE_KING) piecesBB[whiteKing] |= pos;
+        else if (piece == Piece.BLACK_KING) piecesBB[blackKing] |= pos;
     }
 
-    /* Generate Moves methods */
+    public int setSideToMove(String fenSide) {
+        if (fenSide.equals("w")) {
+            isWhiteSideToPlay = true;
+        } else if (fenSide.equals("b")) {
+            isWhiteSideToPlay = false;
+        } else {
+            return -1;
+        }
+        return 0;
+    }
+
+    public int setCastlingCapabilities(String fenCastling) {
+        for (char c : fenCastling.toCharArray()) {
+            if (c == '-') {
+                return 0;
+            } else if (c == 'K') {
+                isAllowedWhiteShortCastle = true;
+            } else if (c == 'Q') {
+                isAllowedWhiteLongCastle = true;
+            } else if (c == 'k') {
+                isAllowedBlackShortCastle = true;
+            } else if (c == 'q') {
+                isAllowedBlackLongCastle = true;
+            } else {
+                return -1;
+            }
+        }
+        return 0;
+    }
+
+    public int setEpTargetSquare(String fenEp) {
+        if (fenEp.equals("-")) {
+            enPassantSquare = -1;
+            return 0;
+        }
+        int fileIndex = fenEp.charAt(0) - 'a';
+        int rankIndex = Character.getNumericValue(fenEp.charAt(1)) - 1;
+        int sq = 8 * rankIndex + fileIndex;
+
+        if (0 <= sq && sq < 64) {
+            enPassantSquare = (byte) sq;
+            return 0;
+        }
+        return -1;
+    }
+
+    public int setHalfmoveClock(String fenMv) {
+        halfMoveClock = Integer.parseInt(fenMv);
+        return 0;
+    }
+
+    public int setFullmoveCounter(String fenMv) {
+        fullMoveCounter = Integer.parseInt(fenMv);
+        return 0;
+    }
+
+    public String getFEN() {
+        return getBoardFEN() + " " +
+                (isWhiteSideToPlay ? "w" : "b") + " " +
+                getCastlingFEN() + " " +
+                getEpFEN() + " " +
+                halfMoveClock + " " +
+                fullMoveCounter;
+    }
+
+    private String getBoardFEN() {
+        StringBuilder fen = new StringBuilder();
+        for (int rank = 7; rank >= 0; rank--) {
+            int emptySquares = 0;
+            for (int file = 0; file < 8; file++) {
+                byte sq = (byte) (rank * 8 + file);
+                char pieceChar = getPieceAtSquare(sq);
+
+                if (pieceChar == ' ') {
+                    emptySquares++;
+                } else {
+                    if (emptySquares > 0) {
+                        fen.append(emptySquares);
+                        emptySquares = 0;
+                    }
+                    fen.append(pieceChar);
+                }
+            }
+            if (emptySquares > 0) {
+                fen.append(emptySquares);
+            }
+            if (rank > 0) {
+                fen.append('/');
+            }
+        }
+        return fen.toString();
+    }
+
+    private char getPieceAtSquare(byte sq) {
+        long pos = Square.bitboardForSquare(sq);
+        if ((piecesBB[pawns] & pos) != 0) return (piecesBB[whitePieces] & pos) != 0 ? 'P' : 'p';
+        if ((piecesBB[knights] & pos) != 0) return (piecesBB[whitePieces] & pos) != 0 ? 'N' : 'n';
+        if ((piecesBB[bishops] & pos) != 0) return (piecesBB[whitePieces] & pos) != 0 ? 'B' : 'b';
+        if ((piecesBB[rooks] & pos) != 0) return (piecesBB[whitePieces] & pos) != 0 ? 'R' : 'r';
+        if ((piecesBB[queens] & pos) != 0) return (piecesBB[whitePieces] & pos) != 0 ? 'Q' : 'q';
+        if ((piecesBB[whiteKing] & pos) != 0) return 'K';
+        if ((piecesBB[blackKing] & pos) != 0) return 'k';
+        return ' ';
+    }
+
+    private String getCastlingFEN() {
+        StringBuilder sb = new StringBuilder();
+        if (isAllowedWhiteShortCastle) sb.append('K');
+        if (isAllowedWhiteLongCastle) sb.append('Q');
+        if (isAllowedBlackShortCastle) sb.append('k');
+        if (isAllowedBlackLongCastle) sb.append('q');
+        return (sb.isEmpty()) ? "-" : sb.toString();
+    }
+
+    private String getEpFEN() {
+        if (enPassantSquare == -1) return "-";
+        int file = enPassantSquare % 8;
+        int rank = enPassantSquare / 8;
+        return (char) ('a' + file) + Integer.toString(rank + 1);
+    }
+
+
+    /* ################### CHECKCOUNT AND SQUAREDATTACK ################### */
+
+    public int checkCount(byte sq, byte colorIdx) {
+        int count = 0;
+        long attackers;
+
+        long Knights = piecesBB[colorIdx] & piecesBB[knights];
+
+        if (Knights != 0) {
+            attackers = Knights & Piece.knightAttacks(sq);
+            if ((count += Long.bitCount(attackers)) >= 2) return count;
+        }
+
+        long Pawns = piecesBB[colorIdx] & piecesBB[pawns];
+        if (Pawns != 0) {
+            attackers = Pawns & (colorIdx == 1 ? Piece.whitePawnAttacks(sq) : Piece.blackPawnAttacks(sq));
+            if ((count += Long.bitCount(attackers)) >= 2) return count;
+        }
+
+        long Rooks = piecesBB[colorIdx] & piecesBB[rooks];
+        long rookAttacks = 0L;
+        boolean isRooksComputed = false;
+        if (Rooks != 0) {
+            rookAttacks = Piece.rookAttacks(occupied, sq);
+            attackers = Rooks & rookAttacks;
+            if ((count += Long.bitCount(attackers)) >= 2) return count;
+            isRooksComputed = true;
+        }
+
+        long Bishops = piecesBB[colorIdx] & piecesBB[bishops];
+        long bishopAttacks = 0L;
+        boolean isBishopComputed = false;
+        if (Bishops != 0) {
+            bishopAttacks = Piece.bishopAttacks(occupied, sq);
+            attackers = Bishops & bishopAttacks;
+            if ((count += Long.bitCount(attackers)) >= 2) return count;
+            isBishopComputed = true;
+        }
+
+        long Queens = piecesBB[colorIdx] & piecesBB[queens];
+        if (Queens != 0) {
+            if (!isRooksComputed) rookAttacks = Piece.rookAttacks(occupied, sq);
+            if (!isBishopComputed) bishopAttacks = Piece.bishopAttacks(occupied, sq);
+            attackers = Queens & (rookAttacks | bishopAttacks);
+            if ((count += Long.bitCount(attackers)) >= 2) return count;
+        }
+        return count;
+    }
+
+    public boolean isSquareAttacked(byte sq, byte colorIdx) {
+        long Knights = piecesBB[colorIdx] & piecesBB[knights];
+        if ((Knights != 0) && (Knights & Piece.knightAttacks(sq)) != 0) {
+            return true;
+        }
+
+        long Pawns = piecesBB[colorIdx] & piecesBB[pawns];
+        if ((Pawns != 0) && (Pawns & (colorIdx == 1 ?
+                Piece.whitePawnAttacks(sq) : Piece.blackPawnAttacks(sq))) != 0)  {
+            return true;
+        }
+
+        long Rooks = piecesBB[colorIdx] & piecesBB[rooks];
+        long rookAttacks = 0L;
+        boolean isRooksComputed = false;
+        if (Rooks != 0) {
+            rookAttacks = Piece.rookAttacks(occupied, sq);
+            if ((Rooks & rookAttacks) != 0) {
+                return true;
+            }
+            isRooksComputed = true;
+        }
+
+        long Bishops = piecesBB[colorIdx] & piecesBB[bishops];
+        long bishopAttacks = 0L;
+        boolean isBishopComputed = false;
+        if (Bishops != 0) {
+            bishopAttacks = Piece.bishopAttacks(occupied, sq);
+            if ((Bishops & bishopAttacks) != 0) {
+                return true;
+            }
+            isBishopComputed = true;
+        }
+
+        long Queens = piecesBB[colorIdx] & piecesBB[queens];
+        if (Queens != 0) {
+            if (!isRooksComputed) rookAttacks = Piece.rookAttacks(occupied, sq);
+            if (!isBishopComputed) bishopAttacks = Piece.bishopAttacks(occupied, sq);
+            if ((Queens & (rookAttacks | bishopAttacks)) != 0) {
+                return true;
+            }
+        }
+        return ((piecesBB[colorIdx == 0 ? whiteKing : blackKing] & Piece.kingAttacks(sq)) != 0);
+    }
+
+    public boolean checkKingSafety(Move mv) {
+        byte color = mv.getColor();
+        boolean isKingSafe = true;
+
+        if (color == 0) makeWhiteMoveBitboardOnly(mv); else makeBlackMoveBitboardOnly(mv);
+
+        if (isSquareAttacked(getKingSquare(color), getOpponentColor(color))) {
+            isKingSafe = false;
+        }
+
+        if (color == 0) unmakeMoveWhite(mv); else unmakeMoveBlack(mv);
+
+        return isKingSafe;
+    }
+
+    /* ################### PIECES MOVES ################### */
 
     public void generatePieceMoves(MoveList mvList, long moveBB, byte sqFrom, byte pieceBB, byte colorBB) {
         while(moveBB != 0) {
@@ -95,7 +368,9 @@ public class Position {
             moveBB &= ~piece;
             byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
             Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB);
-            mvList.addMove(mv);
+            if (checkKingSafety(mv)) {
+                mvList.addMove(mv);
+            }
         }
     }
 
@@ -104,8 +379,10 @@ public class Position {
             long piece = Long.lowestOneBit(moveBB);
             moveBB &= ~piece;
             byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
-            Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, pieceBitboardOnSquare(sqTo), (byte) ((colorBB+1)%2));
-            mvList.addMove(mv);
+            Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, pieceBitboardOnSquare(sqTo), getOpponentColor(colorBB));
+            if (checkKingSafety(mv)) {
+                mvList.addMove(mv);
+            }
         }
     }
 
@@ -120,7 +397,9 @@ public class Position {
                 generatePromotionMoves(mvList, sqFrom, sqTo, pieceBB, colorBB, (byte) 0, (byte) 0);
             } else {
                 Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB);
-                mvList.addMove(mv);
+                if (checkKingSafety(mv)) {
+                    mvList.addMove(mv);
+                }
             }
         }
     }
@@ -132,40 +411,54 @@ public class Position {
             byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
             byte sqFrom = (byte) (sqTo + offset);
             byte cPieceBB = pieceBitboardOnSquare(sqTo);
-            byte cColorBB = (byte) ((colorBB+1)%2);
+            byte cColorBB = getOpponentColor(colorBB);
 
             if (sqTo / 8 == promotionRow) {
                 generatePromotionMoves(mvList, sqFrom, sqTo, pieceBB, colorBB, cPieceBB, cColorBB);
             } else {
                 Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, cPieceBB, cColorBB);
-                mvList.addMove(mv);
+                if (checkKingSafety(mv)) {
+                    mvList.addMove(mv);
+                }
             }
         }
     }
 
     public void generatePromotionMoves(MoveList mvList, byte sqFrom, byte sqTo,
                                        byte pieceBB, byte colorBB, byte cPiece, byte cColor) {
-        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, queens));
+        Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, queens);
+        if (!checkKingSafety(mv)) return;
+        mvList.addMove(mv);
         mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, rooks));
         mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, knights));
         mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, bishops));
     }
 
-    public void generateEnPassantMoves(MoveList mvList, int eastOffset, int westOffset, int enPassantOffset, byte colorBB) {
+    public void generateEnPassantMoves(MoveList mvList, int eastOffset, int westOffset,
+                                       int enPassantOffset, long maskEast, long maskWest, byte colorBB) {
         if (enPassantSquare == -1) return;
 
         byte enemyPawnSquare = (byte) (enPassantSquare + enPassantOffset);
+        Move mv;
 
         byte eastSquare = (byte) (enPassantSquare + eastOffset);
-        if (((0x1L << eastSquare) & piecesBB[colorBB]) != 0) {
-            mvList.addMove(new Move(eastSquare, enPassantSquare, pawns, colorBB, pawns,
-                    (byte) ((colorBB+1)%2), (byte) 0, enemyPawnSquare));
+        long eastSquareBB = (0x1L << eastSquare) & piecesBB[pawns];
+        if (((eastSquareBB & piecesBB[colorBB]) != 0) && ((eastSquareBB & maskEast) != 0)) {
+            mv = new Move(eastSquare, enPassantSquare, pawns, colorBB, pawns,
+                    getOpponentColor(colorBB), (byte) 0, enemyPawnSquare);
+            if (checkKingSafety(mv)) {
+                mvList.addMove(mv);
+            }
         }
 
         byte westSquare = (byte) (enPassantSquare + westOffset);
-        if (((0x1L << westSquare) & piecesBB[colorBB]) != 0) {
-            mvList.addMove(new Move(westSquare, enPassantSquare, pawns, colorBB, pawns,
-                    (byte) ((colorBB+1)%2), (byte) 0, enemyPawnSquare));
+        long westSquareBB = (0x1L << westSquare) & piecesBB[pawns];
+        if (((westSquareBB & piecesBB[colorBB]) != 0) && (westSquareBB & maskWest) != 0){
+            mv = new Move(westSquare, enPassantSquare, pawns, colorBB, pawns,
+                    getOpponentColor(colorBB), (byte) 0, enemyPawnSquare);
+            if (checkKingSafety(mv)) {
+                mvList.addMove(mv);
+            }
         }
     }
 
@@ -183,21 +476,23 @@ public class Position {
         generatePawnMoves(mvList, doublePush, -16, 7, pawns, whitePieces);
         generatePawnCaptures(mvList, captureLeft, -7, 7, pawns, whitePieces);
         generatePawnCaptures(mvList, captureRight, -9, 7, pawns, whitePieces);
-        generateEnPassantMoves(mvList, -7, -9, -8, whitePieces);
+        generateEnPassantMoves(mvList, -7, -9, -8,
+                Square.NOT_A_FILE, Square.NOT_H_FILE, whitePieces);
     }
 
     public void blackPawnMoves(MoveList mvList) {
         long piecesBitboard = piecesBB[pawns] & piecesBB[blackPieces]; // param
-        long singlePush = (piecesBitboard >> 8) & empty; // south
-        long doublePush = ((singlePush & Square.RANK_6) >> 8) & empty;
-        long captureLeft = (piecesBitboard & Square.NOT_H_FILE) >> 7 & piecesBB[whitePieces];  // south-west
-        long captureRight = (piecesBitboard & Square.NOT_A_FILE) >> 9 & piecesBB[whitePieces]; // south-east
+        long singlePush = (piecesBitboard >>> 8) & empty; // south
+        long doublePush = ((singlePush & Square.RANK_6) >>> 8) & empty;
+        long captureLeft = (piecesBitboard & Square.NOT_H_FILE) >>> 7 & piecesBB[whitePieces];  // south-west
+        long captureRight = (piecesBitboard & Square.NOT_A_FILE) >>> 9 & piecesBB[whitePieces]; // south-east
 
         generatePawnMoves(mvList, singlePush, 8, 0, pawns, blackPieces);
         generatePawnMoves(mvList, doublePush, 16, 0, pawns, blackPieces);
         generatePawnCaptures(mvList, captureLeft, 7, 0, pawns, blackPieces);
         generatePawnCaptures(mvList, captureRight, 9, 0, pawns, blackPieces);
-        generateEnPassantMoves(mvList, 9, 7, 8, blackPieces);
+        generateEnPassantMoves(mvList, 7, 9, 8,
+                Square.NOT_H_FILE, Square.NOT_A_FILE, blackPieces);
     }
 
     /* ==== Knights moves ==== */
@@ -240,7 +535,7 @@ public class Position {
 
     /* ====Kings moves ==== */
 
-    public void whiteKingMoves(MoveList mvList) {
+    public void whiteKingMoves(MoveList mvList, int check) {
         byte whiteKingSquare = BinaryHelper.bitScanForward(piecesBB[whiteKing]);
         byte blackKingSquare = BinaryHelper.bitScanForward(piecesBB[blackKing]);
 
@@ -250,11 +545,11 @@ public class Position {
 
         generatePieceMoves(mvList, moveBitboard, whiteKingSquare, whiteKing, whitePieces);
         generatePieceCaptures(mvList, takeBitboard, whiteKingSquare, whiteKing, whitePieces);
-        generateWhiteShortCastling(mvList);
-        generateWhiteLongCastling(mvList);
+        generateWhiteShortCastling(mvList, check);
+        generateWhiteLongCastling(mvList, check);
     }
 
-    public void blackKingMoves(MoveList mvList) {
+    public void blackKingMoves(MoveList mvList, int check) {
         byte whiteKingSquare = BinaryHelper.bitScanForward(piecesBB[whiteKing]);
         byte blackKingSquare = BinaryHelper.bitScanForward(piecesBB[blackKing]);
 
@@ -264,35 +559,51 @@ public class Position {
 
         generatePieceMoves(mvList, moveBitboard, blackKingSquare, blackKing, blackPieces);
         generatePieceCaptures(mvList, takeBitboard, blackKingSquare, blackKing, blackPieces);
-        generateBlackShortCastling(mvList);
-        generateBlackLongCastling(mvList);
+        generateBlackShortCastling(mvList, check);
+        generateBlackLongCastling(mvList, check);
     }
 
-    private void generateBlackShortCastling(MoveList mvList) {
-        if (isAllowedBlackShortCastle && Square.isEmpty(Square.F8, occupied) && Square.isEmpty(Square.G8, occupied)) {
+    private void generateBlackShortCastling(MoveList mvList, int check) {
+        if (check == 0 && isAllowedBlackShortCastle
+                && Square.isEmpty(Square.F8, occupied)
+                && Square.isEmpty(Square.G8, occupied)
+                && (!isSquareAttacked(Square.F8, whitePieces))
+                && (!isSquareAttacked(Square.G8, whitePieces))) {
             Move mv = new Move(Square.E8, Square.G8, blackKing, blackPieces);
             mvList.addMove(mv);
         }
     }
 
-    private void generateBlackLongCastling(MoveList mvList) {
-        if (isAllowedBlackLongCastle && Square.isEmpty(Square.B8, occupied) && Square.isEmpty(Square.C8, occupied)
-                && Square.isEmpty(Square.D8, occupied)) {
+    private void generateBlackLongCastling(MoveList mvList, int check) {
+        if (check == 0 && isAllowedBlackLongCastle
+                && Square.isEmpty(Square.B8, occupied)
+                && Square.isEmpty(Square.C8, occupied)
+                && Square.isEmpty(Square.D8, occupied)
+                && (!isSquareAttacked(Square.C8, whitePieces))
+                && (!isSquareAttacked(Square.D8, whitePieces))) {
             Move mv = new Move(Square.E8, Square.C8, blackKing, blackPieces);
             mvList.addMove(mv);
         }
     }
 
-    private void generateWhiteShortCastling(MoveList mvList) {
-        if (isAllowedWhiteShortCastle && Square.isEmpty(Square.F1, occupied) && Square.isEmpty(Square.G1, occupied)) {
+    private void generateWhiteShortCastling(MoveList mvList, int check) {
+        if (check == 0 && isAllowedWhiteShortCastle
+                && Square.isEmpty(Square.F1, occupied)
+                && Square.isEmpty(Square.G1, occupied)
+                && (!isSquareAttacked(Square.F1, blackPieces))
+                && (!isSquareAttacked(Square.G1, blackPieces))) {
             Move mv = new Move(Square.E1, Square.G1, whiteKing, whitePieces);
             mvList.addMove(mv);
         }
     }
 
-    private void generateWhiteLongCastling(MoveList mvList) {
-        if (isAllowedWhiteLongCastle && Square.isEmpty(Square.B1, occupied) && Square.isEmpty(Square.C1, occupied)
-                && Square.isEmpty(Square.D1, occupied)) {
+    private void generateWhiteLongCastling(MoveList mvList, int check) {
+        if (check == 0 && isAllowedWhiteLongCastle
+                && Square.isEmpty(Square.B1, occupied)
+                && Square.isEmpty(Square.C1, occupied)
+                && Square.isEmpty(Square.D1, occupied)
+                && (!isSquareAttacked(Square.C1, blackPieces))
+                && (!isSquareAttacked(Square.D1, blackPieces))) {
             Move mv = new Move(Square.E1, Square.C1, whiteKing, whitePieces);
             mvList.addMove(mv);
         }
@@ -369,8 +680,8 @@ public class Position {
             long moveBitboard = possibleAttackSquares & empty;
             long takeBitboard = possibleAttackSquares & piecesBB[whitePieces]; // param
 
-            generatePieceMoves(mvList, moveBitboard, sqFrom, bishops, blackPieces);
-            generatePieceCaptures(mvList, takeBitboard, sqFrom, bishops, blackPieces);
+            generatePieceMoves(mvList, moveBitboard, sqFrom, rooks, blackPieces);
+            generatePieceCaptures(mvList, takeBitboard, sqFrom, rooks, blackPieces);
         }
     }
 
@@ -412,13 +723,16 @@ public class Position {
         }
     }
 
-    /* ==== Pseudo-legal moves ==== */
+    /* ==== Legal moves ==== */
 
-    public MoveList whitesPseudoLegalMoves() {
+    public MoveList whitesLegalMoves() {
         MoveList whitesLegalMoves = new MoveList();
 
+        int count = checkCount(getKingSquare(whitePieces), blackPieces);
+        whiteKingMoves(whitesLegalMoves, count);
+        if (count > 1) return whitesLegalMoves;
+
         whitePawnMoves(whitesLegalMoves);
-        whiteKingMoves(whitesLegalMoves);
         whiteKnightMoves(whitesLegalMoves);
         whiteBishopMoves(whitesLegalMoves);
         whiteRookMoves(whitesLegalMoves);
@@ -427,11 +741,14 @@ public class Position {
         return whitesLegalMoves;
     }
 
-    public MoveList blacksPseudoLegalMoves() {
+    public MoveList blacksLegalMoves() {
         MoveList blacksLegalMoves = new MoveList();
 
+        int count = checkCount(getKingSquare(blackPieces), whitePieces);
+        blackKingMoves(blacksLegalMoves, count);
+        if (count > 1) return blacksLegalMoves;
+
         blackPawnMoves(blacksLegalMoves);
-        blackKingMoves(blacksLegalMoves);
         blackKnightMoves(blacksLegalMoves);
         blackBishopMoves(blacksLegalMoves);
         blackRookMoves(blacksLegalMoves);
@@ -440,8 +757,8 @@ public class Position {
         return blacksLegalMoves;
     }
 
-    public MoveList generatePseudoLegalMoves() {
-        return isWhiteSideToPlay ? whitesPseudoLegalMoves() : blacksPseudoLegalMoves();
+    public MoveList generateLegalMoves() {
+        return isWhiteSideToPlay ? whitesLegalMoves() : blacksLegalMoves();
     }
 
     public byte pieceBitboardOnSquare(byte sq) {
@@ -467,29 +784,27 @@ public class Position {
         long bbSquare = Square.bitboardForSquare(sq);
 
         if ((bbSquare & piecesBB[blackKing]) != 0) return Piece.BLACK_KING;
-        if ((bbSquare & piecesBB[whiteKing]) != 0) return Piece.WHITE_KING;
+        else if ((bbSquare & piecesBB[whiteKing]) != 0) return Piece.WHITE_KING;
 
-        if ((piecesBB[whitePieces] & bbSquare) != 0) {
+        else if ((piecesBB[whitePieces] & bbSquare) != 0) {
             if ((piecesBB[pawns] & bbSquare) != 0) return Piece.WHITE_PAWN;
-            if ((piecesBB[knights] & bbSquare) != 0) return Piece.WHITE_KNIGHT;
-            if ((piecesBB[bishops] & bbSquare) != 0) return Piece.WHITE_BISHOP;
-            if ((piecesBB[rooks] & bbSquare) != 0) return Piece.WHITE_ROOK;
-            if ((piecesBB[queens] & bbSquare) != 0) return Piece.WHITE_QUEEN;
+            else if ((piecesBB[knights] & bbSquare) != 0) return Piece.WHITE_KNIGHT;
+            else if ((piecesBB[bishops] & bbSquare) != 0) return Piece.WHITE_BISHOP;
+            else if ((piecesBB[rooks] & bbSquare) != 0) return Piece.WHITE_ROOK;
+            else if ((piecesBB[queens] & bbSquare) != 0) return Piece.WHITE_QUEEN;
             return Piece.NONE;
         }
 
-        if ((piecesBB[blackPieces] & bbSquare) != 0) {
+        else if ((piecesBB[blackPieces] & bbSquare) != 0) {
             if ((piecesBB[pawns] & bbSquare) != 0) return Piece.BLACK_PAWN;
-            if ((piecesBB[knights] & bbSquare) != 0) return Piece.BLACK_KNIGHT;
-            if ((piecesBB[bishops] & bbSquare) != 0) return Piece.BLACK_BISHOP;
-            if ((piecesBB[rooks] & bbSquare) != 0) return Piece.BLACK_ROOK;
-            if ((piecesBB[queens] & bbSquare) != 0) return Piece.BLACK_QUEEN;
+            else if ((piecesBB[knights] & bbSquare) != 0) return Piece.BLACK_KNIGHT;
+            else if ((piecesBB[bishops] & bbSquare) != 0) return Piece.BLACK_BISHOP;
+            else if ((piecesBB[rooks] & bbSquare) != 0) return Piece.BLACK_ROOK;
+            else if ((piecesBB[queens] & bbSquare) != 0) return Piece.BLACK_QUEEN;
         }
 
         return Piece.NONE;
     }
-
-    /* makeMove && unmakeMove */
 
     private boolean isBlackShortCastling(Move move) {
         return move.getFrom() == Square.E8 && move.getTo() == Square.G8 && move.getPiece() == blackKing;
@@ -507,7 +822,9 @@ public class Position {
         return move.getFrom() == Square.E1 && move.getTo() == Square.C1 && move.getPiece() == whiteKing;
     }
 
-    private void playBlackCastling(boolean isShort) {
+    /* ################### MAKEMOVE AND UNMAKEMOVE ################### */
+
+    private void playBlackCastlingBitboardOnly(boolean isShort) {
         long kingFrom = Square.bitboardForSquare(Square.E8);
         long kingTo = Square.bitboardForSquare(isShort ? Square.G8 : Square.C8);
         long rookFrom = Square.bitboardForSquare(isShort ? Square.H8 : Square.A8);
@@ -520,12 +837,9 @@ public class Position {
         piecesBB[blackPieces] ^= kingFromToBB ^ rookFromToBB;
         piecesBB[rooks] ^= rookFromToBB;
         piecesBB[blackKing] ^= kingFromToBB;
-
-        isAllowedBlackShortCastle = false;
-        isAllowedBlackLongCastle = false;
     }
 
-    private void playWhiteCastling(boolean isShort) {
+    private void playWhiteCastlingBitboardOnly(boolean isShort) {
         long kingFrom = Square.bitboardForSquare(Square.E1);
         long kingTo = Square.bitboardForSquare(isShort ? Square.G1 : Square.C1);
         long rookFrom = Square.bitboardForSquare(isShort ? Square.H1 : Square.A1);
@@ -538,9 +852,6 @@ public class Position {
         piecesBB[whitePieces] ^= kingFromToBB ^ rookFromToBB;
         piecesBB[rooks] ^= rookFromToBB;
         piecesBB[whiteKing] ^= kingFromToBB;
-
-        isAllowedWhiteShortCastle = false;
-        isAllowedWhiteLongCastle = false;
     }
 
     private void updateWhiteCastlingRights(Move move) {
@@ -604,9 +915,9 @@ public class Position {
         isWhiteSideToPlay = !isWhiteSideToPlay;
     }
 
-    public void makeWhiteMove(Move move) {
-        if (isWhiteShortCastling(move)) {playWhiteCastling(true); return;}
-        if (isWhiteLongCastling(move)) {playWhiteCastling(false); return;}
+    public void makeWhiteMoveBitboardOnly(Move move) {
+        if (isWhiteShortCastling(move)) {playWhiteCastlingBitboardOnly(true); return;}
+        if (isWhiteLongCastling(move)) {playWhiteCastlingBitboardOnly(false); return;}
 
         long fromBB = 0x1L << move.getFrom();
         long toBB = 0x1L << move.getTo();
@@ -638,13 +949,22 @@ public class Position {
         }
 
         piecesBB[move.getColor()] ^= fromToBB;
-
-        updateWhiteCastlingRights(move);
     }
 
-    public void makeBlackMove(Move move) {
-        if (isBlackShortCastling(move)) {playBlackCastling(true);return;}
-        if (isBlackLongCastling(move)) {playBlackCastling(false);return;}
+    public void makeWhiteMove(Move move) {
+        makeWhiteMoveBitboardOnly(move);
+
+        if (isWhiteShortCastling(move) || isWhiteLongCastling(move)) {
+            isAllowedWhiteShortCastle = false;
+            isAllowedWhiteLongCastle = false;
+        } else {
+            updateWhiteCastlingRights(move);
+        }
+    }
+
+    public void makeBlackMoveBitboardOnly(Move move) {
+        if (isBlackShortCastling(move)) {playBlackCastlingBitboardOnly(true);return;}
+        if (isBlackLongCastling(move)) {playBlackCastlingBitboardOnly(false);return;}
 
         long fromBB = 0x1L << move.getFrom();
         long toBB = 0x1L << move.getTo();
@@ -676,9 +996,17 @@ public class Position {
         }
 
         piecesBB[move.getColor()] ^= fromToBB;
+    }
 
-        updateBlackCastlingRights(move);
+    public void makeBlackMove(Move move) {
+        makeBlackMoveBitboardOnly(move);
 
+        if (isBlackShortCastling(move) || isBlackLongCastling(move)) {
+            isAllowedBlackShortCastle = false;
+            isAllowedBlackLongCastle = false;
+        } else {
+            updateBlackCastlingRights(move);
+        }
     }
 
     private void undoBlackCastling(boolean isShort) {
@@ -715,18 +1043,19 @@ public class Position {
         MoveState previousState = null;
         if (!moveStateHistory.isEmpty()) {
             previousState = moveStateHistory.pop();
-            isAllowedBlackShortCastle = previousState.isAllowedBlackShortCastle;
-            isAllowedBlackLongCastle = previousState.isAllowedBlackLongCastle;
-            isAllowedWhiteShortCastle = previousState.isAllowedWhiteShortCastle;
-            isAllowedWhiteLongCastle = previousState.isAllowedWhiteLongCastle;
-            isWhiteSideToPlay = previousState.isWhiteSideToPlay;
+            this.isAllowedBlackShortCastle = previousState.isAllowedBlackShortCastle;
+            this.isAllowedBlackLongCastle = previousState.isAllowedBlackLongCastle;
+            this.isAllowedWhiteShortCastle = previousState.isAllowedWhiteShortCastle;
+            this.isAllowedWhiteLongCastle = previousState.isAllowedWhiteLongCastle;
+            this.isWhiteSideToPlay = previousState.isWhiteSideToPlay;
+            this.enPassantSquare = previousState.enPassantSquare;
         }
         return previousState;
     }
 
     public void unmakeMove(Move move) {
-        MoveState previousState = restaureMoveState();
-        if (previousState.isWhiteSideToPlay) unmakeMoveWhite(move); else unmakeMoveBlack(move);
+        if (!isWhiteSideToPlay) unmakeMoveWhite(move); else unmakeMoveBlack(move);
+        restaureMoveState();
     }
 
     public void unmakeMoveWhite(Move move) {
@@ -812,7 +1141,12 @@ public class Position {
         newPos.isAllowedBlackShortCastle = pos.isAllowedBlackShortCastle;
         newPos.isAllowedBlackLongCastle = pos.isAllowedBlackLongCastle;
 
-        System.arraycopy(pos.piecesBB, 0, newPos.piecesBB, 0, pos.piecesBB.length);
+        newPos.piecesBB = pos.piecesBB.clone();
+
+        newPos.moveStateHistory = new Stack<>();
+        for (MoveState ms : pos.moveStateHistory) {
+            newPos.moveStateHistory.push(new MoveState(ms));
+        }
 
         return newPos;
     }

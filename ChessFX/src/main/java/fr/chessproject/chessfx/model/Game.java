@@ -2,22 +2,36 @@ package fr.chessproject.chessfx.model;
 
 public class Game {
 
-    private final Position currentPos;
+    private Position currentPos;
 
     private MoveList validMoves;
     private Move lastMove;
 
     public Game() {
         currentPos = new Position();
-        //currentPos.loadFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        currentPos.loadFEN("2n1p1k1/3P4/8/8/8/8/5p2/2K1Q1R1 w - - 0 1");
-        validMoves = currentPos.generatePseudoLegalMoves();
-        lastMove = null;
+        currentPos.loadFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        initMoves();
+    }
+
+    public void setFen(String fen) {
+        currentPos = new Position();
+        currentPos.loadFEN(fen);
+        initMoves();
+    }
+
+    public String getFen() {
+        return currentPos.getFEN();
     }
 
     public Position getPosition() {
         return currentPos;
     }
+
+    public void initMoves() {
+        validMoves = currentPos.generateLegalMoves();
+        lastMove = null;
+    }
+
 
     public Move checkMove(Move mv) {
         for (int i = 0; i < validMoves.getMvCount(); i++) {
@@ -30,7 +44,7 @@ public class Game {
 
     public void playMove(Move mv) {
         currentPos.makeMove(mv);
-        validMoves = currentPos.generatePseudoLegalMoves();
+        validMoves = currentPos.generateLegalMoves();
         lastMove = mv;
     }
 

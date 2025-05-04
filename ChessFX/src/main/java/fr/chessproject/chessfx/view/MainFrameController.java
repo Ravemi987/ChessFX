@@ -1,6 +1,8 @@
 package fr.chessproject.chessfx.view;
 
 import fr.chessproject.chessfx.controller.ChessController;
+import fr.chessproject.chessfx.model.CommandListenerObserver;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Point2D;
@@ -10,7 +12,7 @@ import javafx.scene.layout.Pane;
 
 import java.io.IOException;
 
-public class MainFrameController {
+public class MainFrameController implements CommandListenerObserver {
 
     @FXML
     public BorderPane mainFrame;
@@ -23,12 +25,20 @@ public class MainFrameController {
     private GamePanelController gamePanelController;
 
     public MainFrameController() {
-        System.out.println("MainFrameController created");
+        //System.out.println("MainFrameController created");
+    }
+
+    @Override
+    public void onCommandReceived(String command, String args) {
+        if (command.equals("quit")) {
+            System.out.println("Shutting down application...");
+            Platform.exit();
+        }
     }
 
     @FXML
     public void initialize() {
-        System.out.println("MainFrameController initialized");
+        //System.out.println("MainFrameController initialized");
         gamePanelController = (GamePanelController) boardPane.getProperties().get("controller");
     }
 
@@ -39,6 +49,10 @@ public class MainFrameController {
     public void setMainController(ChessController chessController) {
         this.controller = chessController;
         gamePanelController.setMainController(controller);
+    }
+
+    public void updateBoard() {
+        gamePanelController.refreshBoard();
     }
 
     public void setVisible(boolean visible) {
