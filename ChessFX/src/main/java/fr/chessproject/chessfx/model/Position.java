@@ -266,7 +266,7 @@ public class Position {
 
         long Pawns = piecesBB[colorIdx] & piecesBB[pawns];
         if (Pawns != 0) {
-            attackers = Pawns & (colorIdx == 0 ? Piece.blackPawnAttacks(sq) : Piece.whitePawnAttacks(sq));
+            attackers = Pawns & (colorIdx == 1 ? Piece.whitePawnAttacks(sq) : Piece.blackPawnAttacks(sq));
             if ((count += Long.bitCount(attackers)) >= 2) return count;
         }
 
@@ -482,10 +482,10 @@ public class Position {
 
     public void blackPawnMoves(MoveList mvList) {
         long piecesBitboard = piecesBB[pawns] & piecesBB[blackPieces]; // param
-        long singlePush = (piecesBitboard >> 8) & empty; // south
-        long doublePush = ((singlePush & Square.RANK_6) >> 8) & empty;
-        long captureLeft = (piecesBitboard & Square.NOT_H_FILE) >> 7 & piecesBB[whitePieces];  // south-west
-        long captureRight = (piecesBitboard & Square.NOT_A_FILE) >> 9 & piecesBB[whitePieces]; // south-east
+        long singlePush = (piecesBitboard >>> 8) & empty; // south
+        long doublePush = ((singlePush & Square.RANK_6) >>> 8) & empty;
+        long captureLeft = (piecesBitboard & Square.NOT_H_FILE) >>> 7 & piecesBB[whitePieces];  // south-west
+        long captureRight = (piecesBitboard & Square.NOT_A_FILE) >>> 9 & piecesBB[whitePieces]; // south-east
 
         generatePawnMoves(mvList, singlePush, 8, 0, pawns, blackPieces);
         generatePawnMoves(mvList, doublePush, 16, 0, pawns, blackPieces);
