@@ -275,9 +275,7 @@ public class Position {
         long rookAttacks = 0L;
         boolean isRooksComputed = false;
         if (Rooks != 0) {
-            long blockers = occupied & Piece.rookRelevantMask[sq];
-            int key = (int) ((blockers * Piece.rookMagics[sq]) >>> Piece.rookShifts[sq]);
-            rookAttacks = ChessController.rookMovesLookup[sq][key]; // param
+            rookAttacks = Piece.rookAttacksLookup(occupied, sq);
             attackers = Rooks & rookAttacks;
             if ((count += Long.bitCount(attackers)) >= 2) return count;
             isRooksComputed = true;
@@ -287,9 +285,7 @@ public class Position {
         long bishopAttacks = 0L;
         boolean isBishopComputed = false;
         if (Bishops != 0) {
-            long blockers = occupied & Piece.bishopRelevantMask[sq];
-            int key = (int) ((blockers * Piece.bishopMagics[sq]) >>> Piece.bishopShifts[sq]);
-            bishopAttacks = ChessController.bishopMovesLookup[sq][key]; // param
+            bishopAttacks = Piece.bishopAttacksLookup(occupied, sq);
             attackers = Bishops & bishopAttacks;
             if ((count += Long.bitCount(attackers)) >= 2) return count;
             isBishopComputed = true;
@@ -298,14 +294,10 @@ public class Position {
         long Queens = piecesBB[colorIdx] & piecesBB[queens];
         if (Queens != 0) {
             if (!isRooksComputed) {
-                long blockers = occupied & Piece.rookRelevantMask[sq];
-                int key = (int) ((blockers * Piece.rookMagics[sq]) >>> Piece.rookShifts[sq]);
-                rookAttacks = ChessController.rookMovesLookup[sq][key]; // param
+                rookAttacks = Piece.rookAttacksLookup(occupied, sq);
             }
             if (!isBishopComputed) {
-                long blockers = occupied & Piece.bishopRelevantMask[sq];
-                int key = (int) ((blockers * Piece.bishopMagics[sq]) >>> Piece.bishopShifts[sq]);
-                bishopAttacks = ChessController.bishopMovesLookup[sq][key]; // param
+                bishopAttacks = Piece.bishopAttacksLookup(occupied, sq);
             }
             attackers = Queens & (rookAttacks | bishopAttacks);
             if ((count += Long.bitCount(attackers)) >= 2) return count;
@@ -329,9 +321,7 @@ public class Position {
         long rookAttacks = 0L;
         boolean isRooksComputed = false;
         if (Rooks != 0) {
-            long blockers = occupied & Piece.rookRelevantMask[sq];
-            int key = (int) ((blockers * Piece.rookMagics[sq]) >>> Piece.rookShifts[sq]);
-            rookAttacks = ChessController.rookMovesLookup[sq][key]; // param
+            rookAttacks = Piece.rookAttacksLookup(occupied, sq);
             if ((Rooks & rookAttacks) != 0) {
                 return true;
             }
@@ -342,9 +332,7 @@ public class Position {
         long bishopAttacks = 0L;
         boolean isBishopComputed = false;
         if (Bishops != 0) {
-            long blockers = occupied & Piece.bishopRelevantMask[sq];
-            int key = (int) ((blockers * Piece.bishopMagics[sq]) >>> Piece.bishopShifts[sq]);
-            bishopAttacks = ChessController.bishopMovesLookup[sq][key]; // param
+            bishopAttacks = Piece.bishopAttacksLookup(occupied, sq);
             if ((Bishops & bishopAttacks) != 0) {
                 return true;
             }
@@ -354,14 +342,10 @@ public class Position {
         long Queens = piecesBB[colorIdx] & piecesBB[queens];
         if (Queens != 0) {
             if (!isRooksComputed) {
-                long blockers = occupied & Piece.rookRelevantMask[sq];
-                int key = (int) ((blockers * Piece.rookMagics[sq]) >>> Piece.rookShifts[sq]);
-                rookAttacks = ChessController.rookMovesLookup[sq][key]; // param
+                rookAttacks = Piece.rookAttacksLookup(occupied, sq);
             }
             if (!isBishopComputed) {
-                long blockers = occupied & Piece.bishopRelevantMask[sq];
-                int key = (int) ((blockers * Piece.bishopMagics[sq]) >>> Piece.bishopShifts[sq]);
-                bishopAttacks = ChessController.bishopMovesLookup[sq][key]; // param
+                bishopAttacks = Piece.bishopAttacksLookup(occupied, sq);
             }
             if ((Queens & (rookAttacks | bishopAttacks)) != 0) {
                 return true;
@@ -645,9 +629,7 @@ public class Position {
             piecesBitboard &= ~piece;
             byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
 
-            long blockers = occupied & Piece.bishopRelevantMask[sqFrom];
-            int key = (int) ((blockers * Piece.bishopMagics[sqFrom]) >>> Piece.bishopShifts[sqFrom]);
-            long possibleAttackSquares = ChessController.bishopMovesLookup[sqFrom][key]; // param
+            long possibleAttackSquares = Piece.bishopAttacksLookup(occupied, sqFrom);
 
             long moveBitboard = possibleAttackSquares & empty;
             long takeBitboard = possibleAttackSquares & piecesBB[blackPieces]; // param
@@ -666,9 +648,7 @@ public class Position {
             piecesBitboard &= ~piece;
             byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
 
-            long blockers = occupied & Piece.bishopRelevantMask[sqFrom];
-            int key = (int) ((blockers * Piece.bishopMagics[sqFrom]) >>> Piece.bishopShifts[sqFrom]);
-            long possibleAttackSquares = ChessController.bishopMovesLookup[sqFrom][key]; // param
+            long possibleAttackSquares = Piece.bishopAttacksLookup(occupied, sqFrom);
 
             long moveBitboard = possibleAttackSquares & empty;
             long takeBitboard = possibleAttackSquares & piecesBB[whitePieces]; // param
@@ -689,9 +669,7 @@ public class Position {
             piecesBitboard &= ~piece;
             byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
 
-            long blockers = occupied & Piece.rookRelevantMask[sqFrom];
-            int key = (int) ((blockers * Piece.rookMagics[sqFrom]) >>> Piece.rookShifts[sqFrom]);
-            long possibleAttackSquares = ChessController.rookMovesLookup[sqFrom][key]; // param
+            long possibleAttackSquares = Piece.rookAttacksLookup(occupied, sqFrom);
 
             long moveBitboard = possibleAttackSquares & empty;
             long takeBitboard = possibleAttackSquares & piecesBB[blackPieces]; // param
@@ -710,9 +688,7 @@ public class Position {
             piecesBitboard &= ~piece;
             byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
 
-            long blockers = occupied & Piece.rookRelevantMask[sqFrom];
-            int key = (int) ((blockers * Piece.rookMagics[sqFrom]) >>> Piece.rookShifts[sqFrom]);
-            long possibleAttackSquares = ChessController.rookMovesLookup[sqFrom][key]; // param
+            long possibleAttackSquares = Piece.rookAttacksLookup(occupied, sqFrom);
 
             long moveBitboard = possibleAttackSquares & empty;
             long takeBitboard = possibleAttackSquares & piecesBB[whitePieces]; // param
@@ -733,15 +709,7 @@ public class Position {
             piecesBitboard &= ~piece;
             byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
 
-            long bishopBlockers = occupied & Piece.bishopRelevantMask[sqFrom];
-            int bishopKey = (int) ((bishopBlockers * Piece.bishopMagics[sqFrom]) >>> Piece.bishopShifts[sqFrom]);
-            long bishopAttackSquares = ChessController.bishopMovesLookup[sqFrom][bishopKey]; // param
-
-            long rookBlockers = occupied & Piece.rookRelevantMask[sqFrom];
-            int rookKey = (int) ((rookBlockers * Piece.rookMagics[sqFrom]) >>> Piece.rookShifts[sqFrom]);
-            long rookAttackSquares = ChessController.rookMovesLookup[sqFrom][rookKey]; // param
-
-            long possibleAttackSquares = bishopAttackSquares | rookAttackSquares;
+            long possibleAttackSquares = Piece.queenAttacksLookup(occupied, sqFrom);
 
             long moveBitboard = possibleAttackSquares & empty;
             long takeBitboard = possibleAttackSquares & piecesBB[blackPieces]; // param
@@ -760,15 +728,7 @@ public class Position {
             piecesBitboard &= ~piece;
             byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
 
-            long bishopBlockers = occupied & Piece.bishopRelevantMask[sqFrom];
-            int bishopKey = (int) ((bishopBlockers * Piece.bishopMagics[sqFrom]) >>> Piece.bishopShifts[sqFrom]);
-            long bishopAttackSquares = ChessController.bishopMovesLookup[sqFrom][bishopKey]; // param
-
-            long rookBlockers = occupied & Piece.rookRelevantMask[sqFrom];
-            int rookKey = (int) ((rookBlockers * Piece.rookMagics[sqFrom]) >>> Piece.rookShifts[sqFrom]);
-            long rookAttackSquares = ChessController.rookMovesLookup[sqFrom][rookKey]; // param
-
-            long possibleAttackSquares = bishopAttackSquares | rookAttackSquares;
+            long possibleAttackSquares = Piece.queenAttacksLookup(occupied, sqFrom);
 
             long moveBitboard = possibleAttackSquares & empty;
             long takeBitboard = possibleAttackSquares & piecesBB[whitePieces]; // param

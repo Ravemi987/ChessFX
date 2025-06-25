@@ -1,5 +1,6 @@
 package fr.chessproject.chessfx.model;
 
+import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.helpers.BinaryHelper;
 
 import java.io.BufferedWriter;
@@ -434,6 +435,26 @@ public class Piece {
 
     public static long blackPawnAttacks(byte square) {
         return blackPawnsAttacksTableStatic[square];
+    }
+
+    /* New Attack Lookups */
+
+    public static long rookAttacksLookup(long occ, byte sq) {
+        long blockers = occ & rookRelevantMask[sq];
+        int key = (int) ((blockers * rookMagics[sq]) >>> rookShifts[sq]);
+        return ChessController.rookMovesLookup[sq][key];
+    }
+
+    public static long bishopAttacksLookup(long occ, byte sq) {
+        long blockers = occ & bishopRelevantMask[sq];
+        int key = (int) ((blockers * bishopMagics[sq]) >>> bishopShifts[sq]);
+        return ChessController.bishopMovesLookup[sq][key];
+    }
+
+    public static long queenAttacksLookup(long occ, byte sq) {
+        int bishopKey = (int) (((occ & bishopRelevantMask[sq]) * bishopMagics[sq]) >>> bishopShifts[sq]);
+        int rookKey = (int) ((( occ & rookRelevantMask[sq]) * rookMagics[sq]) >>> rookShifts[sq]);
+        return ChessController.bishopMovesLookup[sq][bishopKey] | ChessController.rookMovesLookup[sq][rookKey];
     }
 
 
