@@ -1,5 +1,6 @@
 package fr.chessproject.chessfx.main;
 
+import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.model.Move;
 import fr.chessproject.chessfx.model.MoveList;
 import fr.chessproject.chessfx.model.Position;
@@ -10,6 +11,7 @@ import java.util.concurrent.Executors;
 public class Perft {
     private final Position currentPosition;
     private String fen;
+    private ChessController controller = new ChessController();
 
     public Perft(String fen) {
         currentPosition = new Position();

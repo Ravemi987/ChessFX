@@ -1,5 +1,6 @@
 package fr.chessproject.chessfx.model;
 
+import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.helpers.BinaryHelper;
 
 import java.util.Stack;
@@ -274,7 +275,7 @@ public class Position {
         long rookAttacks = 0L;
         boolean isRooksComputed = false;
         if (Rooks != 0) {
-            rookAttacks = Piece.rookAttacks(occupied, sq);
+            rookAttacks = Piece.rookAttacksLookup(occupied, sq);
             attackers = Rooks & rookAttacks;
             if ((count += Long.bitCount(attackers)) >= 2) return count;
             isRooksComputed = true;
@@ -284,7 +285,7 @@ public class Position {
         long bishopAttacks = 0L;
         boolean isBishopComputed = false;
         if (Bishops != 0) {
-            bishopAttacks = Piece.bishopAttacks(occupied, sq);
+            bishopAttacks = Piece.bishopAttacksLookup(occupied, sq);
             attackers = Bishops & bishopAttacks;
             if ((count += Long.bitCount(attackers)) >= 2) return count;
             isBishopComputed = true;
@@ -292,8 +293,12 @@ public class Position {
 
         long Queens = piecesBB[colorIdx] & piecesBB[queens];
         if (Queens != 0) {
-            if (!isRooksComputed) rookAttacks = Piece.rookAttacks(occupied, sq);
-            if (!isBishopComputed) bishopAttacks = Piece.bishopAttacks(occupied, sq);
+            if (!isRooksComputed) {
+                rookAttacks = Piece.rookAttacksLookup(occupied, sq);
+            }
+            if (!isBishopComputed) {
+                bishopAttacks = Piece.bishopAttacksLookup(occupied, sq);
+            }
             attackers = Queens & (rookAttacks | bishopAttacks);
             if ((count += Long.bitCount(attackers)) >= 2) return count;
         }
@@ -316,7 +321,7 @@ public class Position {
         long rookAttacks = 0L;
         boolean isRooksComputed = false;
         if (Rooks != 0) {
-            rookAttacks = Piece.rookAttacks(occupied, sq);
+            rookAttacks = Piece.rookAttacksLookup(occupied, sq);
             if ((Rooks & rookAttacks) != 0) {
                 return true;
             }
@@ -327,7 +332,7 @@ public class Position {
         long bishopAttacks = 0L;
         boolean isBishopComputed = false;
         if (Bishops != 0) {
-            bishopAttacks = Piece.bishopAttacks(occupied, sq);
+            bishopAttacks = Piece.bishopAttacksLookup(occupied, sq);
             if ((Bishops & bishopAttacks) != 0) {
                 return true;
             }
@@ -336,8 +341,12 @@ public class Position {
 
         long Queens = piecesBB[colorIdx] & piecesBB[queens];
         if (Queens != 0) {
-            if (!isRooksComputed) rookAttacks = Piece.rookAttacks(occupied, sq);
-            if (!isBishopComputed) bishopAttacks = Piece.bishopAttacks(occupied, sq);
+            if (!isRooksComputed) {
+                rookAttacks = Piece.rookAttacksLookup(occupied, sq);
+            }
+            if (!isBishopComputed) {
+                bishopAttacks = Piece.bishopAttacksLookup(occupied, sq);
+            }
             if ((Queens & (rookAttacks | bishopAttacks)) != 0) {
                 return true;
             }
@@ -620,7 +629,8 @@ public class Position {
             piecesBitboard &= ~piece;
             byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
 
-            long possibleAttackSquares = Piece.bishopAttacks(occupied, sqFrom); // param
+            long possibleAttackSquares = Piece.bishopAttacksLookup(occupied, sqFrom);
+
             long moveBitboard = possibleAttackSquares & empty;
             long takeBitboard = possibleAttackSquares & piecesBB[blackPieces]; // param
 
@@ -638,7 +648,8 @@ public class Position {
             piecesBitboard &= ~piece;
             byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
 
-            long possibleAttackSquares = Piece.bishopAttacks(occupied, sqFrom); // param
+            long possibleAttackSquares = Piece.bishopAttacksLookup(occupied, sqFrom);
+
             long moveBitboard = possibleAttackSquares & empty;
             long takeBitboard = possibleAttackSquares & piecesBB[whitePieces]; // param
 
@@ -658,7 +669,8 @@ public class Position {
             piecesBitboard &= ~piece;
             byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
 
-            long possibleAttackSquares = Piece.rookAttacks(occupied, sqFrom); // param
+            long possibleAttackSquares = Piece.rookAttacksLookup(occupied, sqFrom);
+
             long moveBitboard = possibleAttackSquares & empty;
             long takeBitboard = possibleAttackSquares & piecesBB[blackPieces]; // param
 
@@ -676,7 +688,8 @@ public class Position {
             piecesBitboard &= ~piece;
             byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
 
-            long possibleAttackSquares = Piece.rookAttacks(occupied, sqFrom); // param
+            long possibleAttackSquares = Piece.rookAttacksLookup(occupied, sqFrom);
+
             long moveBitboard = possibleAttackSquares & empty;
             long takeBitboard = possibleAttackSquares & piecesBB[whitePieces]; // param
 
@@ -696,7 +709,8 @@ public class Position {
             piecesBitboard &= ~piece;
             byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
 
-            long possibleAttackSquares = Piece.queenAttacks(occupied, sqFrom); // param
+            long possibleAttackSquares = Piece.queenAttacksLookup(occupied, sqFrom);
+
             long moveBitboard = possibleAttackSquares & empty;
             long takeBitboard = possibleAttackSquares & piecesBB[blackPieces]; // param
 
@@ -714,7 +728,8 @@ public class Position {
             piecesBitboard &= ~piece;
             byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
 
-            long possibleAttackSquares = Piece.queenAttacks(occupied, sqFrom); // param
+            long possibleAttackSquares = Piece.queenAttacksLookup(occupied, sqFrom);
+
             long moveBitboard = possibleAttackSquares & empty;
             long takeBitboard = possibleAttackSquares & piecesBB[whitePieces]; // param
 

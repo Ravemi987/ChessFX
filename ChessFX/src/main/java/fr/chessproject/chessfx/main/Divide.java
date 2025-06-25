@@ -1,5 +1,6 @@
 package fr.chessproject.chessfx.main;
 
+import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.model.Move;
 import fr.chessproject.chessfx.model.MoveList;
 import fr.chessproject.chessfx.model.Position;
@@ -12,6 +13,7 @@ import static fr.chessproject.chessfx.main.Perft.perftRec;
 public class Divide {
     private final Position currentPosition;
     private String fen;
+    private ChessController controller = new ChessController();
 
     public Divide(String fen) {
         currentPosition = new Position();
