@@ -35,6 +35,7 @@ public class Square {
     public static final long RANK_3 = 0x0000000000FF0000L;
     public static final long RANK_6 = 0x0000FF0000000000L;
 
+
     public static long bitboardForSquare(byte sq) {
         return 0x1L << sq;
     }

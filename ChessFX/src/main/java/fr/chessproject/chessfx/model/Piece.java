@@ -2,7 +2,14 @@ package fr.chessproject.chessfx.model;
 
 import fr.chessproject.chessfx.helpers.BinaryHelper;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+
 public class Piece {
+
+    public static int random_state = 1804289383;
 
     /* Pieces */
 
@@ -70,6 +77,31 @@ public class Piece {
                     0x0400040200000000L, 0x0800080500000000L, 0x1100110A00000000L, 0x2200221400000000L, 0x4400442800000000L, 0x8800885000000000L, 0x100010A000000000L, 0x2000204000000000L,
                     0x0004020000000000L, 0x0008050000000000L, 0x00110A0000000000L, 0x0022140000000000L, 0x0044280000000000L, 0x0088500000000000L, 0x0010A00000000000L, 0x0020400000000000L
             };
+
+    private static final long[] whitePawnsAttacksTableStatic = new long[]
+            {
+                    0x0000000000000200L, 0x0000000000000500L, 0x0000000000000A00L, 0x0000000000001400L, 0x0000000000002800L, 0x0000000000005000L, 0x000000000000A000L, 0x0000000000004000L,
+                    0x0000000000020000L, 0x0000000000050000L, 0x00000000000A0000L, 0x0000000000140000L, 0x0000000000280000L, 0x0000000000500000L, 0x0000000000A00000L, 0x0000000000400000L,
+                    0x0000000002000000L, 0x0000000005000000L, 0x000000000A000000L, 0x0000000014000000L, 0x0000000028000000L, 0x0000000050000000L, 0x00000000A0000000L, 0x0000000040000000L,
+                    0x0000000200000000L, 0x0000000500000000L, 0x0000000A00000000L, 0x0000001400000000L, 0x0000002800000000L, 0x0000005000000000L, 0x000000A000000000L, 0x0000004000000000L,
+                    0x0000020000000000L, 0x0000050000000000L, 0x00000A0000000000L, 0x0000140000000000L, 0x0000280000000000L, 0x0000500000000000L, 0x0000A00000000000L, 0x0000400000000000L,
+                    0x0002000000000000L, 0x0005000000000000L, 0x000A000000000000L, 0x0014000000000000L, 0x0028000000000000L, 0x0050000000000000L, 0x00A0000000000000L, 0x0040000000000000L,
+                    0x0200000000000000L, 0x0500000000000000L, 0x0A00000000000000L, 0x1400000000000000L, 0x2800000000000000L, 0x5000000000000000L, 0xA000000000000000L, 0x4000000000000000L,
+                    0x0000000000000000L, 0x0000000000000000L, 0x0000000000000000L, 0x0000000000000000L, 0x0000000000000000L, 0x0000000000000000L, 0x0000000000000000L, 0x0000000000000000L
+            };
+
+    private static final long[] blackPawnsAttacksTableStatic = new long[]
+            {
+                    0x0000000000000000L, 0x0000000000000000L, 0x0000000000000000L, 0x0000000000000000L, 0x0000000000000000L, 0x0000000000000000L, 0x0000000000000000L, 0x0000000000000000L,
+                    0x0000000000000002L, 0x0000000000000005L, 0x000000000000000AL, 0x0000000000000014L, 0x0000000000000028L, 0x0000000000000050L, 0x00000000000000A0L, 0x0000000000000040L,
+                    0x0000000000000200L, 0x0000000000000500L, 0x0000000000000A00L, 0x0000000000001400L, 0x0000000000002800L, 0x0000000000005000L, 0x000000000000A000L, 0x0000000000004000L,
+                    0x0000000000020000L, 0x0000000000050000L, 0x00000000000A0000L, 0x0000000000140000L, 0x0000000000280000L, 0x0000000000500000L, 0x0000000000A00000L, 0x0000000000400000L,
+                    0x0000000002000000L, 0x0000000005000000L, 0x000000000A000000L, 0x0000000014000000L, 0x0000000028000000L, 0x0000000050000000L, 0x00000000A0000000L, 0x0000000040000000L,
+                    0x0000000200000000L, 0x0000000500000000L, 0x0000000A00000000L, 0x0000001400000000L, 0x0000002800000000L, 0x0000005000000000L, 0x000000A000000000L, 0x0000004000000000L,
+                    0x0000020000000000L, 0x0000050000000000L, 0x00000A0000000000L, 0x0000140000000000L, 0x0000280000000000L, 0x0000500000000000L, 0x0000A00000000000L, 0x0000400000000000L,
+                    0x0002000000000000L, 0x0005000000000000L, 0x000A000000000000L, 0x0014000000000000L, 0x0028000000000000L, 0x0050000000000000L, 0x00A0000000000000L, 0x0040000000000000L
+            };
+
 
 
     /* One Step Only // Generalized Shift */
@@ -139,6 +171,100 @@ public class Piece {
         1 1 1 1 1 1 1 .     1 1 1 1 1 1 1 1     . 1 1 1 1 1 1 1
      */
 
+    /* Arrays of numbers of relevant bits for magic bitboards*/
+
+    private static final int[] rookRelevantsBits = new int[] {
+        12, 11, 11, 11, 11, 11, 11, 12,
+        11, 10, 10, 10, 10, 10, 10, 11,
+        11, 10, 10, 10, 10, 10, 10, 11,
+        11, 10, 10, 10, 10, 10, 10, 11,
+        11, 10, 10, 10, 10, 10, 10, 11,
+        11, 10, 10, 10, 10, 10, 10, 11,
+        11, 10, 10, 10, 10, 10, 10, 11,
+        12, 11, 11, 11, 11, 11, 11, 12
+    };
+
+    private static final int[] bishopRelevantsBits = new int[] {
+        6, 5, 5, 5, 5, 5, 5, 6,
+        5, 5, 5, 5, 5, 5, 5, 5,
+        5, 5, 7, 7, 7, 7, 5, 5,
+        5, 5, 7, 9, 9, 7, 5, 5,
+        5, 5, 7, 9, 9, 7, 5, 5,
+        5, 5, 7, 7, 7, 7, 5, 5,
+        5, 5, 5, 5, 5, 5, 5, 5,
+        6, 5, 5, 5, 5, 5, 5, 6
+    };
+
+    public static final long[] bishopMagics = new long[] {
+            0x005841142A820600L,0x0008305110510504L,0x4084010405120080L,0x40208A0580000101L,0x0102021010020000L,0x0001104210050000L,0x1800841088040006L,0x6102402401084000L,
+            0x00002102100602A0L,0x4004082880940042L,0x0000102400A02050L,0x000A090405020200L,0x0200011040000020L,0x0442011008050812L,0x0041010802100422L,0x1E44830422050C40L,
+            0x002008C184014202L,0x1304410808080040L,0x000504502102A100L,0x00C8007682034000L,0x0144020202110006L,0x0022024108010400L,0x0000680084100800L,0xA010230101011002L,
+            0x1520200884090231L,0x010211208811080CL,0x0018010408004100L,0x0082080004004008L,0x4480820004010404L,0x00100080A1004100L,0x0000808002080400L,0x4008802210840410L,
+            0x0290300480102481L,0x0000900482084807L,0x2080149004180040L,0x0800400821020200L,0x00080A0400001100L,0x0420060210208800L,0x0024084142028420L,0x40080A00800A4078L,
+            0x8446101184000800L,0x0202824820102208L,0x04A2011448000410L,0x0040084022001024L,0x0000082008200102L,0x0240011410204100L,0x100802808C109200L,0x2011020400550101L,
+            0x0460486804100800L,0x0420808818220912L,0x4008002884100420L,0x0480002484042500L,0x8000000961010404L,0x020020021A421000L,0x1020428418109400L,0x000414A802042010L,
+            0x090B854808050800L,0x0892420200C20804L,0x2900000A01461800L,0x000824004020A800L,0x0000800810020224L,0x061000A004410208L,0x0003501441042400L,0x1010201081020028L,
+    };
+
+    public static final long[] bishopShifts = new long[] {
+            58,59,59,59,59,59,59,58,
+            59,59,59,59,59,59,59,59,
+            59,59,57,57,57,57,59,59,
+            59,59,57,55,55,57,59,59,
+            59,59,57,55,55,57,59,59,
+            59,59,57,57,57,57,59,59,
+            59,59,59,59,59,59,59,59,
+            58,59,59,59,59,59,59,58,
+    };
+
+    public static final long[] bishopRelevantMask = new long[] {
+            0x0040201008040200L,0x0000402010080400L,0x0000004020100A00L,0x0000000040221400L,0x0000000002442800L,0x0000000204085000L,0x0000020408102000L,0x0002040810204000L,
+            0x0020100804020000L,0x0040201008040000L,0x00004020100A0000L,0x0000004022140000L,0x0000000244280000L,0x0000020408500000L,0x0002040810200000L,0x0004081020400000L,
+            0x0010080402000200L,0x0020100804000400L,0x004020100A000A00L,0x0000402214001400L,0x0000024428002800L,0x0002040850005000L,0x0004081020002000L,0x0008102040004000L,
+            0x0008040200020400L,0x0010080400040800L,0x0020100A000A1000L,0x0040221400142200L,0x0002442800284400L,0x0004085000500800L,0x0008102000201000L,0x0010204000402000L,
+            0x0004020002040800L,0x0008040004081000L,0x00100A000A102000L,0x0022140014224000L,0x0044280028440200L,0x0008500050080400L,0x0010200020100800L,0x0020400040201000L,
+            0x0002000204081000L,0x0004000408102000L,0x000A000A10204000L,0x0014001422400000L,0x0028002844020000L,0x0050005008040200L,0x0020002010080400L,0x0040004020100800L,
+            0x0000020408102000L,0x0000040810204000L,0x00000A1020400000L,0x0000142240000000L,0x0000284402000000L,0x0000500804020000L,0x0000201008040200L,0x0000402010080400L,
+            0x0002040810204000L,0x0004081020400000L,0x000A102040000000L,0x0014224000000000L,0x0028440200000000L,0x0050080402000000L,0x0020100804020000L,0x0040201008040200L,
+    };
+
+
+    public static final long[] rookMagics = new long[] {
+            0x0080102040008000L,0x08400A20001001C0L,0x0100200010090042L,0x2080040800801000L,0x0200204850840200L,0x0200100104080200L,0x0200020001408804L,0x8200010080402A04L,
+            0x011C800040002081L,0x0041804000806008L,0x0863001020010044L,0x0102000A20104201L,0x0001001008010004L,0x0400800200040080L,0x0A00808002000100L,0x0881000894422100L,
+            0x0008288004400081L,0x0004848020004000L,0x4101090020004010L,0x0404220010400A00L,0x00A3010008000410L,0x0180808004000200L,0x00004400098A1810L,0x4200020000890844L,
+            0x10A0208080004003L,0x2880200040005000L,0x8420002100410010L,0x2200080080100080L,0x0200040080800800L,0x0000040080800200L,0x4004010080800200L,0x2000004200008104L,
+            0x0040004262800080L,0x0030004002402001L,0x0800802000801000L,0x20C1002009001004L,0x2040802402800800L,0x000A0004D2001008L,0x2040488104001002L,0x0003004082000104L,
+            0x0000802040008000L,0x0820100841254000L,0x3820041001868020L,0x9001011004210008L,0x0020080004008080L,0x5100040002008080L,0x2090508102040028L,0x1400010040820004L,
+            0x0121800040122A80L,0x000C204009008300L,0x0401001444200100L,0x0020815000080180L,0x0222000410082200L,0x0980040002008080L,0x4106220110486400L,0x0211000042008100L,
+            0x6000144081002202L,0x008040001B006381L,0x0088402000100901L,0x0200081000210055L,0x0102002008100402L,0x201A000408011082L,0x1000589008010204L,0x080A518621004C02L,
+    };
+
+    public static final long[] rookShifts = new long[] {
+            52,53,53,53,53,53,53,52,
+            53,54,54,54,54,54,54,53,
+            53,54,54,54,54,54,54,53,
+            53,54,54,54,54,54,54,53,
+            53,54,54,54,54,54,54,53,
+            53,54,54,54,54,54,54,53,
+            53,54,54,54,54,54,54,53,
+            52,53,53,53,53,53,53,52,
+    };
+
+
+    public static final long[] rookRelevantMask = new long[] {
+            0x000101010101017EL,0x000202020202027CL,0x000404040404047AL,0x0008080808080876L,0x001010101010106EL,0x002020202020205EL,0x004040404040403EL,0x008080808080807EL,
+            0x0001010101017E00L,0x0002020202027C00L,0x0004040404047A00L,0x0008080808087600L,0x0010101010106E00L,0x0020202020205E00L,0x0040404040403E00L,0x0080808080807E00L,
+            0x00010101017E0100L,0x00020202027C0200L,0x00040404047A0400L,0x0008080808760800L,0x00101010106E1000L,0x00202020205E2000L,0x00404040403E4000L,0x00808080807E8000L,
+            0x000101017E010100L,0x000202027C020200L,0x000404047A040400L,0x0008080876080800L,0x001010106E101000L,0x002020205E202000L,0x004040403E404000L,0x008080807E808000L,
+            0x0001017E01010100L,0x0002027C02020200L,0x0004047A04040400L,0x0008087608080800L,0x0010106E10101000L,0x0020205E20202000L,0x0040403E40404000L,0x0080807E80808000L,
+            0x00017E0101010100L,0x00027C0202020200L,0x00047A0404040400L,0x0008760808080800L,0x00106E1010101000L,0x00205E2020202000L,0x00403E4040404000L,0x00807E8080808000L,
+            0x007E010101010100L,0x007C020202020200L,0x007A040404040400L,0x0076080808080800L,0x006E101010101000L,0x005E202020202000L,0x003E404040404000L,0x007E808080808000L,
+            0x7E01010101010100L,0x7C02020202020200L,0x7A04040404040400L,0x7608080808080800L,0x6E10101010101000L,0x5E20202020202000L,0x3E40404040404000L,0x7E80808080808000L,
+    };
+
+
+
     private static long shift(long b, int dir8) {
         if (shiftOffset[dir8] > 0) {
             return (b << shiftOffset[dir8]) & avoidWrap[dir8];
@@ -150,7 +276,7 @@ public class Piece {
     /* Pre-computation methods */
 
     // Function to initialize rays[][] bitboard
-    public static void precomputeRays() {
+    private static void precomputeRays() {
         System.out.print("private final long[][] rayAttacks = new long[][]{");
         for (int dir = 0; dir < 8; dir++) {
             System.out.print("{");
@@ -177,7 +303,7 @@ public class Piece {
     }
 
     // Precompute all king moves
-    public static void precomputeKingMoves() {
+    private static void precomputeKingMoves() {
         System.out.print("private final long[] kingAttacksTableStatic = new long[]{");
         for (byte square = 0; square < 64; square++) {
             kingAttacksTableStatic[square] = computeKingMoves(square);
@@ -199,7 +325,7 @@ public class Piece {
     }
 
     // Precompute all knight moves
-    public static void precomputeKnightMoves() {
+    private static void precomputeKnightMoves() {
         System.out.print("private final long[] knightAttacksTableStatic = new long[]{");
         for (byte square = 0; square < 64; square++) {
             knightAttacksTableStatic[square] = computeKnightMoves(square);
@@ -215,6 +341,35 @@ public class Piece {
         bitboard |= (pos & Square.NOT_GH_FILES) << 10 | (pos & Square.NOT_H_FILE) << 17 | (pos & Square.NOT_AB_FILES) << 6 | (pos & Square.NOT_A_FILE) << 15;
         bitboard |= (pos & Square.NOT_GH_FILES) >>> 6 | (pos & Square.NOT_H_FILE) >>> 15  | (pos & Square.NOT_AB_FILES) >>> 10 | (pos & Square.NOT_A_FILE) >>> 17 ;
         return bitboard;
+    }
+
+    // Precompute all pawns moves
+    private static void precomputePawnsMoves() {
+        System.out.print("private final long[] whitePawnsAttacksTableStatic = new long[]{");
+        for (byte square = 0; square < 64; square++) {
+            System.out.print(BinaryHelper.toHexString(computeWhitePawnMoves(square)) + ", ");
+        }
+        System.out.print("}\n\n");
+
+        System.out.print("private final long[] blackPawnsAttacksTableStatic = new long[]{");
+        for (byte square = 0; square < 64; square++) {
+            System.out.print(BinaryHelper.toHexString(computeBlackPawnMoves(square)) + ", ");
+        }
+        System.out.print("}\n");
+    }
+
+    // Compute moves for the white pawns from a given square
+    private static long computeWhitePawnMoves(byte square) {
+        long bb = Square.bitboardForSquare(square);
+        return (bb & Square.NOT_A_FILE) << 7 |
+                (bb & Square.NOT_H_FILE) << 9;
+    }
+
+    // Compute moves for the black pawns from a given square
+    private static long computeBlackPawnMoves(byte square) {
+        long bb = Square.bitboardForSquare(square);
+        return (bb & Square.NOT_H_FILE) >>> 7 |
+                (bb & Square.NOT_A_FILE) >>> 9;
     }
 
     /* Attacks methods */
@@ -274,23 +429,20 @@ public class Piece {
     }
 
     public static long whitePawnAttacks(byte square) {
-        long bb = Square.bitboardForSquare(square);
-        return (bb & Square.NOT_A_FILE) << 7 |
-                (bb & Square.NOT_H_FILE) << 9;
+        return whitePawnsAttacksTableStatic[square];
     }
 
     public static long blackPawnAttacks(byte square) {
-        long bb = Square.bitboardForSquare(square);
-        return (bb & Square.NOT_H_FILE) >>> 7 |
-                (bb & Square.NOT_A_FILE) >>> 9;
+        return blackPawnsAttacksTableStatic[square];
     }
 
+
+    /* Helpers */
 
     public static byte fromChar(char chr) {
         int index = " KQBNRPkqbnrp".indexOf(chr);
         return (index < 1) ? NONE : (byte)index;
     }
-
 
     public static boolean isWhite(byte piece) {
         return piece > 0 && piece < 7;
@@ -315,4 +467,243 @@ public class Piece {
     public static boolean isQueen(byte piece) {
         return piece == WHITE_QUEEN || piece == BLACK_QUEEN;
     }
+
+
+    /* Magic Bitboards */
+
+    public static int getRandom32Bits() {
+        int number = random_state;
+
+        number ^= number << 13;
+        number ^= number >> 17;
+        number ^= number << 5;
+
+        random_state = number;
+
+        return number;
+    }
+
+    public static long getRandom64Bits() {
+        long n1, n2, n3, n4;
+
+        n1 = (long)(getRandom32Bits()) & 0xFFFF;
+        n2 = (long)(getRandom32Bits()) & 0xFFFF;
+        n3 = (long)(getRandom32Bits()) & 0xFFFF;
+        n4 = (long)(getRandom32Bits()) & 0xFFFF;
+
+        return n1 | (n2 << 16) | (n3 << 32) | (n4 << 48);
+    }
+
+    private static long generateMagicNumber() {
+        return getRandom64Bits() & getRandom64Bits() & getRandom64Bits();
+    }
+
+    private static long rookRelevantMask(byte sq) {
+        long result = 0L;
+        int rk = sq/8, fl = sq%8, r, f;
+        for(r = rk+1; r <= 6; r++) result |= (1L << (fl + r*8));
+        for(r = rk-1; r >= 1; r--) result |= (1L << (fl + r*8));
+        for(f = fl+1; f <= 6; f++) result |= (1L << (f + rk*8));
+        for(f = fl-1; f >= 1; f--) result |= (1L << (f + rk*8));
+        return result;
+    }
+
+    private static long bishopsRelevantMask(byte sq) {
+        long result = 0L;
+        int rk = sq/8, fl = sq%8, r, f;
+        for(r=rk+1, f=fl+1; r<=6 && f<=6; r++, f++) result |= (1L << (f + r*8));
+        for(r=rk+1, f=fl-1; r<=6 && f>=1; r++, f--) result |= (1L << (f + r*8));
+        for(r=rk-1, f=fl+1; r>=1 && f<=6; r--, f++) result |= (1L << (f + r*8));
+        for(r=rk-1, f=fl-1; r>=1 && f>=1; r--, f--) result |= (1L << (f + r*8));
+        return result;
+    }
+
+    private static void generateRelevantBits(boolean rooks) {
+        for (byte rank = 0; rank < 8; rank++) {
+            for (byte file = 0; file < 8; file++) {
+                byte square = (byte) (rank * 8 + file);
+                System.out.printf(" %d", Long.bitCount(rooks ? rookRelevantMask(square) : bishopsRelevantMask(square)));
+            }
+            System.out.print("\n");
+        }
+    }
+
+
+    public static ArrayList<Integer> getAttackSquaresIndexes(long movesMask) {
+        ArrayList<Integer> attackSqIndexes = new ArrayList<>();
+
+        for (int i = 0; i < 64; i++) {
+            if (((movesMask >>> i) & 1) == 1) {
+                attackSqIndexes.add(i);
+            }
+        }
+
+        return attackSqIndexes;
+    }
+
+    public static long generateBlocker(long combination, ArrayList<Integer> attackSqIndexes) {
+        long blocker = 0;
+
+        for (int j = 0; j < attackSqIndexes.size(); j++) {
+            if (((combination >>> j) & 1) == 1) {
+                blocker |= 1L << attackSqIndexes.get(j);
+            }
+        }
+
+        return blocker;
+    }
+
+    public static long findMagic(byte sq, int relevantBits, boolean bishop) {
+        // Ex: bishop square 35 = 9 bits a 1
+        long movesMask, magic;
+        int tableSize = 1 << relevantBits;
+        long[] blockers = new long[tableSize];
+        long[] attacks = new long[tableSize];
+        long[] used = new long[tableSize];
+        int i, k, magicIndex;
+        boolean fail;
+
+        movesMask = bishop ? bishopsRelevantMask(sq) : rookRelevantMask(sq);
+
+        ArrayList<Integer> moveSquareIndex = getAttackSquaresIndexes(movesMask);
+        // moveSquareIndex = [14, 17, 21, 26, 28, 50, 52, 65, 69]
+
+        // 1 << relevantBits = 1 << 9 = 2^9 = 0b1000000000 (1 et 9 zeros). i = 1 combinaison possible de blockers
+        for (i = 0; i < tableSize; i++) {
+            blockers[i] = generateBlocker(i, moveSquareIndex);
+            // Si i = 5 par exemple, blockers[i] = bitboard avec index 14 et 21 à 1
+            attacks[i] = bishop ? bishopAttacks(blockers[i], sq) : rookAttacks(blockers[i], sq);
+            // attacks[i] = le bitboard d'attaque pour l'occupation blockers[i] a partir de sq
+        }
+
+        for (k = 0; k < 100000000; k++) {
+            magic = generateMagicNumber();
+
+            // Rejeter les magics ayant peu de bits hauts a 1 pour eviter les collisions apres le shift final
+            if (Long.bitCount((movesMask * magic) & 0xFF00000000000000L) < 6) continue;
+
+            for (i = 0; i < tableSize; i++) used[i] = 0L;
+
+            fail = false;
+
+            for (i = 0; !fail && i < tableSize; i++) {
+                magicIndex = (int) ((blockers[i] * magic) >>> (64 - relevantBits));
+                if (used[magicIndex] == 0) used[magicIndex] = attacks[i];
+                else if (used[magicIndex] != attacks[i]) fail = true;
+            }
+            if (!fail) return magic;
+        }
+
+        System.out.println("Failed");
+        return 0;
+    }
+
+    public static long[][] generateMovesLookup(boolean bishop) {
+        long[][] movesLookup = new long[64][];
+
+        for (byte sq = 0; sq < 64; sq++) {
+            long movesMask = bishop ? bishopsRelevantMask(sq) : rookRelevantMask(sq);
+            ArrayList<Integer> moveSquareIndex = getAttackSquaresIndexes(movesMask);
+            int relevantBits = bishop ? bishopRelevantsBits[sq] : rookRelevantsBits[sq];
+            long magic = bishop ? bishopMagics[sq] : rookMagics[sq];
+            long shift = bishop ? bishopShifts[sq] : rookShifts[sq];
+
+            int tableSize = 1 << relevantBits;
+            movesLookup[sq] = new long[tableSize];
+
+            for (int i = 0; i < tableSize; i++) {
+                long blocker = generateBlocker(i, moveSquareIndex);
+                int key = (int) ((blocker * magic) >>> shift);
+                movesLookup[sq][key] = bishop ? bishopAttacks(blocker, sq) : rookAttacks(blocker, sq);
+            }
+        }
+
+        return movesLookup;
+    }
+
+
+    private static void writeRelevantMask(boolean bishop, String filePath) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
+        writer.write("public static final long[] " + (bishop ? "bishop" : "rook") + "RelevantMask = new long[] {");
+        for (byte sq = 0; sq < 64; sq++) {
+            if (sq % 8 == 0) {
+                writer.write('\n');
+            }
+            writer.write((bishop ? BinaryHelper.toHexString(bishopsRelevantMask(sq)) : BinaryHelper.toHexString(rookRelevantMask(sq))) + ",");
+        }
+        writer.write("""
+                
+                };
+                """);
+
+        writer.close();
+    }
+
+    private static void writeMagic(boolean bishop, String filePath) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
+        writer.write("public static final long[] " + (bishop ? "bishop" : "rook") + "Magics = new long[] {");
+        for (byte sq = 0; sq < 64; sq++) {
+            if (sq % 8 == 0) {
+                writer.write('\n');
+            }
+            long magic = findMagic(sq, (bishop ? bishopRelevantsBits[sq] : rookRelevantsBits[sq]), bishop);
+            writer.write(BinaryHelper.toHexString(magic) + ",");
+        }
+        writer.write("""
+                
+                };
+                
+                """);
+
+        writer.write("public static final long[] " + (bishop ? "bishop" : "rook") + "Shifts = new long[] {");
+        for (byte sq = 0; sq < 64; sq++) {
+            if (sq % 8 == 0) {
+                writer.write('\n');
+            }
+            writer.write((bishop ? 64 - bishopRelevantsBits[sq] : 64 - rookRelevantsBits[sq]) + ",");
+        }
+        writer.write("""
+                
+                };
+                """);
+
+        writer.close();
+    }
+
+    private static void writeLookup(boolean bishop, String filePath) throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(filePath));
+        writer.write("public static final long[][] " + (bishop ? "bishop" : "rooks") + "MovesLookup = {\n");
+
+        long[][] movesLookup = generateMovesLookup(bishop);
+
+        for (int sq = 0; sq < 64; sq++) {
+            writer.write("    {");
+            for (int index = 0; index < movesLookup[sq].length; index++) {
+                writer.write(BinaryHelper.toHexString(movesLookup[sq][index]));
+                if (index < movesLookup[sq].length - 1) {
+                    writer.write(", ");
+                }
+            }
+            writer.write("}");
+            if (sq < 63) {
+                writer.write(",");
+            }
+            writer.write("\n");
+        }
+
+        writer.write("};\n");
+        writer.close();
+    }
+
+
+    public static void main(String[] args) throws IOException {
+//        writeMagic(true, "C:\\Users\\Admin_Remi\\Documents\\GitHub\\ChessFX\\ChessFX\\src\\main\\resources\\bishopsMagics.txt");
+//        writeMagic(false, "C:\\Users\\Admin_Remi\\Documents\\GitHub\\ChessFX\\ChessFX\\src\\main\\resources\\rooksMagics.txt");
+//        writeLookup(true, "C:\\Users\\Admin_Remi\\Documents\\GitHub\\ChessFX\\ChessFX\\src\\main\\resources\\bishopsLookup.txt");
+//        writeLookup(false, "C:\\Users\\Admin_Remi\\Documents\\GitHub\\ChessFX\\ChessFX\\src\\main\\resources\\rooksLookup.txt");
+//        writeRelevantMask(true, "C:\\Users\\Admin_Remi\\Documents\\GitHub\\ChessFX\\ChessFX\\src\\main\\resources\\bishopsRelevantMask.txt");
+//        writeRelevantMask(false, "C:\\Users\\Admin_Remi\\Documents\\GitHub\\ChessFX\\ChessFX\\src\\main\\resources\\rooksRelevantMask.txt");
+        precomputePawnsMoves();
+    }
+
 }

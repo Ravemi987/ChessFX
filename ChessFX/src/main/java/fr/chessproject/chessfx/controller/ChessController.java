@@ -4,15 +4,20 @@ import fr.chessproject.chessfx.main.Divide;
 import fr.chessproject.chessfx.main.Perft;
 import fr.chessproject.chessfx.model.CommandListenerObserver;
 import fr.chessproject.chessfx.model.Game;
+import fr.chessproject.chessfx.model.Piece;
 import fr.chessproject.chessfx.view.MainFrameController;
 
 public class ChessController implements CommandListenerObserver {
 
     private MainFrameController frameController;
     private final Game game;
+    public static long[][] rookMovesLookup;
+    public static long[][] bishopMovesLookup;
 
-    public ChessController(Game game) {
-        this.game = game;
+    public ChessController() {
+        rookMovesLookup = Piece.generateMovesLookup(false);
+        bishopMovesLookup = Piece.generateMovesLookup(true);
+        this.game = new Game();
     }
 
     @Override

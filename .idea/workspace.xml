@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ff8303b9-09bf-445d-8f74-8a6b1b222e7c" name="Changes" comment="" />
+    <list default="true" id="ff8303b9-09bf-445d-8f74-8a6b1b222e7c" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/ChessFX/src/main/java/fr/chessproject/chessfx/model/Piece.java" beforeDir="false" afterPath="$PROJECT_DIR$/ChessFX/src/main/java/fr/chessproject/chessfx/model/Piece.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ChessFX/src/main/java/fr/chessproject/chessfx/model/Square.java" beforeDir="false" afterPath="$PROJECT_DIR$/ChessFX/src/main/java/fr/chessproject/chessfx/model/Square.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -30,28 +33,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.Main.executor&quot;: &quot;Run&quot;,
-    &quot;Application.MainFrame.executor&quot;: &quot;Run&quot;,
-    &quot;Application.ParallelPerft.executor&quot;: &quot;Profiler#1&quot;,
-    &quot;Application.ParallelPerftExecutor.executor&quot;: &quot;Profiler#1&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Admin_Remi/Documents/GitHub/Chess&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;SDKs&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.15&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.Main.executor": "Run",
+    "Application.MainFrame.executor": "Run",
+    "Application.ParallelPerft.executor": "Profiler#1",
+    "Application.ParallelPerftExecutor.executor": "Profiler#1",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "MagicBitboards",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/Admin_Remi/Documents/GitHub/Chess",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "SDKs",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.2",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="Application.Main">
     <configuration name="Main" type="Application" factoryName="Application">
       <option name="MAIN_CLASS_NAME" value="fr.chessproject.chessfx.main.Program" />
@@ -208,6 +211,7 @@
       <workItem from="1736026853424" duration="92000" />
       <workItem from="1737655382224" duration="48000" />
       <workItem from="1738494655637" duration="236000" />
+      <workItem from="1750517630170" duration="12000" />
     </task>
     <servers />
   </component>

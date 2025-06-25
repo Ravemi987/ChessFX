@@ -34,7 +34,7 @@ public class MainFrame extends Application {
 
     @Override
     public void start(Stage primaryStage) throws IOException {
-        ChessController controller = new ChessController(new Game());
+        ChessController controller = new ChessController();
 
         FXMLLoader mainFrameLoader = new FXMLLoader(getClass().getResource("/fr/chessproject/chessfx/main/MainFrame.fxml"));
         BorderPane root = mainFrameLoader.load();
