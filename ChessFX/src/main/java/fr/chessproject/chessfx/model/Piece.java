@@ -30,14 +30,14 @@ public class Piece {
 
     /* Directions */
 
-    private static final int noEa = 0;
-    private static final int east = 1;
-    private static final int soEa = 2;
-    private static final int south = 3;
-    private static final int soWe = 4;
-    private static final int west = 5;
-    private static final int noWe = 6;
-    private static final int north = 7;
+    public static final int noEa = 0;
+    public static final int east = 1;
+    public static final int soEa = 2;
+    public static final int south = 3;
+    public static final int soWe = 4;
+    public static final int west = 5;
+    public static final int noWe = 6;
+    public static final int north = 7;
 
     /* Pre-computation arrays */
 
@@ -375,7 +375,7 @@ public class Piece {
 
     /* Attacks methods */
 
-    private static long getRayAttacks(long occupied, int dir8, byte square) {
+    public static long getRayAttacks(long occupied, int dir8, byte square) {
         long attacks = rayAttacks[dir8][square];
         long blocker = attacks & occupied;
         if (blocker != 0) {
@@ -385,7 +385,7 @@ public class Piece {
         return attacks;
     }
 
-    private static boolean isNegative(int dir) {
+    public static boolean isNegative(int dir) {
         return shiftOffset[dir] < 0;
     }
 
@@ -529,7 +529,7 @@ public class Piece {
         return result;
     }
 
-    private static long bishopsRelevantMask(byte sq) {
+    private static long bishopRelevantMask(byte sq) {
         long result = 0L;
         int rk = sq/8, fl = sq%8, r, f;
         for(r=rk+1, f=fl+1; r<=6 && f<=6; r++, f++) result |= (1L << (f + r*8));
@@ -543,7 +543,7 @@ public class Piece {
         for (byte rank = 0; rank < 8; rank++) {
             for (byte file = 0; file < 8; file++) {
                 byte square = (byte) (rank * 8 + file);
-                System.out.printf(" %d", Long.bitCount(rooks ? rookRelevantMask(square) : bishopsRelevantMask(square)));
+                System.out.printf(" %d", Long.bitCount(rooks ? rookRelevantMask(square) : bishopRelevantMask(square)));
             }
             System.out.print("\n");
         }
@@ -584,7 +584,7 @@ public class Piece {
         int i, k, magicIndex;
         boolean fail;
 
-        movesMask = bishop ? bishopsRelevantMask(sq) : rookRelevantMask(sq);
+        movesMask = bishop ? bishopRelevantMask(sq) : rookRelevantMask(sq);
 
         ArrayList<Integer> moveSquareIndex = getAttackSquaresIndexes(movesMask);
         // moveSquareIndex = [14, 17, 21, 26, 28, 50, 52, 65, 69]
@@ -623,7 +623,7 @@ public class Piece {
         long[][] movesLookup = new long[64][];
 
         for (byte sq = 0; sq < 64; sq++) {
-            long movesMask = bishop ? bishopsRelevantMask(sq) : rookRelevantMask(sq);
+            long movesMask = bishop ? bishopRelevantMask(sq) : rookRelevantMask(sq);
             ArrayList<Integer> moveSquareIndex = getAttackSquaresIndexes(movesMask);
             int relevantBits = bishop ? bishopRelevantsBits[sq] : rookRelevantsBits[sq];
             long magic = bishop ? bishopMagics[sq] : rookMagics[sq];
@@ -650,7 +650,7 @@ public class Piece {
             if (sq % 8 == 0) {
                 writer.write('\n');
             }
-            writer.write((bishop ? BinaryHelper.toHexString(bishopsRelevantMask(sq)) : BinaryHelper.toHexString(rookRelevantMask(sq))) + ",");
+            writer.write((bishop ? BinaryHelper.toHexString(bishopRelevantMask(sq)) : BinaryHelper.toHexString(rookRelevantMask(sq))) + ",");
         }
         writer.write("""
                 

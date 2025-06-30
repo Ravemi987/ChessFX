@@ -55,4 +55,22 @@ public class Game {
     public MoveList getValidMoves() {
         return validMoves;
     }
+
+    // Helpers
+
+    public long getAttackInfoCheckMask() {
+        return currentPos.getAttackInfo().checkRay;
+    }
+
+    public long getAttackInfoAttackMask() {
+        return currentPos.getAttackInfo().enemyAttacks;
+    }
+
+    public long getAttackInfoPinnedPices() {
+        return currentPos.getAttackInfo().pinned;
+    }
+
+    public long getEpBitboard() {
+        return 1L << currentPos.getEpSquare();
+    }
 }

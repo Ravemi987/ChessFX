@@ -10,5 +10,6 @@
     <Canvas fx:id="drawingCanvas" height="960" width="960" layoutX="10" layoutY="10" styleClass="canvas-style" />
     <Canvas fx:id="piecesCanvas" height="960" width="960" layoutX="10" layoutY="10" styleClass="canvas-style" />
     <Canvas fx:id="draggingCanvas" height="960" width="960" layoutX="10" layoutY="10" styleClass="canvas-style" />
+    <Canvas fx:id="bitboardCanvas" height="960" width="960" layoutX="10" layoutY="10" styleClass="canvas-style" />
     <Pane fx:id="boardMaskPane"  maxHeight="968" maxWidth="968" prefHeight="968.0" prefWidth="968.0" layoutY="6" layoutX="6" />
 </Pane>

@@ -5,12 +5,17 @@ import fr.chessproject.chessfx.main.Perft;
 import fr.chessproject.chessfx.model.CommandListenerObserver;
 import fr.chessproject.chessfx.model.Game;
 import fr.chessproject.chessfx.model.Piece;
+import fr.chessproject.chessfx.view.Config;
 import fr.chessproject.chessfx.view.MainFrameController;
+import fr.chessproject.chessfx.view.Theme;
+
+import java.util.function.Supplier;
 
 public class ChessController implements CommandListenerObserver {
 
     private MainFrameController frameController;
     private final Game game;
+    private final Config config;
     public static long[][] rookMovesLookup;
     public static long[][] bishopMovesLookup;
 
@@ -18,6 +23,7 @@ public class ChessController implements CommandListenerObserver {
         rookMovesLookup = Piece.generateMovesLookup(false);
         bishopMovesLookup = Piece.generateMovesLookup(true);
         this.game = new Game();
+        this.config = new Config();
     }
 
     @Override
@@ -99,5 +105,31 @@ public class ChessController implements CommandListenerObserver {
 
     public Game getGame() {
         return game;
+    }
+
+    public Theme getTheme() {
+        return config.getTheme();
+    }
+
+    // Helpers
+
+    public long getAttackInfoCheckMask() {
+        return game.getAttackInfoCheckMask();
+    }
+
+    public long getAttackInfoAttackMask() {
+        return game.getAttackInfoAttackMask();
+    }
+
+    public long getAttackInfoPinnedPices() {
+        return game.getAttackInfoPinnedPices();
+    }
+
+    public long getEpBitboard() {
+        return game.getEpBitboard();
+    }
+
+    public Supplier<Long> getDebugBitboard() {
+        return this::getEpBitboard;
     }
 }

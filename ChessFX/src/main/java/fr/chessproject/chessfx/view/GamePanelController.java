@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class GamePanelController {
 
@@ -48,6 +49,8 @@ public class GamePanelController {
     public Canvas coloredSquaresCanvas;
     @FXML
     public Canvas drawingCanvas;
+    @FXML
+    public Canvas bitboardCanvas;
 
     private ChessController controller;
 
@@ -56,6 +59,7 @@ public class GamePanelController {
     private static final double TICKS_PER_SECOND = 120;
     private static final double NS_PER_TICK = 1_000_000_000 / TICKS_PER_SECOND;
 
+    private Theme theme;
     private GameSpritesLoader spritesLoader;
     private WritableImage staticBoardImage;
     private WritableImage staticCoordsImage;
@@ -76,6 +80,7 @@ public class GamePanelController {
         isSquareColored = new boolean[64];
 
         controller = null;
+        theme = null;
         selectedPiece = -1;
         previousSelectedPiece = -1;
         draggedPiece = -1;
@@ -97,6 +102,7 @@ public class GamePanelController {
         renderBoard();
         renderCoordinates();
         renderPieces();
+        //drawBitboard(bitboardCanvas.getGraphicsContext2D(), controller.getDebugBitboard());
         setupMouseEvents();
         startGameLoop();
     }
@@ -189,6 +195,7 @@ public class GamePanelController {
         renderColoredSquares();
         renderPieces();
         renderDragging();
+        //drawBitboard(bitboardCanvas.getGraphicsContext2D(), controller.getDebugBitboard());
     }
 
     private void updateGameState() {
@@ -211,11 +218,11 @@ public class GamePanelController {
             Color c;
 
             if (hoveredSquare == selectedPiece) {
-                c = Color.rgb(242, 234, 183);
+                c = theme.getHoverSelectedSquare();
             } else if ((row + col) % 2 == 0) {
-                c = Color.rgb(250, 242, 229);
+                c = theme.getHoverLightSquare();
             } else {
-                c = Color.rgb(229, 213, 201);
+                c = theme.getHoverDarkSquare();
             }
 
             double width = 5.7;
@@ -237,7 +244,7 @@ public class GamePanelController {
                 if (mv.getFrom() == selectedPiece) {
                     int row = 7 - mv.getTo() / 8;
                     int col = mv.getTo() % 8;
-                    gc.setFill(((row + col) % 2 == 0 ) ? Color.rgb(235, 121, 99) : Color.rgb(225, 105, 84));
+                    gc.setFill(((row + col) % 2 == 0 ) ? theme.getValidMoveLightSquare() : theme.getValidMoveDarkSquare());
                     gc.fillRect(col * squareSize,row  * squareSize, squareSize, squareSize);
                 }
             }
@@ -250,9 +257,9 @@ public class GamePanelController {
             int squareSize = (int) (boardCanvas.getWidth() / 8);
             int fromRow = 7 - lastMove.getFrom() / 8, toRow = 7 - lastMove.getTo() / 8;
             int fromCol = lastMove.getFrom() % 8, toCol = lastMove.getTo() % 8;
-            gc.setFill(((fromRow + fromCol) % 2 == 0 ) ? Color.rgb(246, 235, 114) : Color.rgb(220, 195, 75));
+            gc.setFill(((fromRow + fromCol) % 2 == 0 ) ? theme.getLastMoveLightStartSquare() : theme.getLastMoveDarkStartSquare());
             gc.fillRect(fromCol * squareSize,fromRow  * squareSize, squareSize, squareSize);
-            gc.setFill(((toRow + toCol) % 2 == 0 ) ? Color.rgb(246, 235, 114) : Color.rgb(220, 195, 75));
+            gc.setFill(((toRow + toCol) % 2 == 0 ) ? theme.getLastMoveLightEndSquare() : theme.getLastMoveDarkEndSquare());
             gc.fillRect(toCol * squareSize,toRow  * squareSize, squareSize, squareSize);
         }
     }
@@ -262,7 +269,7 @@ public class GamePanelController {
         if (selectedPiece != -1) {
             int row = 7 - selectedPiece / 8;
             int col = selectedPiece % 8;
-            gc.setFill(((row + col) % 2 == 0 ) ? Color.rgb(246, 235, 114) : Color.rgb(220, 195, 75));
+            gc.setFill(((row + col) % 2 == 0 ) ? theme.getSelectedLightSquare() : theme.getSelectedDarkSquare());
             gc.fillRect(col * squareSize,row  * squareSize, squareSize, squareSize);
         }
     }
@@ -309,12 +316,12 @@ public class GamePanelController {
         gc.setFont(new Font("Arial", fontSize));
 
         for (int row = 0; row < 8; row++) {
-            gc.setFill(((row % 2) == 0) ? Color.rgb(181, 136, 99) : Color.rgb(240, 217, 181));
+            gc.setFill(((row % 2) == 0) ? theme.getDarkSquare() : theme.getLightSquare());
             gc.fillText(String.valueOf(8 - row), 10, row * squareSize + fontSize);
         }
 
         for (int col = 0; col < 8; col++) {
-            gc.setFill(((col % 2) == 0) ? Color.rgb(240, 217, 181) : Color.rgb(181, 136, 99));
+            gc.setFill(((col % 2) == 0) ? theme.getLightSquare() : theme.getDarkSquare());
             gc.fillText(String.valueOf((char) ('a' + col)), col * squareSize + (squareSize - fontSize), boardCanvas.getHeight() - (fontSize / 2));
         }
     }
@@ -324,20 +331,22 @@ public class GamePanelController {
 
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
-                gc.setFill(((row + col) % 2 == 0 ) ? Color.rgb(240, 217, 181) : Color.rgb(181, 136, 99));
+                gc.setFill(((row + col) % 2 == 0 ) ? theme.getLightSquare() : theme.getDarkSquare());
                 gc.fillRect(col*squareSize, row*squareSize, squareSize, squareSize);
             }
         }
     }
 
-    private void drawBitboard(GraphicsContext gc, long bitboard) {
-        double squareSize = boardCanvas.getWidth() / 8;
+    private void drawBitboard(GraphicsContext gc, Supplier<Long> bitboardSupplier) {
+        long bitboard = bitboardSupplier.get();
+        gc.clearRect(0, 0, bitboardCanvas.getWidth(), bitboardCanvas.getHeight());
+
+        double squareSize = bitboardCanvas.getWidth() / 8;
         gc.setFont(new Font("Arial", squareSize / 2));
+        double alpha = 0.8;
 
         for (int i = 0; i < 64; i++) {
             char bit = ((bitboard >>> i) & 1) == 1 ? '1' : '0';
-
-            gc.setFill((bit == '0') ? Color.rgb(70, 57, 57) : Color.rgb(194, 181, 45));
 
             Text text = new Text(String.valueOf(bit));
             text.setFont(gc.getFont());
@@ -346,8 +355,19 @@ public class GamePanelController {
 
             int row = 7 - (i / 8);
             int col = (i % 8);
+
             int x = (int) (col * squareSize + squareSize / 2 - textWidth / 2);
             int y = (int) (row * squareSize + squareSize / 2 + textHeight / 4);
+
+            if (bit == '0') {
+                gc.setFill((row + col) % 2 == 0 ? Color.rgb(89, 171, 221, alpha) : Color.rgb(62, 144, 195, alpha));
+                gc.fillRect(col*squareSize, row*squareSize, squareSize, squareSize);
+            } else {
+                gc.setFill((row + col) % 2 == 0 ?  Color.rgb(234,89,102, alpha) : Color.rgb(201,51,69, alpha));
+                gc.fillRect(col*squareSize, row*squareSize, squareSize, squareSize);
+            }
+
+            gc.setFill(Color.rgb(255, 255, 255, alpha));
             gc.fillText(String.valueOf(bit), x, y);
         }
     }
@@ -442,9 +462,9 @@ public class GamePanelController {
         int col = square % 8;
 
         if (isSquareColored[square]) {
-            gc.setFill((row + col) % 2 == 0 ? Color.rgb(113, 217, 100) : Color.rgb(50, 200, 100));
+            gc.setFill((row + col) % 2 == 0 ? theme.getDrawingLightSquare() : theme.getDrawingDarkSquare());
         } else {
-            gc.setFill(((row + col) % 2 == 0 ) ? Color.rgb(240, 217, 181) : Color.rgb(181, 136, 99));
+            gc.setFill(((row + col) % 2 == 0 ) ? theme.getLightSquare() : theme.getDarkSquare());
         }
         gc.fillRect(col * squareSize, row * squareSize, squareSize, squareSize);
     }
@@ -555,5 +575,6 @@ public class GamePanelController {
 
     public void setMainController(ChessController controller) {
         this.controller = controller;
+        this.theme = controller.getTheme();
     }
 }
