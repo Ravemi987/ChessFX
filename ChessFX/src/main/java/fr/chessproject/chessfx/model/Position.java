@@ -1094,27 +1094,6 @@ public class Position {
         piecesBB[move.getColor()] ^= fromToBB;
     }
 
-    public static Position copy(Position pos) {
-        Position newPos = new Position();
-        newPos.occupied = pos.occupied;
-        newPos.empty = pos.empty;
-        newPos.isWhiteSideToPlay = pos.isWhiteSideToPlay;
-        newPos.enPassantSquare = pos.enPassantSquare;
-        newPos.isAllowedWhiteShortCastle = pos.isAllowedWhiteShortCastle;
-        newPos.isAllowedWhiteLongCastle = pos.isAllowedWhiteLongCastle;
-        newPos.isAllowedBlackShortCastle = pos.isAllowedBlackShortCastle;
-        newPos.isAllowedBlackLongCastle = pos.isAllowedBlackLongCastle;
-
-        newPos.piecesBB = pos.piecesBB.clone();
-
-        newPos.moveStateHistory = new Stack<>();
-        for (MoveState ms : pos.moveStateHistory) {
-            newPos.moveStateHistory.push(new MoveState(ms));
-        }
-
-        return newPos;
-    }
-
     // Helpers
 
     public AttackInfo getAttackInfo() {
