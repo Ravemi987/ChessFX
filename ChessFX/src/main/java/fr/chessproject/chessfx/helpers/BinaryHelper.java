@@ -26,4 +26,24 @@ public class BinaryHelper {
             return bitScanForward(b);
         }
     }
+
+    public static void printBitboard(long bitboard)
+    {
+        System.out.print("\n");
+
+        for (int rank = 7; rank >= 0; rank--)  {
+            for (int file = 0; file < 8; file++)
+            {
+                int square = rank * 8 + file;
+
+                if (file == 0)
+                    System.out.printf("  %d ", 8 - rank);
+
+                System.out.printf(" %d",  (bitboard & (1L << square)) != 0 ? 1 : 0);
+
+            }
+            System.out.print("\n");
+        }
+        System.out.print("\n     a b c d e f g h\n\n");
+    }
 }

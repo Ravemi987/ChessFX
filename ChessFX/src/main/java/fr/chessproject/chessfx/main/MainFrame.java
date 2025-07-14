@@ -7,8 +7,10 @@ import fr.chessproject.chessfx.model.Game;
 import fr.chessproject.chessfx.view.MainFrameController;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -55,7 +57,12 @@ public class MainFrame extends Application {
             controller.enableDebugMode();
         }
 
-        Scene scene = new Scene(root, 1920, 1080);
+        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+        double screenWidth = screenBounds.getWidth();
+        double screenHeight = screenBounds.getHeight();
+
+        Scene scene = new Scene(root, screenWidth, screenHeight);
+
         primaryStage.centerOnScreen();
         primaryStage.setTitle("Chess");
         primaryStage.setScene(scene);

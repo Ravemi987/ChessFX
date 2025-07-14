@@ -1,10 +1,7 @@
 package fr.chessproject.chessfx.view;
 
 import fr.chessproject.chessfx.model.Piece;
-
-import javafx.scene.SnapshotParameters;
 import javafx.scene.image.*;
-import javafx.scene.paint.Color;
 
 import java.util.HashMap;
 import java.util.Map;

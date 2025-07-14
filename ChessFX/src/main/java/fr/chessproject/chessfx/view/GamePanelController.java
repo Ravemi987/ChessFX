@@ -5,32 +5,29 @@ import fr.chessproject.chessfx.model.*;
 
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.stage.Screen;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Supplier;
 
 public class GamePanelController {
 
     // Panes
 
     @FXML
-    public Pane boardPane;
+    public StackPane boardPane;
     @FXML
     public Pane boardMaskPane;
 
@@ -48,17 +45,17 @@ public class GamePanelController {
     public Canvas coloredSquaresCanvas;
     @FXML
     public Canvas drawingCanvas;
+    @FXML
+    public Canvas bitboardCanvas;
 
     private ChessController controller;
 
-    private final Map<Byte, Image> resizedPieceSprites = new HashMap<>();
-
     private static final double TICKS_PER_SECOND = 120;
     private static final double NS_PER_TICK = 1_000_000_000 / TICKS_PER_SECOND;
+    private final double SCREEN_SIZE = Screen.getPrimary().getVisualBounds().getHeight();
 
+    private Theme theme;
     private GameSpritesLoader spritesLoader;
-    private WritableImage staticBoardImage;
-    private WritableImage staticCoordsImage;
 
     private boolean[] isSquareColored;
     private int selectedPiece;
@@ -76,6 +73,7 @@ public class GamePanelController {
         isSquareColored = new boolean[64];
 
         controller = null;
+        theme = null;
         selectedPiece = -1;
         previousSelectedPiece = -1;
         draggedPiece = -1;
@@ -92,36 +90,37 @@ public class GamePanelController {
         boardPane.getProperties().put("controller", this);
     }
 
+    private void setBoardSize(int size) {
+        boardPane.setPrefSize(size, size);
+        boardPane.setMinSize(size, size);
+        boardPane.setMaxSize(size, size);
+
+        for (Canvas canvas : List.of(boardCanvas, coordsCanvas, piecesCanvas,
+                draggingCanvas, coloredSquaresCanvas, drawingCanvas, bitboardCanvas)) {
+            canvas.setWidth(size);
+            canvas.setHeight(size);
+        }
+
+        boardMaskPane.setPrefSize(size, size);
+        boardMaskPane.setMinSize(size, size);
+        boardMaskPane.setMaxSize(size, size);
+
+        StackPane.setMargin(boardMaskPane, new Insets(-3, 3, 3, -3));
+    }
+
     public void init() {
+        setBoardSize((int) (SCREEN_SIZE * 0.9));
         loadGraphics();
         renderBoard();
         renderCoordinates();
         renderPieces();
+        //drawBitboard(bitboardCanvas.getGraphicsContext2D(), controller.getDebugBitboard());
         setupMouseEvents();
         startGameLoop();
     }
 
     public void refreshBoard() {
         render();
-    }
-
-    private void precalculatePieceSprites() {
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
-        int scaledWidth = (int) (squareSize * 1.05);
-
-        for (byte piece = Piece.WHITE_KING; piece <= Piece.BLACK_PAWN; piece++) {
-            ImageView imageView = new ImageView(spritesLoader.getPieceSprite(piece));
-            imageView.setFitWidth(scaledWidth);
-            imageView.setFitHeight(scaledWidth);
-            imageView.setSmooth(true);
-            imageView.setPreserveRatio(true);
-
-            SnapshotParameters params = new SnapshotParameters();
-            params.setFill(Color.TRANSPARENT);
-            Image snapshot = imageView.snapshot(params, null);
-
-            resizedPieceSprites.put(piece, snapshot);
-        }
     }
 
     public void setupMouseEvents() {
@@ -151,14 +150,12 @@ public class GamePanelController {
     private void renderBoard() {
         GraphicsContext gc = boardCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, boardCanvas.getWidth(), boardCanvas.getHeight());
-        //gc.drawImage(staticBoardImage, 0, 0);
         drawBoard(gc);
     }
 
     private void renderCoordinates() {
         GraphicsContext gc = coordsCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, coordsCanvas.getWidth(), coordsCanvas.getHeight());
-        //gc.drawImage(staticCoordsImage, 0, 0);
         drawCoordinates(gc);
     }
 
@@ -189,6 +186,7 @@ public class GamePanelController {
         renderColoredSquares();
         renderPieces();
         renderDragging();
+        //drawBitboard(bitboardCanvas.getGraphicsContext2D(), controller.getDebugBitboard());
     }
 
     private void updateGameState() {
@@ -197,9 +195,6 @@ public class GamePanelController {
     public void loadGraphics() {
         int squareSize = (int) ((boardCanvas.getWidth()) / 8);
         spritesLoader = new GameSpritesLoader(squareSize);
-//        initializeStaticBoardImage();
-//        initializeStaticCoordsImage();
-        //precalculatePieceSprites();
     }
 
     private void showHover(GraphicsContext gc) {
@@ -211,11 +206,11 @@ public class GamePanelController {
             Color c;
 
             if (hoveredSquare == selectedPiece) {
-                c = Color.rgb(242, 234, 183);
+                c = theme.getHoverSelectedSquare();
             } else if ((row + col) % 2 == 0) {
-                c = Color.rgb(250, 242, 229);
+                c = theme.getHoverLightSquare();
             } else {
-                c = Color.rgb(229, 213, 201);
+                c = theme.getHoverDarkSquare();
             }
 
             double width = 5.7;
@@ -237,7 +232,7 @@ public class GamePanelController {
                 if (mv.getFrom() == selectedPiece) {
                     int row = 7 - mv.getTo() / 8;
                     int col = mv.getTo() % 8;
-                    gc.setFill(((row + col) % 2 == 0 ) ? Color.rgb(235, 121, 99) : Color.rgb(225, 105, 84));
+                    gc.setFill(((row + col) % 2 == 0 ) ? theme.getValidMoveLightSquare() : theme.getValidMoveDarkSquare());
                     gc.fillRect(col * squareSize,row  * squareSize, squareSize, squareSize);
                 }
             }
@@ -250,9 +245,9 @@ public class GamePanelController {
             int squareSize = (int) (boardCanvas.getWidth() / 8);
             int fromRow = 7 - lastMove.getFrom() / 8, toRow = 7 - lastMove.getTo() / 8;
             int fromCol = lastMove.getFrom() % 8, toCol = lastMove.getTo() % 8;
-            gc.setFill(((fromRow + fromCol) % 2 == 0 ) ? Color.rgb(246, 235, 114) : Color.rgb(220, 195, 75));
+            gc.setFill(((fromRow + fromCol) % 2 == 0 ) ? theme.getLastMoveLightStartSquare() : theme.getLastMoveDarkStartSquare());
             gc.fillRect(fromCol * squareSize,fromRow  * squareSize, squareSize, squareSize);
-            gc.setFill(((toRow + toCol) % 2 == 0 ) ? Color.rgb(246, 235, 114) : Color.rgb(220, 195, 75));
+            gc.setFill(((toRow + toCol) % 2 == 0 ) ? theme.getLastMoveLightEndSquare() : theme.getLastMoveDarkEndSquare());
             gc.fillRect(toCol * squareSize,toRow  * squareSize, squareSize, squareSize);
         }
     }
@@ -262,7 +257,7 @@ public class GamePanelController {
         if (selectedPiece != -1) {
             int row = 7 - selectedPiece / 8;
             int col = selectedPiece % 8;
-            gc.setFill(((row + col) % 2 == 0 ) ? Color.rgb(246, 235, 114) : Color.rgb(220, 195, 75));
+            gc.setFill(((row + col) % 2 == 0 ) ? theme.getSelectedLightSquare() : theme.getSelectedDarkSquare());
             gc.fillRect(col * squareSize,row  * squareSize, squareSize, squareSize);
         }
     }
@@ -309,12 +304,12 @@ public class GamePanelController {
         gc.setFont(new Font("Arial", fontSize));
 
         for (int row = 0; row < 8; row++) {
-            gc.setFill(((row % 2) == 0) ? Color.rgb(181, 136, 99) : Color.rgb(240, 217, 181));
+            gc.setFill(((row % 2) == 0) ? theme.getDarkSquare() : theme.getLightSquare());
             gc.fillText(String.valueOf(8 - row), 10, row * squareSize + fontSize);
         }
 
         for (int col = 0; col < 8; col++) {
-            gc.setFill(((col % 2) == 0) ? Color.rgb(240, 217, 181) : Color.rgb(181, 136, 99));
+            gc.setFill(((col % 2) == 0) ? theme.getLightSquare() : theme.getDarkSquare());
             gc.fillText(String.valueOf((char) ('a' + col)), col * squareSize + (squareSize - fontSize), boardCanvas.getHeight() - (fontSize / 2));
         }
     }
@@ -324,20 +319,22 @@ public class GamePanelController {
 
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
-                gc.setFill(((row + col) % 2 == 0 ) ? Color.rgb(240, 217, 181) : Color.rgb(181, 136, 99));
+                gc.setFill(((row + col) % 2 == 0 ) ? theme.getLightSquare() : theme.getDarkSquare());
                 gc.fillRect(col*squareSize, row*squareSize, squareSize, squareSize);
             }
         }
     }
 
-    private void drawBitboard(GraphicsContext gc, long bitboard) {
-        double squareSize = boardCanvas.getWidth() / 8;
+    private void drawBitboard(GraphicsContext gc, Supplier<Long> bitboardSupplier) {
+        long bitboard = bitboardSupplier.get();
+        gc.clearRect(0, 0, bitboardCanvas.getWidth(), bitboardCanvas.getHeight());
+
+        double squareSize = bitboardCanvas.getWidth() / 8;
         gc.setFont(new Font("Arial", squareSize / 2));
+        double alpha = 0.8;
 
         for (int i = 0; i < 64; i++) {
             char bit = ((bitboard >>> i) & 1) == 1 ? '1' : '0';
-
-            gc.setFill((bit == '0') ? Color.rgb(70, 57, 57) : Color.rgb(194, 181, 45));
 
             Text text = new Text(String.valueOf(bit));
             text.setFont(gc.getFont());
@@ -346,47 +343,27 @@ public class GamePanelController {
 
             int row = 7 - (i / 8);
             int col = (i % 8);
+
             int x = (int) (col * squareSize + squareSize / 2 - textWidth / 2);
             int y = (int) (row * squareSize + squareSize / 2 + textHeight / 4);
+
+            if (bit == '0') {
+                gc.setFill((row + col) % 2 == 0 ? Color.rgb(89, 171, 221, alpha) : Color.rgb(62, 144, 195, alpha));
+                gc.fillRect(col*squareSize, row*squareSize, squareSize, squareSize);
+            } else {
+                gc.setFill((row + col) % 2 == 0 ?  Color.rgb(234,89,102, alpha) : Color.rgb(201,51,69, alpha));
+                gc.fillRect(col*squareSize, row*squareSize, squareSize, squareSize);
+            }
+
+            gc.setFill(Color.rgb(255, 255, 255, alpha));
             gc.fillText(String.valueOf(bit), x, y);
         }
     }
 
-    private void initializeStaticBoardImage() {
-        int width = (int) boardCanvas.getWidth();
-        int height = (int) boardCanvas.getHeight();
-
-        staticBoardImage = new WritableImage(width, height);
-        Canvas tempCanvas = new Canvas(width, height);
-        GraphicsContext gc = tempCanvas.getGraphicsContext2D();
-
-        gc.setImageSmoothing(true);
-
-        drawBoard(gc);
-
-        tempCanvas.snapshot(null, staticBoardImage);
-    }
-
-    private void initializeStaticCoordsImage() {
-        int width = (int) coordsCanvas.getWidth();
-        int height = (int) coordsCanvas.getHeight();
-
-        staticCoordsImage = new WritableImage(width, height);
-        Canvas tempCanvas = new Canvas(width, height);
-        GraphicsContext gc = tempCanvas.getGraphicsContext2D();
-
-        gc.setImageSmoothing(true);
-
-        drawCoordinates(gc);
-
-        SnapshotParameters params = new SnapshotParameters();
-        params.setFill(Color.TRANSPARENT);
-        tempCanvas.snapshot(params, staticCoordsImage);
-    }
-
-    public void updateMousePos(double absX, double abY) {
-        int x = (int) absX;
-        int y = (int) abY;
+    public void updateMousePos(MouseEvent mouseEvent ) {
+        Point2D coords = boardCanvas.sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
+        int x = (int) coords.getX();
+        int y = (int) coords.getY();
 
         if (inBoardRect(x)) {
             mouseXOnBoard = x;
@@ -442,9 +419,9 @@ public class GamePanelController {
         int col = square % 8;
 
         if (isSquareColored[square]) {
-            gc.setFill((row + col) % 2 == 0 ? Color.rgb(113, 217, 100) : Color.rgb(50, 200, 100));
+            gc.setFill((row + col) % 2 == 0 ? theme.getDrawingLightSquare() : theme.getDrawingDarkSquare());
         } else {
-            gc.setFill(((row + col) % 2 == 0 ) ? Color.rgb(240, 217, 181) : Color.rgb(181, 136, 99));
+            gc.setFill(((row + col) % 2 == 0 ) ? theme.getLightSquare() : theme.getDarkSquare());
         }
         gc.fillRect(col * squareSize, row * squareSize, squareSize, squareSize);
     }
@@ -545,15 +522,16 @@ public class GamePanelController {
 
     @FXML
     private void handleMouseDragged(MouseEvent mouseEvent) {
-        updateMousePos(mouseEvent.getX(), mouseEvent.getY());
+        updateMousePos(mouseEvent);
     }
 
     @FXML
     public void handleMouseMoved(MouseEvent mouseEvent) {
-        updateMousePos(mouseEvent.getX(), mouseEvent.getY());
+        updateMousePos(mouseEvent);
     }
 
     public void setMainController(ChessController controller) {
         this.controller = controller;
+        this.theme = controller.getTheme();
     }
 }
