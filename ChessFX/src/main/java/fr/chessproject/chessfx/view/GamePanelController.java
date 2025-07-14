@@ -7,12 +7,8 @@ import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
@@ -23,9 +19,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Screen;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
 public class GamePanelController {
@@ -56,16 +50,12 @@ public class GamePanelController {
 
     private ChessController controller;
 
-    private final Map<Byte, Image> resizedPieceSprites = new HashMap<>();
-
     private static final double TICKS_PER_SECOND = 120;
     private static final double NS_PER_TICK = 1_000_000_000 / TICKS_PER_SECOND;
     private final double SCREEN_SIZE = Screen.getPrimary().getVisualBounds().getHeight();
 
     private Theme theme;
     private GameSpritesLoader spritesLoader;
-    private WritableImage staticBoardImage;
-    private WritableImage staticCoordsImage;
 
     private boolean[] isSquareColored;
     private int selectedPiece;
@@ -133,25 +123,6 @@ public class GamePanelController {
         render();
     }
 
-    private void precalculatePieceSprites() {
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
-        int scaledWidth = (int) (squareSize * 1.05);
-
-        for (byte piece = Piece.WHITE_KING; piece <= Piece.BLACK_PAWN; piece++) {
-            ImageView imageView = new ImageView(spritesLoader.getPieceSprite(piece));
-            imageView.setFitWidth(scaledWidth);
-            imageView.setFitHeight(scaledWidth);
-            imageView.setSmooth(true);
-            imageView.setPreserveRatio(true);
-
-            SnapshotParameters params = new SnapshotParameters();
-            params.setFill(Color.TRANSPARENT);
-            Image snapshot = imageView.snapshot(params, null);
-
-            resizedPieceSprites.put(piece, snapshot);
-        }
-    }
-
     public void setupMouseEvents() {
         boardMaskPane.setOnMousePressed(this::handleMousePressed);
         boardMaskPane.setOnMouseDragged(this::handleMouseDragged);
@@ -179,14 +150,12 @@ public class GamePanelController {
     private void renderBoard() {
         GraphicsContext gc = boardCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, boardCanvas.getWidth(), boardCanvas.getHeight());
-        //gc.drawImage(staticBoardImage, 0, 0);
         drawBoard(gc);
     }
 
     private void renderCoordinates() {
         GraphicsContext gc = coordsCanvas.getGraphicsContext2D();
         gc.clearRect(0, 0, coordsCanvas.getWidth(), coordsCanvas.getHeight());
-        //gc.drawImage(staticCoordsImage, 0, 0);
         drawCoordinates(gc);
     }
 
@@ -226,9 +195,6 @@ public class GamePanelController {
     public void loadGraphics() {
         int squareSize = (int) ((boardCanvas.getWidth()) / 8);
         spritesLoader = new GameSpritesLoader(squareSize);
-//        initializeStaticBoardImage();
-//        initializeStaticCoordsImage();
-        //precalculatePieceSprites();
     }
 
     private void showHover(GraphicsContext gc) {
@@ -394,44 +360,10 @@ public class GamePanelController {
         }
     }
 
-    private void initializeStaticBoardImage() {
-        int width = (int) boardCanvas.getWidth();
-        int height = (int) boardCanvas.getHeight();
-
-        staticBoardImage = new WritableImage(width, height);
-        Canvas tempCanvas = new Canvas(width, height);
-        GraphicsContext gc = tempCanvas.getGraphicsContext2D();
-
-        gc.setImageSmoothing(true);
-
-        drawBoard(gc);
-
-        tempCanvas.snapshot(null, staticBoardImage);
-    }
-
-    private void initializeStaticCoordsImage() {
-        int width = (int) coordsCanvas.getWidth();
-        int height = (int) coordsCanvas.getHeight();
-
-        staticCoordsImage = new WritableImage(width, height);
-        Canvas tempCanvas = new Canvas(width, height);
-        GraphicsContext gc = tempCanvas.getGraphicsContext2D();
-
-        gc.setImageSmoothing(true);
-
-        drawCoordinates(gc);
-
-        SnapshotParameters params = new SnapshotParameters();
-        params.setFill(Color.TRANSPARENT);
-        tempCanvas.snapshot(params, staticCoordsImage);
-    }
-
     public void updateMousePos(MouseEvent mouseEvent ) {
         Point2D coords = boardCanvas.sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
         int x = (int) coords.getX();
         int y = (int) coords.getY();
-        //int x = (int) mouseEvent.getX();
-        //int y = (int) mouseEvent.getY();
 
         if (inBoardRect(x)) {
             mouseXOnBoard = x;
