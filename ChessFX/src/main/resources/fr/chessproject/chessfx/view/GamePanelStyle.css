@@ -1,8 +1,3 @@
-#boardPane {
-    -fx-background-color: rgb(38, 37, 34);
-    -fx-background-radius: 10px;
-}
-
 #boardMaskPane {
     -fx-background-color: transparent;
     -fx-border-color: rgb(38, 37, 34);

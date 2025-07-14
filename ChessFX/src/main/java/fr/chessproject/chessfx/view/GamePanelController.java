@@ -5,6 +5,7 @@ import fr.chessproject.chessfx.model.*;
 
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
+import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.canvas.Canvas;
@@ -15,12 +16,13 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.stage.Screen;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +33,7 @@ public class GamePanelController {
     // Panes
 
     @FXML
-    public Pane boardPane;
+    public StackPane boardPane;
     @FXML
     public Pane boardMaskPane;
 
@@ -58,6 +60,7 @@ public class GamePanelController {
 
     private static final double TICKS_PER_SECOND = 120;
     private static final double NS_PER_TICK = 1_000_000_000 / TICKS_PER_SECOND;
+    private final double SCREEN_SIZE = Screen.getPrimary().getVisualBounds().getHeight();
 
     private Theme theme;
     private GameSpritesLoader spritesLoader;
@@ -97,7 +100,26 @@ public class GamePanelController {
         boardPane.getProperties().put("controller", this);
     }
 
+    private void setBoardSize(int size) {
+        boardPane.setPrefSize(size, size);
+        boardPane.setMinSize(size, size);
+        boardPane.setMaxSize(size, size);
+
+        for (Canvas canvas : List.of(boardCanvas, coordsCanvas, piecesCanvas,
+                draggingCanvas, coloredSquaresCanvas, drawingCanvas, bitboardCanvas)) {
+            canvas.setWidth(size);
+            canvas.setHeight(size);
+        }
+
+        boardMaskPane.setPrefSize(size, size);
+        boardMaskPane.setMinSize(size, size);
+        boardMaskPane.setMaxSize(size, size);
+
+        StackPane.setMargin(boardMaskPane, new Insets(-3, 3, 3, -3));
+    }
+
     public void init() {
+        setBoardSize((int) (SCREEN_SIZE * 0.9));
         loadGraphics();
         renderBoard();
         renderCoordinates();
@@ -404,9 +426,12 @@ public class GamePanelController {
         tempCanvas.snapshot(params, staticCoordsImage);
     }
 
-    public void updateMousePos(double absX, double abY) {
-        int x = (int) absX;
-        int y = (int) abY;
+    public void updateMousePos(MouseEvent mouseEvent ) {
+        Point2D coords = boardCanvas.sceneToLocal(mouseEvent.getSceneX(), mouseEvent.getSceneY());
+        int x = (int) coords.getX();
+        int y = (int) coords.getY();
+        //int x = (int) mouseEvent.getX();
+        //int y = (int) mouseEvent.getY();
 
         if (inBoardRect(x)) {
             mouseXOnBoard = x;
@@ -565,12 +590,12 @@ public class GamePanelController {
 
     @FXML
     private void handleMouseDragged(MouseEvent mouseEvent) {
-        updateMousePos(mouseEvent.getX(), mouseEvent.getY());
+        updateMousePos(mouseEvent);
     }
 
     @FXML
     public void handleMouseMoved(MouseEvent mouseEvent) {
-        updateMousePos(mouseEvent.getX(), mouseEvent.getY());
+        updateMousePos(mouseEvent);
     }
 
     public void setMainController(ChessController controller) {
