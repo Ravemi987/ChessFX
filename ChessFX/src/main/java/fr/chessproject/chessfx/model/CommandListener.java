@@ -88,7 +88,6 @@ public class CommandListener implements Runnable {
 
     private void handleDivide(String s) {
         notifyObserver("divide", s);
-
     }
 
     private void handlePerft(String s) {

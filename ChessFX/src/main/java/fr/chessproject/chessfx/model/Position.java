@@ -3,6 +3,8 @@ package fr.chessproject.chessfx.model;
 import fr.chessproject.chessfx.helpers.BinaryHelper;
 
 import java.util.Stack;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 public class Position {
 
@@ -283,9 +285,7 @@ public class Position {
 
     /* ################### PIECES MOVES ################### */
 
-    public void generatePieceMoves(MoveList mvList, long moveBB, byte sqFrom, byte pieceBB, byte colorBB) {
-        long legalMovesBB = moveBB & attackInfo.checkRay & attackInfo.pinMasks[sqFrom];
-
+    private void extractQuietMoves(MoveList mvList, byte sqFrom, byte pieceBB, byte colorBB, long legalMovesBB) {
         while(legalMovesBB != 0) {
             long piece = Long.lowestOneBit(legalMovesBB);
             legalMovesBB &= ~piece;
@@ -293,40 +293,36 @@ public class Position {
             Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB);
             mvList.addMove(mv);
         }
+    }
+
+    private void extractCaptures(MoveList mvList, byte sqFrom, byte pieceBB, byte colorBB, long legalMovesBB) {
+        while(legalMovesBB != 0) {
+            long piece = Long.lowestOneBit(legalMovesBB);
+            legalMovesBB &= ~piece;
+            byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
+            Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, pieceBitboardOnSquare(sqTo), getOpponentColor());
+            mvList.addMove(mv);
+        }
+    }
+
+    public void generatePieceMoves(MoveList mvList, long moveBB, byte sqFrom, byte pieceBB, byte colorBB) {
+        long legalMovesBB = moveBB & attackInfo.checkRay & attackInfo.pinMasks[sqFrom];
+        extractQuietMoves(mvList, sqFrom, pieceBB, colorBB, legalMovesBB);
     }
 
     public void generatePieceCaptures(MoveList mvList, long moveBB, byte sqFrom, byte pieceBB, byte colorBB) {
         long legalMovesBB = moveBB & attackInfo.checkRay & attackInfo.pinMasks[sqFrom];
-
-        while(legalMovesBB != 0) {
-            long piece = Long.lowestOneBit(legalMovesBB);
-            legalMovesBB &= ~piece;
-            byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
-            Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, pieceBitboardOnSquare(sqTo), getOpponentColor());
-            mvList.addMove(mv);
-        }
+        extractCaptures(mvList, sqFrom, pieceBB, colorBB, legalMovesBB);
     }
 
     public void generateKingMoves(MoveList mvList, long moveBB, byte sqFrom, byte pieceBB, byte colorBB) {
         long legalMovesBB = moveBB & ~attackInfo.enemyAttacks;
-        while(legalMovesBB != 0) {
-            long piece = Long.lowestOneBit(legalMovesBB);
-            legalMovesBB &= ~piece;
-            byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
-            Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB);
-            mvList.addMove(mv);
-        }
+        extractQuietMoves(mvList, sqFrom, pieceBB, colorBB, legalMovesBB);
     }
 
     public void generateKingCaptures(MoveList mvList, long moveBB, byte sqFrom, byte pieceBB, byte colorBB) {
         long legalMovesBB = moveBB & ~attackInfo.enemyAttacks;
-        while(legalMovesBB != 0) {
-            long piece = Long.lowestOneBit(legalMovesBB);
-            legalMovesBB &= ~piece;
-            byte sqTo =  (byte)Long.numberOfTrailingZeros(piece);
-            Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, pieceBitboardOnSquare(sqTo), getOpponentColor());
-            mvList.addMove(mv);
-        }
+        extractCaptures(mvList, sqFrom, pieceBB, colorBB, legalMovesBB);
     }
 
     public void generatePawnMoves(MoveList mvList, long moveBB, int offset, int promotionRow, byte pieceBB, byte colorBB) {
@@ -452,10 +448,9 @@ public class Position {
                 Square.NOT_H_FILE, Square.NOT_A_FILE, blackPieces);
     }
 
-    /* ==== Knights moves ==== */
-
-    public void whiteKnightMoves(MoveList mvList) {
-        long piecesBitboard = piecesBB[knights] & piecesBB[whitePieces]; // param
+    private void extractPiecesAttacks(MoveList mvList, byte friendlyColor, byte enemyColor, byte pieceType,
+                                      BiFunction<Long, Byte, Long> attackFunction) {
+        long piecesBitboard = piecesBB[pieceType] & piecesBB[friendlyColor];
 
         while (piecesBitboard != 0) {
 
@@ -463,61 +458,54 @@ public class Position {
             piecesBitboard &= ~piece;
             byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
 
-            long possibleAttackSquares = Piece.knightAttacks(sqFrom); // param
+            long possibleAttackSquares = attackFunction.apply(occupied, sqFrom);
             long moveBitboard = possibleAttackSquares & empty;
-            long takeBitboard = possibleAttackSquares & piecesBB[blackPieces]; // param
+            long takeBitboard = possibleAttackSquares & piecesBB[enemyColor];
 
-            generatePieceMoves(mvList, moveBitboard, sqFrom, knights, whitePieces);
-            generatePieceCaptures(mvList, takeBitboard, sqFrom, knights, whitePieces);
+            generatePieceMoves(mvList, moveBitboard, sqFrom, pieceType, friendlyColor);
+            generatePieceCaptures(mvList, takeBitboard, sqFrom, pieceType, friendlyColor);
         }
     }
 
+    /* ==== Knights moves ==== */
+
+    public void whiteKnightMoves(MoveList mvList) {
+        extractPiecesAttacks(mvList, whitePieces, blackPieces, knights, (_, sq) -> Piece.knightAttacks(sq));
+    }
+
     public void blackKnightMoves(MoveList mvList) {
-        long piecesBitboard = piecesBB[knights] & piecesBB[blackPieces]; // param
-
-        while (piecesBitboard != 0) {
-
-            long piece = Long.lowestOneBit(piecesBitboard);
-            piecesBitboard &= ~piece;
-            byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
-
-            long possibleAttackSquares = Piece.knightAttacks(sqFrom); // param
-            long moveBitboard = possibleAttackSquares & empty;
-            long takeBitboard = possibleAttackSquares & piecesBB[whitePieces]; // param
-
-            generatePieceMoves(mvList, moveBitboard, sqFrom, knights, blackPieces);
-            generatePieceCaptures(mvList, takeBitboard, sqFrom, knights, blackPieces);
-        }
+        extractPiecesAttacks(mvList, blackPieces, whitePieces, knights, (_, sq) -> Piece.knightAttacks(sq));
     }
 
     /* ====Kings moves ==== */
 
+    private void extractKingAttacks(MoveList mvList, int check, byte friendlyColor, byte enemyColor,
+                                    byte friendlyKingSq, byte enemyKingSq, byte pieceType,
+                                    BiConsumer<MoveList, Integer> shortCastlingFunction, BiConsumer<MoveList, Integer> longCastlingFunction) {
+        long possibleAttackSquares = Piece.kingAttacks(friendlyKingSq) & ~Piece.kingAttacks(enemyKingSq);
+        long moveBitboard = possibleAttackSquares & empty;
+        long takeBitboard = possibleAttackSquares & piecesBB[enemyColor];
+
+        generateKingMoves(mvList, moveBitboard, friendlyKingSq, pieceType, friendlyColor);
+        generateKingCaptures(mvList, takeBitboard, friendlyKingSq, pieceType, friendlyColor);
+        shortCastlingFunction.accept(mvList, check);
+        longCastlingFunction.accept(mvList, check);
+    }
+
     public void whiteKingMoves(MoveList mvList, int check) {
         byte whiteKingSquare = BinaryHelper.bitScanForward(piecesBB[whiteKing]);
         byte blackKingSquare = BinaryHelper.bitScanForward(piecesBB[blackKing]);
-
-        long possibleAttackSquares = Piece.kingAttacks(whiteKingSquare) & ~Piece.kingAttacks(blackKingSquare);
-        long moveBitboard = possibleAttackSquares & empty;
-        long takeBitboard = possibleAttackSquares & piecesBB[blackPieces];
-
-        generateKingMoves(mvList, moveBitboard, whiteKingSquare, whiteKing, whitePieces);
-        generateKingCaptures(mvList, takeBitboard, whiteKingSquare, whiteKing, whitePieces);
-        generateWhiteShortCastling(mvList, check);
-        generateWhiteLongCastling(mvList, check);
+        extractKingAttacks(mvList, check, whitePieces, blackPieces, whiteKingSquare, blackKingSquare, whiteKing,
+                this::generateWhiteShortCastling, this::generateWhiteLongCastling
+        );
     }
 
     public void blackKingMoves(MoveList mvList, int check) {
         byte whiteKingSquare = BinaryHelper.bitScanForward(piecesBB[whiteKing]);
         byte blackKingSquare = BinaryHelper.bitScanForward(piecesBB[blackKing]);
-
-        long possibleAttackSquares = Piece.kingAttacks(blackKingSquare) & ~Piece.kingAttacks(whiteKingSquare);
-        long moveBitboard = possibleAttackSquares & empty;
-        long takeBitboard = possibleAttackSquares & piecesBB[whitePieces];
-
-        generateKingMoves(mvList, moveBitboard, blackKingSquare, blackKing, blackPieces);
-        generateKingCaptures(mvList, takeBitboard, blackKingSquare, blackKing, blackPieces);
-        generateBlackShortCastling(mvList, check);
-        generateBlackLongCastling(mvList, check);
+        extractKingAttacks(mvList, check, blackPieces, whitePieces, blackKingSquare, whiteKingSquare, blackKing,
+                this::generateBlackShortCastling, this::generateBlackLongCastling
+        );
     }
 
     private void generateBlackShortCastling(MoveList mvList, int check) {
@@ -569,121 +557,31 @@ public class Position {
     /* ==== Bishops moves ==== */
 
     public void whiteBishopMoves(MoveList mvList) {
-        long piecesBitboard = piecesBB[bishops] & piecesBB[whitePieces]; // param
-
-        while (piecesBitboard != 0) {
-
-            long piece = Long.lowestOneBit(piecesBitboard);
-            piecesBitboard &= ~piece;
-            byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
-
-            long possibleAttackSquares = Piece.bishopAttacksLookup(occupied, sqFrom);
-
-            long moveBitboard = possibleAttackSquares & empty;
-            long takeBitboard = possibleAttackSquares & piecesBB[blackPieces]; // param
-
-            generatePieceMoves(mvList, moveBitboard, sqFrom, bishops, whitePieces);
-            generatePieceCaptures(mvList, takeBitboard, sqFrom, bishops, whitePieces);
-        }
+        extractPiecesAttacks(mvList, whitePieces, blackPieces, bishops, Piece::bishopAttacksLookup);
     }
 
     public void blackBishopMoves(MoveList mvList) {
-        long piecesBitboard = piecesBB[bishops] & piecesBB[blackPieces]; // param
-
-        while (piecesBitboard != 0) {
-
-            long piece = Long.lowestOneBit(piecesBitboard);
-            piecesBitboard &= ~piece;
-            byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
-
-            long possibleAttackSquares = Piece.bishopAttacksLookup(occupied, sqFrom);
-
-            long moveBitboard = possibleAttackSquares & empty;
-            long takeBitboard = possibleAttackSquares & piecesBB[whitePieces]; // param
-
-            generatePieceMoves(mvList, moveBitboard, sqFrom, bishops, blackPieces);
-            generatePieceCaptures(mvList, takeBitboard, sqFrom, bishops, blackPieces);
-        }
+        extractPiecesAttacks(mvList, blackPieces, whitePieces, bishops, Piece::bishopAttacksLookup);
     }
 
     /* ==== Rooks moves ==== */
 
     public void whiteRookMoves(MoveList mvList) {
-        long piecesBitboard = piecesBB[rooks] & piecesBB[whitePieces]; // param
-
-        while (piecesBitboard != 0) {
-
-            long piece = Long.lowestOneBit(piecesBitboard);
-            piecesBitboard &= ~piece;
-            byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
-
-            long possibleAttackSquares = Piece.rookAttacksLookup(occupied, sqFrom);
-
-            long moveBitboard = possibleAttackSquares & empty;
-            long takeBitboard = possibleAttackSquares & piecesBB[blackPieces]; // param
-
-            generatePieceMoves(mvList, moveBitboard, sqFrom, rooks, whitePieces);
-            generatePieceCaptures(mvList, takeBitboard, sqFrom, rooks, whitePieces);
-        }
+        extractPiecesAttacks(mvList, whitePieces, blackPieces, rooks, Piece::rookAttacksLookup);
     }
 
     public void blackRookMoves(MoveList mvList) {
-        long piecesBitboard = piecesBB[rooks] & piecesBB[blackPieces]; // param
-
-        while (piecesBitboard != 0) {
-
-            long piece = Long.lowestOneBit(piecesBitboard);
-            piecesBitboard &= ~piece;
-            byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
-
-            long possibleAttackSquares = Piece.rookAttacksLookup(occupied, sqFrom);
-
-            long moveBitboard = possibleAttackSquares & empty;
-            long takeBitboard = possibleAttackSquares & piecesBB[whitePieces]; // param
-
-            generatePieceMoves(mvList, moveBitboard, sqFrom, rooks, blackPieces);
-            generatePieceCaptures(mvList, takeBitboard, sqFrom, rooks, blackPieces);
-        }
+        extractPiecesAttacks(mvList, blackPieces, whitePieces, rooks, Piece::rookAttacksLookup);
     }
 
     /* ==== Queens moves ==== */
 
     public void whiteQueenMoves(MoveList mvList) {
-        long piecesBitboard = piecesBB[queens] & piecesBB[whitePieces]; // param
-
-        while (piecesBitboard != 0) {
-
-            long piece = Long.lowestOneBit(piecesBitboard);
-            piecesBitboard &= ~piece;
-            byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
-
-            long possibleAttackSquares = Piece.queenAttacksLookup(occupied, sqFrom);
-
-            long moveBitboard = possibleAttackSquares & empty;
-            long takeBitboard = possibleAttackSquares & piecesBB[blackPieces]; // param
-
-            generatePieceMoves(mvList, moveBitboard, sqFrom, queens, whitePieces);
-            generatePieceCaptures(mvList, takeBitboard, sqFrom, queens, whitePieces);
-        }
+        extractPiecesAttacks(mvList, whitePieces, blackPieces, queens, Piece::queenAttacksLookup);
     }
 
     public void blackQueenMoves(MoveList mvList) {
-        long piecesBitboard = piecesBB[queens] & piecesBB[blackPieces]; // param
-
-        while (piecesBitboard != 0) {
-
-            long piece = Long.lowestOneBit(piecesBitboard);
-            piecesBitboard &= ~piece;
-            byte sqFrom = (byte)Long.numberOfTrailingZeros(piece);
-
-            long possibleAttackSquares = Piece.queenAttacksLookup(occupied, sqFrom);
-
-            long moveBitboard = possibleAttackSquares & empty;
-            long takeBitboard = possibleAttackSquares & piecesBB[whitePieces]; // param
-
-            generatePieceMoves(mvList, moveBitboard, sqFrom, queens, blackPieces);
-            generatePieceCaptures(mvList, takeBitboard, sqFrom, queens, blackPieces);
-        }
+        extractPiecesAttacks(mvList, blackPieces, whitePieces, queens, Piece::queenAttacksLookup);
     }
 
     /* ==== Legal moves ==== */
@@ -788,34 +686,30 @@ public class Position {
 
     /* ################### MAKEMOVE AND UNMAKEMOVE ################### */
 
-    private void playBlackCastlingBitboardOnly(boolean isShort) {
-        long kingFrom = Square.bitboardForSquare(Square.E8);
-        long kingTo = Square.bitboardForSquare(isShort ? Square.G8 : Square.C8);
-        long rookFrom = Square.bitboardForSquare(isShort ? Square.H8 : Square.A8);
-        long rookTo = Square.bitboardForSquare(isShort ? Square.F8 : Square.D8);
+    private void playCastlingBitboardOnly(boolean isShort, byte friendlyColor, byte pieceType,
+                                          byte E, byte G, byte C, byte H, byte A, byte F, byte D) {
+        long kingFrom = Square.bitboardForSquare(E);
+        long kingTo = Square.bitboardForSquare(isShort ? G : C);
+        long rookFrom = Square.bitboardForSquare(isShort ? H : A);
+        long rookTo = Square.bitboardForSquare(isShort ? F: D);
         long kingFromToBB = kingFrom ^ kingTo;
         long rookFromToBB = rookFrom ^ rookTo;
 
         occupied ^= kingFromToBB ^ rookFromToBB;
         empty ^= kingFromToBB ^ rookFromToBB;
-        piecesBB[blackPieces] ^= kingFromToBB ^ rookFromToBB;
+        piecesBB[friendlyColor] ^= kingFromToBB ^ rookFromToBB;
         piecesBB[rooks] ^= rookFromToBB;
-        piecesBB[blackKing] ^= kingFromToBB;
+        piecesBB[pieceType] ^= kingFromToBB;
+    }
+
+    private void playBlackCastlingBitboardOnly(boolean isShort) {
+        playCastlingBitboardOnly(isShort, blackPieces, blackKing,
+                Square.E8, Square.G8, Square.C8, Square.H8, Square.A8, Square.F8, Square.D8);
     }
 
     private void playWhiteCastlingBitboardOnly(boolean isShort) {
-        long kingFrom = Square.bitboardForSquare(Square.E1);
-        long kingTo = Square.bitboardForSquare(isShort ? Square.G1 : Square.C1);
-        long rookFrom = Square.bitboardForSquare(isShort ? Square.H1 : Square.A1);
-        long rookTo = Square.bitboardForSquare(isShort ? Square.F1 : Square.D1);
-        long kingFromToBB = kingFrom ^ kingTo;
-        long rookFromToBB = rookFrom ^ rookTo;
-
-        occupied ^= kingFromToBB ^ rookFromToBB;
-        empty ^= kingFromToBB ^ rookFromToBB;
-        piecesBB[whitePieces] ^= kingFromToBB ^ rookFromToBB;
-        piecesBB[rooks] ^= rookFromToBB;
-        piecesBB[whiteKing] ^= kingFromToBB;
+        playCastlingBitboardOnly(isShort, whitePieces, whiteKing,
+                Square.E1, Square.G1, Square.C1, Square.H1, Square.A1, Square.F1, Square.D1);
     }
 
     private void updateWhiteCastlingRights(Move move) {
@@ -879,10 +773,7 @@ public class Position {
         isWhiteSideToPlay = !isWhiteSideToPlay;
     }
 
-    public void makeWhiteMoveBitboardOnly(Move move) {
-        if (isWhiteShortCastling(move)) {playWhiteCastlingBitboardOnly(true); return;}
-        if (isWhiteLongCastling(move)) {playWhiteCastlingBitboardOnly(false); return;}
-
+    public void makeMoveBitboardOnly(Move move, byte enemyColor) {
         long fromBB = 0x1L << move.getFrom();
         long toBB = 0x1L << move.getTo();
         long fromToBB = fromBB ^ toBB;
@@ -891,7 +782,7 @@ public class Position {
             if (move.isEnPassant()) {
                 long enemyBB = 0x1L << move.getEnPassant();
                 piecesBB[pawns] ^= enemyBB;
-                piecesBB[blackPieces] ^= enemyBB;
+                piecesBB[enemyColor] ^= enemyBB;
                 occupied ^= enemyBB ^ fromToBB;
                 empty ^= enemyBB ^ fromToBB;
             } else {
@@ -916,95 +807,45 @@ public class Position {
     }
 
     public void makeWhiteMove(Move move) {
-        makeWhiteMoveBitboardOnly(move);
-
-        if (isWhiteShortCastling(move) || isWhiteLongCastling(move)) {
+        if (isWhiteShortCastling(move)) {
+            playWhiteCastlingBitboardOnly(true);
+            isAllowedWhiteShortCastle = false;
+            isAllowedWhiteLongCastle = false;
+        } else if (isWhiteLongCastling(move)) {
+            playWhiteCastlingBitboardOnly(false);
             isAllowedWhiteShortCastle = false;
             isAllowedWhiteLongCastle = false;
         } else {
+            makeMoveBitboardOnly(move, blackPieces);
             updateWhiteCastlingRights(move);
         }
     }
 
-    public void makeBlackMoveBitboardOnly(Move move) {
-        if (isBlackShortCastling(move)) {playBlackCastlingBitboardOnly(true);return;}
-        if (isBlackLongCastling(move)) {playBlackCastlingBitboardOnly(false);return;}
-
-        long fromBB = 0x1L << move.getFrom();
-        long toBB = 0x1L << move.getTo();
-        long fromToBB = fromBB ^ toBB;
-
-        if (move.isCapture()) {
-            if (move.isEnPassant()) {
-                long enemyBB = 0x1L << move.getEnPassant();
-                piecesBB[pawns] ^= enemyBB;
-                piecesBB[whitePieces] ^= enemyBB;
-                occupied ^= enemyBB ^ fromToBB;
-                empty ^= enemyBB ^ fromToBB;
-            } else {
-                piecesBB[move.getCapturedPiece()] ^= toBB;
-                piecesBB[move.getCapturedColor()] ^= toBB;
-                occupied ^= fromBB;
-                empty ^= fromBB;
-            }
-        } else {
-            occupied ^= fromToBB;
-            empty ^= fromToBB;
-        }
-
-        if (move.isPromotion()) {
-            piecesBB[pawns] ^= fromBB;
-            piecesBB[move.getPromotedPiece()] ^= toBB;
-        } else {
-            piecesBB[move.getPiece()] ^= fromToBB;
-        }
-
-        piecesBB[move.getColor()] ^= fromToBB;
-    }
-
     public void makeBlackMove(Move move) {
-        makeBlackMoveBitboardOnly(move);
-
-        if (isBlackShortCastling(move) || isBlackLongCastling(move)) {
+        if (isBlackShortCastling(move)) {
+            playBlackCastlingBitboardOnly(true);
+            isAllowedBlackShortCastle = false;
+            isAllowedBlackLongCastle = false;
+        } else if (isBlackLongCastling(move)) {
+            playBlackCastlingBitboardOnly(false);
             isAllowedBlackShortCastle = false;
             isAllowedBlackLongCastle = false;
         } else {
+            makeMoveBitboardOnly(move, whitePieces);
             updateBlackCastlingRights(move);
         }
     }
 
     private void undoBlackCastling(boolean isShort) {
-        long kingTo = Square.bitboardForSquare(Square.E8);
-        long kingFrom = Square.bitboardForSquare(isShort ? Square.G8 : Square.C8);
-        long rookTo = Square.bitboardForSquare(isShort ? Square.H8 : Square.A8);
-        long rookFrom = Square.bitboardForSquare(isShort ? Square.F8 : Square.D8);
-        long kingFromToBB = kingFrom ^ kingTo;
-        long rookFromToBB = rookFrom ^ rookTo;
-
-        occupied ^= kingFromToBB ^ rookFromToBB;
-        empty ^= kingFromToBB ^ rookFromToBB;
-        piecesBB[blackPieces] ^= kingFromToBB ^ rookFromToBB;
-        piecesBB[rooks] ^= rookFromToBB;
-        piecesBB[blackKing] ^= kingFromToBB;
+        playBlackCastlingBitboardOnly(isShort);
     }
 
     private void undoWhiteCastling(boolean isShort) {
-        long kingTo = Square.bitboardForSquare(Square.E1);
-        long kingFrom = Square.bitboardForSquare(isShort ? Square.G1 : Square.C1);
-        long rookTo = Square.bitboardForSquare(isShort ? Square.H1 : Square.A1);
-        long rookFrom = Square.bitboardForSquare(isShort ? Square.F1 : Square.D1);
-        long kingFromToBB = kingFrom ^ kingTo;
-        long rookFromToBB = rookFrom ^ rookTo;
-
-        occupied ^= kingFromToBB ^ rookFromToBB;
-        empty ^= kingFromToBB ^ rookFromToBB;
-        piecesBB[whitePieces] ^= kingFromToBB ^ rookFromToBB;
-        piecesBB[rooks] ^= rookFromToBB;
-        piecesBB[whiteKing] ^= kingFromToBB;
+        playWhiteCastlingBitboardOnly(isShort);
     }
 
-    private MoveState restaureMoveState() {
-        MoveState previousState = null;
+    private void restaureMoveState() {
+        MoveState previousState;
         if (!moveStateHistory.isEmpty()) {
             previousState = moveStateHistory.pop();
             this.isAllowedBlackShortCastle = previousState.isAllowedBlackShortCastle;
@@ -1014,7 +855,6 @@ public class Position {
             this.isWhiteSideToPlay = previousState.isWhiteSideToPlay;
             this.enPassantSquare = previousState.enPassantSquare;
         }
-        return previousState;
     }
 
     public void unmakeMove(Move move) {
@@ -1026,72 +866,14 @@ public class Position {
         if (isWhiteShortCastling(move)) {undoWhiteCastling(true); return;}
         if (isWhiteLongCastling(move)) {undoWhiteCastling(false); return;}
 
-        long fromBB = 0x1L << move.getFrom();
-        long toBB = 0x1L << move.getTo();
-        long fromToBB = fromBB ^ toBB;
-
-        if (move.isCapture()) {
-            if (move.isEnPassant()) {
-                long enemyBB = 0x1L << move.getEnPassant();
-                piecesBB[pawns] ^= enemyBB;
-                piecesBB[blackPieces] ^= enemyBB;
-                occupied ^= enemyBB ^ fromToBB;
-                empty ^= enemyBB ^ fromToBB;
-            } else {
-                piecesBB[move.getCapturedPiece()] ^= toBB;
-                piecesBB[move.getCapturedColor()] ^= toBB;
-                occupied ^= fromBB;
-                empty ^= fromBB;
-            }
-        } else {
-            occupied ^= fromToBB;
-            empty ^= fromToBB;
-        }
-
-        if (move.isPromotion()) {
-            piecesBB[pawns] ^= fromBB;
-            piecesBB[move.getPromotedPiece()] ^= toBB;
-        } else {
-            piecesBB[move.getPiece()] ^= fromToBB;
-        }
-
-        piecesBB[move.getColor()] ^= fromToBB;
+        makeMoveBitboardOnly(move, blackPieces);
     }
 
     public void unmakeMoveBlack(Move move) {
         if (isBlackShortCastling(move)) {undoBlackCastling(true); return;}
         if (isBlackLongCastling(move)) {undoBlackCastling(false); return;}
 
-        long fromBB = 0x1L << move.getFrom();
-        long toBB = 0x1L << move.getTo();
-        long fromToBB = fromBB ^ toBB;
-
-        if (move.isCapture()) {
-            if (move.isEnPassant()) {
-                long enemyBB = 0x1L << move.getEnPassant();
-                piecesBB[pawns] ^= enemyBB;
-                piecesBB[whitePieces] ^= enemyBB;
-                occupied ^= enemyBB ^ fromToBB;
-                empty ^= enemyBB ^ fromToBB;
-            } else {
-                piecesBB[move.getCapturedPiece()] ^= toBB;
-                piecesBB[move.getCapturedColor()] ^= toBB;
-                occupied ^= fromBB;
-                empty ^= fromBB;
-            }
-        } else {
-            occupied ^= fromToBB;
-            empty ^= fromToBB;
-        }
-
-        if (move.isPromotion()) {
-            piecesBB[pawns] ^= fromBB;
-            piecesBB[move.getPromotedPiece()] ^= toBB;
-        } else {
-            piecesBB[move.getPiece()] ^= fromToBB;
-        }
-
-        piecesBB[move.getColor()] ^= fromToBB;
+        makeMoveBitboardOnly(move, whitePieces);
     }
 
     // Helpers
