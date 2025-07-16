@@ -29,7 +29,7 @@ public class MainFrameController implements CommandListenerObserver {
     }
 
     @Override
-    public void onCommandReceived(String command, String args) {
+    public void onCommandReceived(String command, String... args) {
         if (command.equals("quit")) {
             System.out.println("Shutting down application...");
             Platform.exit();

@@ -16,78 +16,63 @@ public class ChessController implements CommandListenerObserver {
     private MainFrameController frameController;
     private final Game game;
     private final Config config;
+    private int nThreads;
     public static long[][] rookMovesLookup;
     public static long[][] bishopMovesLookup;
 
     public ChessController() {
         rookMovesLookup = Piece.generateMovesLookup(false);
         bishopMovesLookup = Piece.generateMovesLookup(true);
+        nThreads = Runtime.getRuntime().availableProcessors();
         this.game = new Game();
         this.config = new Config();
     }
 
     @Override
-    public void onCommandReceived(String command, String args) {
+    public void onCommandReceived(String command, String[] args) {
         switch (command) {
-            case "getpos":
-                handleGetPosCommand();
+            case "display":
+                handleDisplayCommand();
                 break;
-            case "setpos":
-                handleSetPosCommand(args);
+            case "position":
+                handlePositionCommand(args);
                 break;
-            case "perft":
-                handlePerftCommand(args);
-                break;
-            case "divide":
-                handleDivideCommand(args);
-                break;
+            case "go":
+                handleGoCommand(args);
+            case "setoption":
+                handleSetOptionCommand(args);
             default:
                 break;
         }
     }
 
-    private int[] checkPerftDivideCondition(String s) {
-        String[] args = s.split(" ");
-        int depth, nThreads;
-
-        if (args.length != 2) {
-            System.out.println("Incorrect arguments");
-            return null;
-        } else {
-            try {
-                depth = Integer.parseInt(args[0]);
-                nThreads = Integer.parseInt(args[1]);
-            } catch (NumberFormatException e) {
-                System.out.println("Incorrect arguments");
-                return null;
-            }
-        }
-        return new int[]{depth, nThreads};
-    }
-
-    private void handleGetPosCommand() {
+    private void handleDisplayCommand() {
         System.out.println(game.getFen());
     }
 
-    private void handleSetPosCommand(String s) {
-        if (s.equals("startpos")) {
+    private void handlePositionCommand(String[] s) {
+        if (s[0].equals("startpos")) {
             game.setFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         } else {
-            game.setFen(s);
+            game.setFen(s[1]);
         }
         frameController.updateBoard();
     }
 
-    private void handlePerftCommand(String s) {
-        Perft perft = new Perft(game.getFen());
-        int[] args = checkPerftDivideCondition(s);
-        if (args != null) perft.runPerft(args[0], args[1]);
+    private void handleGoCommand(String[] s) {
+        if (s[0].equals("perft")) {
+            Perft perft = new Perft(game.getFen());
+            perft.runPerft(Integer.parseInt(s[1]), nThreads);
+        } else {
+            Divide divide = new Divide(game.getFen());
+            divide.runDivide(Integer.parseInt(s[1]), nThreads);
+        }
     }
 
-    private void handleDivideCommand(String s) {
-        Divide divide = new Divide(game.getFen());
-        int[] args = checkPerftDivideCondition(s);
-        if (args != null) divide.runDivide(args[0], args[1]);
+    private void handleSetOptionCommand(String[] s) {
+        if (s[0].equals("threads")) {
+            nThreads = Integer.parseInt(s[1]);
+        }
     }
 
     public void setFrameController(MainFrameController frameController) {
@@ -95,7 +80,6 @@ public class ChessController implements CommandListenerObserver {
     }
 
     public void initDialog() {
-        frameController.setVisible(true);
         frameController.resetGUI();
     }
 
