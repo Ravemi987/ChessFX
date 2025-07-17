@@ -2,6 +2,7 @@ package fr.chessproject.chessfx.model;
 
 import fr.chessproject.chessfx.helpers.BinaryHelper;
 
+import java.util.Arrays;
 import java.util.Stack;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -369,8 +370,7 @@ public class Position {
 
     public void generatePromotionMoves(MoveList mvList, byte sqFrom, byte sqTo,
                                        byte pieceBB, byte colorBB, byte cPiece, byte cColor) {
-        Move mv = new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, queens);
-        mvList.addMove(mv);
+        mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, queens));
         mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, rooks));
         mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, knights));
         mvList.addMove(new Move(sqFrom, sqTo, pieceBB, colorBB, cPiece, cColor, bishops));

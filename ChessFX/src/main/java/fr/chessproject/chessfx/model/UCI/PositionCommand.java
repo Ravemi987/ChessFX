@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 public class PositionCommand implements UciCommand {
     private static final Pattern STARTPOS_PATTERN = Pattern.compile("^position startpos(?: moves (.+))?$");
-    private static final Pattern FEN_PATTERN = Pattern.compile("^position fen (.+?)(?: moves (.+))?$");
+    private static final Pattern FEN_PATTERN = Pattern.compile("^position fen (\\S+(?:\\s\\S+){5})(?: moves (.+))?$");
 
     @Override
     public String name() {
@@ -25,11 +25,11 @@ public class PositionCommand implements UciCommand {
 
         if (m1.matches()) {
             String moves = m1.group(1);
-            callback.accept("position", new String[]{"startpos", (moves != null ? " moves " + moves : "")});
+            callback.accept("position", new String[]{"startpos", (moves != null ? "moves" : ""), (moves != null ? moves : "")});
         } else if (m2.matches()) {
             String fen = m2.group(1);
             String moves = m2.group(2);
-            callback.accept("position", new String[]{"fen", fen, (moves != null ? " moves " + moves : "")});
+            callback.accept("position", new String[]{"fen", fen, (moves != null ? "moves" : ""), (moves != null ? moves : "")});
         }
     }
 }

@@ -1,7 +1,5 @@
 package fr.chessproject.chessfx.model.UCI;
 
-import fr.chessproject.chessfx.model.CommandListenerObserver;
-
 import java.util.function.BiConsumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
