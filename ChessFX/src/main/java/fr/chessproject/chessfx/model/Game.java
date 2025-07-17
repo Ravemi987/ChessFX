@@ -32,6 +32,10 @@ public class Game {
         lastMove = null;
     }
 
+    public Move checkMoveFomString(String mvStr) {
+        Move mv = Move.convertFromString(mvStr);
+        return  checkMove(mv);
+    }
 
     public Move checkMove(Move mv) {
         for (int i = 0; i < validMoves.getMvCount(); i++) {

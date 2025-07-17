@@ -2,8 +2,6 @@ package fr.chessproject.chessfx.model;
 
 public class Square {
 
-    public static final byte NONE = -1;
-
     /* Important squares (castling capabilities) */
 
     public static final byte A1 = 0;

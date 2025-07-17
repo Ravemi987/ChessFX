@@ -3,6 +3,7 @@ package fr.chessproject.chessfx.model;
 public class Move {
 
     private final int moveData;
+    private static final char[] promotionsChars = new char[]{'n', 'b', 'r', 'q'};
 
     /*
     | 6 bits | 6 bits | 4 bits | 1 bit | 4 bits | 1 bit | 4 bits | 6 bits | = 32 bits
@@ -47,6 +48,19 @@ public class Move {
                 ((color & 0x01) << 16) |
                 ((cPiece & 0x0F) << 17) |
                 ((cColor & 0x01) << 21) |
+                ((promoted & 0x0F) << 22);
+    }
+
+    /* Constructeurs pour comparaisons */
+
+    public Move(byte from, byte to) {
+        this.moveData = (from & 0x3F) |
+                ((to & 0x3F) << 6);
+    }
+
+    public Move(byte from, byte to, byte promoted) {
+        this.moveData = (from & 0x3F) |
+                ((to & 0x3F) << 6) |
                 ((promoted & 0x0F) << 22);
     }
 
@@ -99,6 +113,29 @@ public class Move {
         return Math.abs(getFrom() - getTo()) == 16;
     }
 
+    public static Move convertFromString(String mvStr) {
+        char fromFileChar = mvStr.charAt(0);
+        char fromRankChar = mvStr.charAt(1);
+        char toFileChar = mvStr.charAt(2);
+        char toRankChar = mvStr.charAt(3);
+
+        int fromCol = fromFileChar - 'a';
+        int fromRow = fromRankChar - '1';
+        int toCol = toFileChar - 'a';
+        int toRow = toRankChar - '1';
+
+        int fromIndex = fromRow * 8 + fromCol;
+        int toIndex = toRow * 8 + toCol;
+
+        if (mvStr.length() == 5) {
+            char promoChar = mvStr.charAt(4);
+            byte promotedPiece = (byte) (3 + new String(promotionsChars).indexOf(promoChar)); // à définir
+            return new Move((byte) fromIndex, (byte) toIndex, promotedPiece);
+        } else {
+            return new Move((byte) fromIndex, (byte) toIndex);
+        }
+    }
+
     @Override
     public String toString() {
         int fromRow = 1 + getFrom() / 8;
@@ -106,12 +143,14 @@ public class Move {
         int fromCol = getFrom() % 8;
         int toCol = getTo() % 8;
         return Character.toString('a' + fromCol) + fromRow
-                + Character.toString('a' + toCol) + toRow;
+                + Character.toString('a' + toCol) + toRow
+                + (isPromotion() ? promotionsChars[getPromotedPiece() - 3] : ' ');
 
     }
 
     public boolean equals(Move mv) {
-        return getFrom() == mv.getFrom() && getTo() == mv.getTo();
+        return getFrom() == mv.getFrom() && getTo() == mv.getTo() &&
+                (getPromotedPiece() == mv.getPromotedPiece() || getPromotedPiece() == 0);
     }
 
     @Override

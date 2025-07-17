@@ -1,6 +1,7 @@
 package fr.chessproject.chessfx.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class MoveList {
     private final Move[] moves;
@@ -26,6 +27,6 @@ public class MoveList {
 
     @Override
     public String toString() {
-        return moves.toString();
+        return Arrays.toString(moves);
     }
 }

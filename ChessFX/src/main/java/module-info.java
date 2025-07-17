@@ -15,4 +15,6 @@ module fr.chessproject.chessfx {
     opens fr.chessproject.chessfx.model to javafx.fxml;
     exports fr.chessproject.chessfx.view;
     opens fr.chessproject.chessfx.view to javafx.fxml;
+    exports fr.chessproject.chessfx.model.UCI;
+    opens fr.chessproject.chessfx.model.UCI to javafx.fxml;
 }

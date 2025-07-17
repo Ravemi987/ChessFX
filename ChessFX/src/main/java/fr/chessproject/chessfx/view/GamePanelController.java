@@ -19,6 +19,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Screen;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -47,6 +48,8 @@ public class GamePanelController {
     public Canvas drawingCanvas;
     @FXML
     public Canvas bitboardCanvas;
+    @FXML
+    public Canvas arrowsCanvas;
 
     private ChessController controller;
 
@@ -66,6 +69,10 @@ public class GamePanelController {
     private boolean dragging;
     private int mouseXOnBoard;
     private int mouseYOnBoard;
+
+    private MouseEvent currentMouseEvent;
+    private int arrowStartSquare = -1;
+    private List<Arrow> arrows = new ArrayList<>();
 
     public GamePanelController() {
         //System.out.println("GamePanelController created");
@@ -96,7 +103,7 @@ public class GamePanelController {
         boardPane.setMaxSize(size, size);
 
         for (Canvas canvas : List.of(boardCanvas, coordsCanvas, piecesCanvas,
-                draggingCanvas, coloredSquaresCanvas, drawingCanvas, bitboardCanvas)) {
+                draggingCanvas, coloredSquaresCanvas, drawingCanvas, arrowsCanvas, bitboardCanvas)) {
             canvas.setWidth(size);
             canvas.setHeight(size);
         }
@@ -404,12 +411,16 @@ public class GamePanelController {
     }
 
     private void clearDrawingCanvas() {
-        GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
-        gc.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
+        GraphicsContext drawingGC = drawingCanvas.getGraphicsContext2D();
+        drawingGC.clearRect(0, 0, drawingCanvas.getWidth(), drawingCanvas.getHeight());
         isSquareColored = new boolean[64];
+
+        GraphicsContext arrowGC = arrowsCanvas.getGraphicsContext2D();
+        arrowGC.clearRect(0, 0, arrowsCanvas.getWidth(), arrowsCanvas.getHeight());
+        arrows.clear();
     }
 
-    private void drawOnCanvas() {
+    private void drawHighlight() {
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
         int squareSize = (int) (drawingCanvas.getWidth() / 8);
 
@@ -426,6 +437,39 @@ public class GamePanelController {
         gc.fillRect(col * squareSize, row * squareSize, squareSize, squareSize);
     }
 
+    private Point2D getSquareCenter(int square, int squareSize) {
+        int row = 7 - square / 8;
+        int col = square % 8;
+        double x = col * squareSize + squareSize / 2.0;
+        double y = row * squareSize + squareSize / 2.0;
+        return new Point2D(x, y);
+    }
+
+    private Color getColorFromModifiers() {
+        boolean ctrl = currentMouseEvent.isControlDown();
+        boolean alt = currentMouseEvent.isAltDown();
+        boolean shift = currentMouseEvent.isShiftDown();
+
+        if (ctrl) return Color.rgb(0, 128, 255, 0.6);   // bleu clair
+        if (alt) return Color.rgb(217, 18, 77, 0.6);      // vert
+        if (shift) return Color.rgb(255, 165, 0, 0.6);  // orange
+        return Color.rgb(105, 66, 220, 0.6);               // rouge par défaut
+    }
+
+    private void renderArrow(Arrow arrow) {
+        GraphicsContext gc = arrowsCanvas.getGraphicsContext2D();
+        int squareSize = (int)(arrowsCanvas.getWidth() / 8);
+
+        Point2D start = getSquareCenter(arrow.fromSquare, squareSize);
+        Point2D end = getSquareCenter(arrow.toSquare, squareSize);
+
+        gc.setStroke(arrow.color);
+        gc.setLineWidth(15);
+        gc.setLineCap(StrokeLineCap.ROUND);
+
+        arrow.draw(gc, start, end);
+    }
+
     private void resetSelection() {
         unselectPiece();
         undragPiece();
@@ -434,6 +478,7 @@ public class GamePanelController {
 
     @FXML
     private void handleMouseReleased(MouseEvent mouseEvent) {
+        currentMouseEvent = mouseEvent;
         if (mouseEvent.getButton() == MouseButton.PRIMARY) {
             handleLeftMouseReleased();
         } else {
@@ -471,14 +516,26 @@ public class GamePanelController {
         if (dragging || selectedPiece != -1) {
             resetSelection();
             render();
+            return;
+        }
+
+        int arrowEndSquare = getSquareFromPos(mouseXOnBoard, mouseYOnBoard);
+        Color color = getColorFromModifiers();
+        Arrow arrow = new Arrow(arrowStartSquare, arrowEndSquare, color);
+
+        if ((arrowEndSquare != arrowStartSquare) && !arrows.contains(arrow)) {
+            arrows.add(arrow);
+            renderArrow(arrow);
+            arrowStartSquare = -1;
         } else {
-            drawOnCanvas();
+            drawHighlight();
         }
     }
 
     @FXML
     private void handleMousePressed(MouseEvent mouseEvent) {
         if (mouseEvent.getButton() != MouseButton.PRIMARY) {
+            arrowStartSquare = getSquareFromPos(mouseXOnBoard, mouseYOnBoard);
             return;
         }
 
