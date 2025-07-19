@@ -3,6 +3,7 @@
     -fx-border-color: rgb(38, 37, 34);
     -fx-border-width: 4px;
     -fx-border-radius: 5px;
+    -fx-border-insets: -4px;
 }
 
 .canvas-style {

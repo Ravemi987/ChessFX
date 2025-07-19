@@ -5,7 +5,6 @@ import fr.chessproject.chessfx.model.*;
 
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -98,21 +97,22 @@ public class GamePanelController {
     }
 
     private void setBoardSize(int size) {
-        boardPane.setPrefSize(size, size);
-        boardPane.setMinSize(size, size);
-        boardPane.setMaxSize(size, size);
+        int squareSize = size / 8;
+        int actualBoardSize = squareSize * 8;
+
+        boardPane.setPrefSize(actualBoardSize, actualBoardSize);
+        boardPane.setMinSize(actualBoardSize, actualBoardSize);
+        boardPane.setMaxSize(actualBoardSize, actualBoardSize);
 
         for (Canvas canvas : List.of(boardCanvas, coordsCanvas, piecesCanvas,
                 draggingCanvas, coloredSquaresCanvas, drawingCanvas, arrowsCanvas, bitboardCanvas)) {
-            canvas.setWidth(size);
-            canvas.setHeight(size);
+            canvas.setWidth(actualBoardSize);
+            canvas.setHeight(actualBoardSize);
         }
 
-        boardMaskPane.setPrefSize(size, size);
-        boardMaskPane.setMinSize(size, size);
-        boardMaskPane.setMaxSize(size, size);
-
-        StackPane.setMargin(boardMaskPane, new Insets(-3, 3, 3, -3));
+        boardMaskPane.setPrefSize(actualBoardSize, actualBoardSize);
+        boardMaskPane.setMinSize(actualBoardSize, actualBoardSize);
+        boardMaskPane.setMaxSize(actualBoardSize, actualBoardSize);
     }
 
     public void init() {
