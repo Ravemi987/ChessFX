@@ -453,7 +453,7 @@ public class GamePanelController {
             gc.setFill((row + col) % 2 == 0 ? theme.getDrawingLightSquare() : theme.getDrawingDarkSquare());
             gc.fillRect(col * squareSize, row * squareSize, squareSize, squareSize);
         } else {
-            double inset = 0.5;
+            double inset = 0.05;
             gc.clearRect(col * squareSize + inset, row * squareSize + inset, squareSize - 2 * inset, squareSize - 2 * inset);
         }
     }
