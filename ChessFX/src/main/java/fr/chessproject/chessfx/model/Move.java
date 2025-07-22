@@ -101,7 +101,7 @@ public class Move {
     /* setters */
 
     public void setPromoted(byte promoted) {
-        moveData |= (promoted & 0x0F) << 22;
+        moveData = (moveData & ~(0x0F << 22)) | ((promoted & 0x0F) << 22);
     }
 
     /* others */
@@ -159,8 +159,7 @@ public class Move {
     }
 
     public boolean equals(Move mv) {
-        return getFrom() == mv.getFrom() && getTo() == mv.getTo() &&
-                (getPromotedPiece() == mv.getPromotedPiece() || getPromotedPiece() == 0);
+        return getFrom() == mv.getFrom() && getTo() == mv.getTo() && getPromotedPiece() == mv.getPromotedPiece();
     }
 
     @Override

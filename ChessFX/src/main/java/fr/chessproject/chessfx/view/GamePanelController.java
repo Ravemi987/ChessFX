@@ -20,6 +20,7 @@ import javafx.stage.Screen;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class GamePanelController {
@@ -68,16 +69,15 @@ public class GamePanelController {
     private boolean dragging;
     private int mouseXOnBoard;
     private int mouseYOnBoard;
+    private boolean suppressRightClick;
 
     private MouseEvent currentMouseEvent;
-    private int arrowStartSquare = -1;
-    private List<Arrow> arrows = new ArrayList<>();
+    private int arrowStartSquare;
+    private final List<Arrow> arrows = new ArrayList<>();
 
     public GamePanelController() {
         //System.out.println("GamePanelController created");
-
         isSquareColored = new boolean[64];
-
         controller = null;
         theme = null;
         selectedPiece = -1;
@@ -88,6 +88,8 @@ public class GamePanelController {
         dragging = false;
         mouseXOnBoard = 0;
         mouseYOnBoard = 0;
+        arrowStartSquare = -1;
+        suppressRightClick = false;
     }
 
     @FXML
@@ -96,13 +98,17 @@ public class GamePanelController {
         boardPane.getProperties().put("controller", this);
     }
 
+    private void setPaneSize(Pane pane, int size) {
+        pane.setPrefSize(size, size);
+        pane.setMinSize(size, size);
+        pane.setMaxSize(size, size);
+    }
+
     private void setBoardSize(int size) {
         int squareSize = size / 8;
         int actualBoardSize = squareSize * 8;
 
-        boardPane.setPrefSize(actualBoardSize, actualBoardSize);
-        boardPane.setMinSize(actualBoardSize, actualBoardSize);
-        boardPane.setMaxSize(actualBoardSize, actualBoardSize);
+        setPaneSize(boardPane, actualBoardSize);
 
         for (Canvas canvas : List.of(boardCanvas, coordsCanvas, piecesCanvas,
                 draggingCanvas, coloredSquaresCanvas, drawingCanvas, arrowsCanvas, bitboardCanvas)) {
@@ -110,13 +116,11 @@ public class GamePanelController {
             canvas.setHeight(actualBoardSize);
         }
 
-        boardMaskPane.setPrefSize(actualBoardSize, actualBoardSize);
-        boardMaskPane.setMinSize(actualBoardSize, actualBoardSize);
-        boardMaskPane.setMaxSize(actualBoardSize, actualBoardSize);
+        setPaneSize(boardMaskPane, actualBoardSize);
     }
 
     public void init() {
-        setBoardSize((int) (SCREEN_SIZE * 0.9));
+        setBoardSize((int) (SCREEN_SIZE * 0.85));
         loadGraphics();
         renderBoard();
         renderCoordinates();
@@ -135,6 +139,10 @@ public class GamePanelController {
         boardMaskPane.setOnMouseDragged(this::handleMouseDragged);
         boardMaskPane.setOnMouseReleased(this::handleMouseReleased);
         boardMaskPane.setOnMouseMoved(this::handleMouseMoved);
+    }
+
+    public void suppressNextRightClick() {
+        suppressRightClick = true;
     }
 
     private void startGameLoop() {
@@ -431,10 +439,10 @@ public class GamePanelController {
 
         if (isSquareColored[square]) {
             gc.setFill((row + col) % 2 == 0 ? theme.getDrawingLightSquare() : theme.getDrawingDarkSquare());
+            gc.fillRect(col * squareSize, row * squareSize, squareSize, squareSize);
         } else {
-            gc.setFill(((row + col) % 2 == 0 ) ? theme.getLightSquare() : theme.getDarkSquare());
+            gc.clearRect(col * squareSize, row * squareSize, squareSize, squareSize);
         }
-        gc.fillRect(col * squareSize, row * squareSize, squareSize, squareSize);
     }
 
     private Point2D getSquareCenter(int square, int squareSize) {
@@ -476,6 +484,33 @@ public class GamePanelController {
         previousSelectedPiece = -1;
     }
 
+    private void handleMoveCreation(Position pos, byte selectedPiece, byte squarePos, byte piece, byte color,
+                                    Consumer<Move> onMoveReady) {
+        int promotionRow = color == pos.whitePieces ? 7 : 0;
+        boolean isPawnMoving = piece == pos.pawns;
+        boolean hasToPlay = (promotionRow == 7 && pos.isWhiteSideToPlay) || (promotionRow == 0 && !pos.isWhiteSideToPlay);
+
+        Move mv = new Move(selectedPiece, squarePos, piece, color);
+        int squareSize = (int) (boardCanvas.getWidth() / 8);
+        int row = 7 - mv.getTo() / 8;
+        int col = mv.getTo() % 8;
+
+        if (mv.getTo() / 8 == promotionRow && isPawnMoving && hasToPlay) {
+            mv.setPromoted((byte) 6);
+            if (!controller.getGame().isLegal(mv)) return;
+            PromotionPopup.showPromotionVBox(boardMaskPane, spritesLoader, col * squareSize, row * squareSize, promotedPiece -> {
+                mv.setPromoted(promotedPiece);
+                onMoveReady.accept(mv);
+                render();
+            }, () -> {
+                resetSelection();
+                render();
+            }, this::suppressNextRightClick);
+        } else {
+            onMoveReady.accept(mv);
+        }
+    }
+
     @FXML
     private void handleMouseReleased(MouseEvent mouseEvent) {
         currentMouseEvent = mouseEvent;
@@ -498,12 +533,13 @@ public class GamePanelController {
         if (previousSelectedPiece != -1 && releasePiece == previousSelectedPiece && clickedPiece == previousSelectedPiece) {
             unselectPiece();
         } else if (selectedPiece != -1) {
-            Move mv = new Move((byte) selectedPiece, (byte) sq, pos.pieceBitboardOnSquare((byte) selectedPiece), pos.pieceColorOnSquare((byte) selectedPiece));
-            Move validMove = controller.getGame().checkMove(mv);
-            if (validMove != null) {
-                controller.getGame().playMove(validMove);
-                unselectPiece();
-            }
+            handleMoveCreation(pos, (byte) selectedPiece, (byte) sq, pos.pieceBitboardOnSquare((byte) selectedPiece), pos.pieceColorOnSquare((byte) selectedPiece), mv -> {
+                Move validMove = controller.getGame().checkMove(mv);
+                if (validMove != null) {
+                    controller.getGame().playMove(validMove);
+                    unselectPiece();
+                }
+            });
         }
 
         undragPiece();
@@ -513,6 +549,11 @@ public class GamePanelController {
     }
 
     private void handleRightMouseReleased() {
+        if (suppressRightClick) {
+            suppressRightClick = false;
+            return;
+        }
+
         if (dragging || selectedPiece != -1) {
             resetSelection();
             render();
@@ -543,16 +584,17 @@ public class GamePanelController {
         Position pos = controller.getGame().getPosition();
         if (Square.isOccupied((byte) clickedSquare, pos.getOccupied())) {
             if (selectedPiece != -1 && pos.pieceColorOnSquare((byte) clickedSquare) != pos.pieceColorOnSquare((byte) selectedPiece)) {
-                Move mv = new Move((byte) selectedPiece, (byte) clickedSquare, pos.pieceBitboardOnSquare((byte) selectedPiece), pos.pieceColorOnSquare((byte) selectedPiece));
-                Move validMove = controller.getGame().checkMove(mv);
-                if (validMove == null) {
-                    clickedPiece = clickedSquare;
-                    dragPiece(clickedPiece);
-                    selectPiece(clickedPiece);
-                } else {
-                    controller.getGame().playMove(validMove);
-                    unselectPiece();
-                }
+                handleMoveCreation(pos, (byte) selectedPiece, (byte) clickedSquare, pos.pieceBitboardOnSquare((byte) selectedPiece), pos.pieceColorOnSquare((byte) selectedPiece), mv -> {
+                    Move validMove = controller.getGame().checkMove(mv);
+                    if (validMove == null) {
+                        clickedPiece = clickedSquare;
+                        dragPiece(clickedPiece);
+                        selectPiece(clickedPiece);
+                    } else {
+                        controller.getGame().playMove(validMove);
+                        unselectPiece();
+                    }
+                });
             } else {
                 clickedPiece = clickedSquare;
                 dragPiece(clickedPiece);
@@ -560,14 +602,15 @@ public class GamePanelController {
             }
         } else {
             if (selectedPiece != -1) {
-                Move mv = new Move((byte) selectedPiece, (byte) clickedSquare, pos.pieceBitboardOnSquare((byte) selectedPiece), pos.pieceColorOnSquare((byte) selectedPiece));
-                Move validMove = controller.getGame().checkMove(mv);
-                if (validMove == null) {
-                    unselectPiece();
-                } else {
-                    controller.getGame().playMove(validMove);
-                    unselectPiece();
-                }
+                handleMoveCreation(pos, (byte) selectedPiece, (byte) clickedSquare, pos.pieceBitboardOnSquare((byte) selectedPiece), pos.pieceColorOnSquare((byte) selectedPiece), mv -> {
+                    Move validMove = controller.getGame().checkMove(mv);
+                    if (validMove == null) {
+                        unselectPiece();
+                    } else {
+                        controller.getGame().playMove(validMove);
+                        unselectPiece();
+                    }
+                });
             } else {
                 unselectPiece();
             }

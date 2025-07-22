@@ -9,7 +9,8 @@ public class Game {
 
     public Game() {
         currentPos = new Position();
-        currentPos.loadFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        currentPos.loadFEN("rnbqkbnr/pPppppp1/8/8/8/8/PPPPPPpP/RNBQKBNR w KQkq - 0 1");
+        //currentPos.loadFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         initMoves();
     }
 
@@ -34,7 +35,7 @@ public class Game {
 
     public Move checkMoveFomString(String mvStr) {
         Move mv = Move.convertFromString(mvStr);
-        return  checkMove(mv);
+        return checkMove(mv);
     }
 
     public Move checkMove(Move mv) {
@@ -44,6 +45,10 @@ public class Game {
             }
         }
         return null;
+    }
+
+    public boolean isLegal(Move mv) {
+        return checkMove(mv) != null;
     }
 
     public void playMove(Move mv) {
