@@ -91,6 +91,7 @@ public class GamePanelController {
         mouseYOnBoard = 0;
         arrowStartSquare = -1;
         suppressRightClick = false;
+        isBoardReversed = false;
     }
 
     @FXML
