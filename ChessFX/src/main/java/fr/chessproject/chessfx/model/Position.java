@@ -2,7 +2,6 @@ package fr.chessproject.chessfx.model;
 
 import fr.chessproject.chessfx.helpers.BinaryHelper;
 
-import java.util.Arrays;
 import java.util.Stack;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -11,15 +10,15 @@ public class Position {
 
     /* Bitboards indexes */
 
-    public final byte whitePieces = 0;
-    public final byte blackPieces = 1;
-    public final byte pawns = 2;
-    public final byte knights = 3;
-    public final byte bishops = 4;
-    public final byte rooks = 5;
-    public final byte queens = 6;
-    public final byte blackKing = 7;
-    public final byte whiteKing = 8;
+    private final byte whitePieces = PieceIndex.WHITE_PIECES.id;
+    private final byte blackPieces = PieceIndex.BLACK_PIECES.id;
+    private final byte pawns = PieceIndex.PAWNS.id;
+    private final byte knights = PieceIndex.KNIGHTS.id;
+    private final byte bishops = PieceIndex.BISHOPS.id;
+    private final byte rooks = PieceIndex.ROOKS.id;
+    private final byte queens = PieceIndex.QUEENS.id;
+    private final byte blackKing = PieceIndex.BLACK_KING.id;
+    private final byte whiteKing = PieceIndex.WHITE_KING.id;
 
     public boolean isAllowedBlackShortCastle;
     public boolean isAllowedBlackLongCastle;
@@ -111,8 +110,8 @@ public class Position {
             } else {
                 byte sq = (byte) (row * 8 + col);
                 long pos = Square.bitboardForSquare(sq);
-                byte piece = Piece.fromChar(c);
-                if (piece == Piece.NONE) {
+                PieceType piece = PieceType.fromId(Piece.fromChar(c));
+                if (piece == PieceType.NONE) {
                     return -1;
                 }
 
@@ -132,14 +131,14 @@ public class Position {
         return 0;
     }
 
-    public void addPieceToBitboard(byte piece, long pos) {
+    public void addPieceToBitboard(PieceType piece, long pos) {
         if (Piece.isPawn(piece)) piecesBB[pawns] |= pos;
         else if (Piece.isKnight(piece)) piecesBB[knights] |= pos;
         else if (Piece.isBishop(piece)) piecesBB[bishops] |= pos;
         else if (Piece.isRook(piece)) piecesBB[rooks] |= pos;
         else if (Piece.isQueen(piece)) piecesBB[queens] |= pos;
-        else if (piece == Piece.WHITE_KING) piecesBB[whiteKing] |= pos;
-        else if (piece == Piece.BLACK_KING) piecesBB[blackKing] |= pos;
+        else if (piece == PieceType.WHITE_KING) piecesBB[whiteKing] |= pos;
+        else if (piece == PieceType.BLACK_KING) piecesBB[blackKing] |= pos;
     }
 
     public int setSideToMove(String fenSide) {
@@ -642,30 +641,30 @@ public class Position {
         return -1;
     }
 
-    public byte pieceOnSquare(byte sq) {
+    public PieceType pieceOnSquare(byte sq) {
         long bbSquare = Square.bitboardForSquare(sq);
 
-        if ((bbSquare & piecesBB[blackKing]) != 0) return Piece.BLACK_KING;
-        else if ((bbSquare & piecesBB[whiteKing]) != 0) return Piece.WHITE_KING;
+        if ((bbSquare & piecesBB[blackKing]) != 0) return PieceType.BLACK_KING;
+        else if ((bbSquare & piecesBB[whiteKing]) != 0) return PieceType.WHITE_KING;
 
         else if ((piecesBB[whitePieces] & bbSquare) != 0) {
-            if ((piecesBB[pawns] & bbSquare) != 0) return Piece.WHITE_PAWN;
-            else if ((piecesBB[knights] & bbSquare) != 0) return Piece.WHITE_KNIGHT;
-            else if ((piecesBB[bishops] & bbSquare) != 0) return Piece.WHITE_BISHOP;
-            else if ((piecesBB[rooks] & bbSquare) != 0) return Piece.WHITE_ROOK;
-            else if ((piecesBB[queens] & bbSquare) != 0) return Piece.WHITE_QUEEN;
-            return Piece.NONE;
+            if ((piecesBB[pawns] & bbSquare) != 0) return PieceType.WHITE_PAWN;
+            else if ((piecesBB[knights] & bbSquare) != 0) return PieceType.WHITE_KNIGHT;
+            else if ((piecesBB[bishops] & bbSquare) != 0) return PieceType.WHITE_BISHOP;
+            else if ((piecesBB[rooks] & bbSquare) != 0) return PieceType.WHITE_ROOK;
+            else if ((piecesBB[queens] & bbSquare) != 0) return PieceType.WHITE_QUEEN;
+            return PieceType.NONE;
         }
 
         else if ((piecesBB[blackPieces] & bbSquare) != 0) {
-            if ((piecesBB[pawns] & bbSquare) != 0) return Piece.BLACK_PAWN;
-            else if ((piecesBB[knights] & bbSquare) != 0) return Piece.BLACK_KNIGHT;
-            else if ((piecesBB[bishops] & bbSquare) != 0) return Piece.BLACK_BISHOP;
-            else if ((piecesBB[rooks] & bbSquare) != 0) return Piece.BLACK_ROOK;
-            else if ((piecesBB[queens] & bbSquare) != 0) return Piece.BLACK_QUEEN;
+            if ((piecesBB[pawns] & bbSquare) != 0) return PieceType.BLACK_PAWN;
+            else if ((piecesBB[knights] & bbSquare) != 0) return PieceType.BLACK_KNIGHT;
+            else if ((piecesBB[bishops] & bbSquare) != 0) return PieceType.BLACK_BISHOP;
+            else if ((piecesBB[rooks] & bbSquare) != 0) return PieceType.BLACK_ROOK;
+            else if ((piecesBB[queens] & bbSquare) != 0) return PieceType.BLACK_QUEEN;
         }
 
-        return Piece.NONE;
+        return PieceType.NONE;
     }
 
     private boolean isBlackShortCastling(Move move) {

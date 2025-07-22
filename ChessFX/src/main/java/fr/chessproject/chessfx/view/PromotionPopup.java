@@ -1,5 +1,7 @@
 package fr.chessproject.chessfx.view;
 
+import fr.chessproject.chessfx.model.PieceIndex;
+import fr.chessproject.chessfx.model.PieceType;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
@@ -15,11 +17,15 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class PromotionPopup {
-    private static final Map<Byte, Byte> spritesToPieces = new HashMap<>() {{
-        put((byte) 2, (byte) 6);
-        put((byte) 4, (byte) 3);
-        put((byte) 5, (byte) 5);
-        put((byte) 3, (byte) 4);
+    private static final Map<PieceType, Byte> spritesToPieces = new HashMap<>() {{
+        put(PieceType.WHITE_QUEEN, PieceIndex.QUEENS.id);
+        put(PieceType.WHITE_KNIGHT, PieceIndex.KNIGHTS.id);
+        put(PieceType.WHITE_ROOK, PieceIndex.ROOKS.id);
+        put(PieceType.WHITE_BISHOP, PieceIndex.BISHOPS.id);
+        put(PieceType.BLACK_QUEEN, PieceIndex.QUEENS.id);
+        put(PieceType.BLACK_KNIGHT, PieceIndex.KNIGHTS.id);
+        put(PieceType.BLACK_ROOK, PieceIndex.ROOKS.id);
+        put(PieceType.BLACK_BISHOP, PieceIndex.BISHOPS.id);
     }};
 
     private static boolean isAncestorOf(Node parent, Node child) {
@@ -37,17 +43,24 @@ public class PromotionPopup {
         pane.setOnMouseMoved(Event::consume);
     }
 
-    private static VBox setupPopUp(int x, int y) {
-        VBox vbox = new VBox(10);
+    private static VBox setupPopUp(double x, double y, boolean isWhite, int iconSize, boolean isBoardReversed) {
+        double spacing = 10;
+        VBox vbox = new VBox(spacing);
 
         vbox.setStyle(
                 "-fx-background-color: white;" +
                         "-fx-border-color: white;" +
-                        "-fx-border-width: 4px;" +
+                        "-fx-border-width: 1px;" +
                         "-fx-border-radius: 5px;" +
                         "-fx-background-radius: 5px;" +
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0.3, 4, 4);"
         );
+
+        if ((!isWhite && !isBoardReversed) || (isWhite && isBoardReversed)) {
+            double totalHeight = iconSize * 3 + spacing * 3;
+             y -= totalHeight;
+        }
+
         vbox.setTranslateX(x);
         vbox.setTranslateY(y);
 
@@ -63,10 +76,24 @@ public class PromotionPopup {
         stack.setOnMouseClicked(Event::consume);
     }
 
-    public static void showPromotionVBox(Pane root, GameSpritesLoader spritesLoader, int x, int y,
-                                         Consumer<Byte> onPieceSelected, Runnable onCancelled, Runnable suppressNextRightClick) {
+    private static PieceType[] getPiecesOrder(boolean isWhite, boolean isBoardReversed) {
+        return new PieceType[]{
+                isWhite ? (isBoardReversed ? PieceType.WHITE_BISHOP : PieceType.WHITE_QUEEN) : (isBoardReversed ? PieceType.BLACK_QUEEN : PieceType.BLACK_BISHOP),
+                isWhite ? (isBoardReversed ? PieceType.WHITE_ROOK : PieceType.WHITE_KNIGHT) : (isBoardReversed ? PieceType.BLACK_KNIGHT : PieceType.BLACK_ROOK),
+                isWhite ? (isBoardReversed ? PieceType.WHITE_KNIGHT : PieceType.WHITE_ROOK) : (isBoardReversed ? PieceType.BLACK_ROOK : PieceType.BLACK_KNIGHT),
+                isWhite ? (isBoardReversed ? PieceType.WHITE_QUEEN : PieceType.WHITE_BISHOP) : (isBoardReversed ? PieceType.BLACK_BISHOP : PieceType.BLACK_QUEEN)
+        };
+    }
 
-        VBox vbox = setupPopUp(x, y);
+    public static void showPromotionVBox(Pane root, GameSpritesLoader spritesLoader, byte color, int squareSize,
+                                         boolean isBoardReversed, double x, double y, Consumer<Byte> onPieceSelected,
+                                         Runnable onCancelled, Runnable suppressNextRightClick) {
+
+        boolean isWhite = color == PieceIndex.WHITE_PIECES.id;
+        PieceType[] pieces = getPiecesOrder(isWhite, isBoardReversed);
+        int iconSize = squareSize - 2;
+
+        VBox vbox = setupPopUp(x, y, isWhite, iconSize, isBoardReversed);
 
         EventHandler<MouseEvent> outsideClickHandler = new EventHandler<>() {
             @Override
@@ -82,10 +109,10 @@ public class PromotionPopup {
             }
         };
 
-        byte[] pieces = {2, 4, 5, 3};
-
-        for (byte piece : pieces) {
-            ImageView img = new ImageView(spritesLoader.getPieceSprite(piece));
+        for (PieceType piece : pieces) {
+            ImageView img = new ImageView(spritesLoader.getPieceSprite(piece.id));
+            img.setFitWidth(iconSize);
+            img.setFitHeight(iconSize);
 
             StackPane stack = new StackPane(img);
             setupIconsEventsFilters(stack);

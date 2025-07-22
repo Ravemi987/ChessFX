@@ -12,22 +12,6 @@ public class Piece {
 
     public static int random_state = 1804289383;
 
-    /* Pieces */
-
-    public static final byte NONE = 0;
-    public static final byte WHITE_KING = 1;
-    public static final byte WHITE_QUEEN = 2;
-    public static final byte WHITE_BISHOP = 3;
-    public static final byte WHITE_KNIGHT = 4;
-    public static final byte WHITE_ROOK = 5;
-    public static final byte WHITE_PAWN = 6;
-    public static final byte BLACK_KING = 7;
-    public static final byte BLACK_QUEEN = 8;
-    public static final byte BLACK_BISHOP = 9;
-    public static final byte BLACK_KNIGHT = 10;
-    public static final byte BLACK_ROOK = 11;
-    public static final byte BLACK_PAWN = 12;
-
     /* Directions */
 
     public static final int noEa = 0;
@@ -462,31 +446,31 @@ public class Piece {
 
     public static byte fromChar(char chr) {
         int index = " KQBNRPkqbnrp".indexOf(chr);
-        return (index < 1) ? NONE : (byte)index;
+        return (index < 1) ? PieceType.NONE.id : (byte)index;
     }
 
-    public static boolean isWhite(byte piece) {
-        return piece > 0 && piece < 7;
+    public static boolean isWhite(PieceType piece) {
+        return piece.id > 0 && piece.id < 7;
     }
 
-    public static boolean isPawn(byte piece) {
-        return piece == WHITE_PAWN || piece == BLACK_PAWN;
+    public static boolean isPawn(PieceType piece) {
+        return piece == PieceType.WHITE_PAWN || piece == PieceType.BLACK_PAWN;
     }
 
-    public static boolean isKnight(byte piece) {
-        return piece == WHITE_KNIGHT || piece == BLACK_KNIGHT;
+    public static boolean isKnight(PieceType piece) {
+        return piece == PieceType.WHITE_KNIGHT || piece == PieceType.BLACK_KNIGHT;
     }
 
-    public static boolean isBishop(byte piece) {
-        return piece == WHITE_BISHOP || piece == BLACK_BISHOP;
+    public static boolean isBishop(PieceType piece) {
+        return piece == PieceType.WHITE_BISHOP || piece == PieceType.BLACK_BISHOP;
     }
 
-    public static boolean isRook(byte piece) {
-        return piece == WHITE_ROOK || piece == BLACK_ROOK;
+    public static boolean isRook(PieceType piece) {
+        return piece == PieceType.WHITE_ROOK || piece == PieceType.BLACK_ROOK;
     }
 
-    public static boolean isQueen(byte piece) {
-        return piece == WHITE_QUEEN || piece == BLACK_QUEEN;
+    public static boolean isQueen(PieceType piece) {
+        return piece == PieceType.WHITE_QUEEN || piece == PieceType.BLACK_QUEEN;
     }
 
 

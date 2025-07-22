@@ -44,12 +44,12 @@ public class AttackInfo {
     }
 
     private long getPawnsAttacksFromAll(Position p) {
-        long bb = p.piecesBB[p.pawns] & p.piecesBB[opColor];
+        long bb = p.piecesBB[PieceIndex.PAWNS.id] & p.piecesBB[opColor];
         long attacks = opColor == 0 ? (bb & Square.NOT_A_FILE) << 7 | (bb & Square.NOT_H_FILE) << 9 :
                 (bb & Square.NOT_H_FILE) >>> 7 | (bb & Square.NOT_A_FILE) >>> 9;
         if ((attacks & (1L << kingSquare)) != 0) {
-            checkersByPiece[p.pawns] = bb & (color == 0 ? Piece.whitePawnAttacks(kingSquare) : Piece.blackPawnAttacks(kingSquare));
-            attackers |= checkersByPiece[p.pawns];
+            checkersByPiece[PieceIndex.PAWNS.id] = bb & (color == 0 ? Piece.whitePawnAttacks(kingSquare) : Piece.blackPawnAttacks(kingSquare));
+            attackers |= checkersByPiece[PieceIndex.PAWNS.id];
         }
         return attacks;
     }
@@ -75,10 +75,10 @@ public class AttackInfo {
 
     public void calculateAllAttacks(Position p) {
         enemyAttacks |= getPawnsAttacksFromAll(p);
-        enemyAttacks |= getAttacksFromAll(p, p.knights, (_, sq) -> Piece.knightAttacks(sq));
-        enemyAttacks |= getAttacksFromAll(p, p.bishops, Piece::bishopAttacksLookup);
-        enemyAttacks |= getAttacksFromAll(p, p.rooks, Piece::rookAttacksLookup);
-        enemyAttacks |= getAttacksFromAll(p, p.queens, Piece::queenAttacksLookup);
+        enemyAttacks |= getAttacksFromAll(p, PieceIndex.KNIGHTS.id, (_, sq) -> Piece.knightAttacks(sq));
+        enemyAttacks |= getAttacksFromAll(p, PieceIndex.BISHOPS.id, Piece::bishopAttacksLookup);
+        enemyAttacks |= getAttacksFromAll(p, PieceIndex.ROOKS.id, Piece::rookAttacksLookup);
+        enemyAttacks |= getAttacksFromAll(p, PieceIndex.QUEENS.id, Piece::queenAttacksLookup);
     }
 
     private void updateSlidingRay(long attacker, byte sq, int[] dirs) {
@@ -91,15 +91,15 @@ public class AttackInfo {
         }
     }
 
-    private void calculateCheckRay(Position p) {
+    private void calculateCheckRay() {
         if (Long.bitCount(attackers) == 1) {
-            if (checkersByPiece[p.pawns] != 0) {checkRay = checkersByPiece[p.pawns]; return;}
-            if (checkersByPiece[p.knights] != 0) {checkRay = checkersByPiece[p.knights]; return;}
-            if (checkersByPiece[p.rooks] != 0) {
-                updateSlidingRay(checkersByPiece[p.rooks], kingSquare, rookDirs); return;}
-            if (checkersByPiece[p.bishops] != 0) {
-                updateSlidingRay(checkersByPiece[p.bishops], kingSquare, bishopDirs); return; }
-            if (checkersByPiece[p.queens] != 0) updateSlidingRay(checkersByPiece[p.queens], kingSquare, queenDirs);
+            if (checkersByPiece[PieceIndex.PAWNS.id] != 0) {checkRay = checkersByPiece[PieceIndex.PAWNS.id]; return;}
+            if (checkersByPiece[PieceIndex.KNIGHTS.id] != 0) {checkRay = checkersByPiece[PieceIndex.KNIGHTS.id]; return;}
+            if (checkersByPiece[PieceIndex.ROOKS.id] != 0) {
+                updateSlidingRay(checkersByPiece[PieceIndex.ROOKS.id], kingSquare, rookDirs); return;}
+            if (checkersByPiece[PieceIndex.BISHOPS.id] != 0) {
+                updateSlidingRay(checkersByPiece[PieceIndex.BISHOPS.id], kingSquare, bishopDirs); return; }
+            if (checkersByPiece[PieceIndex.QUEENS.id] != 0) updateSlidingRay(checkersByPiece[PieceIndex.QUEENS.id], kingSquare, queenDirs);
         }
     }
 
@@ -121,16 +121,16 @@ public class AttackInfo {
     }
 
     private void calculateAllPinnedPieces(Position p) {
-        long rooksAndQueens = p.piecesBB[opColor] & (p.piecesBB[p.rooks] | p.piecesBB[p.queens]);
+        long rooksAndQueens = p.piecesBB[opColor] & (p.piecesBB[PieceIndex.ROOKS.id] | p.piecesBB[PieceIndex.QUEENS.id]);
         calculatePinnedFromDir(p, rooksAndQueens, rookDirs);
-        long bishopAndQueens = p.piecesBB[opColor] & (p.piecesBB[p.bishops] | p.piecesBB[p.queens]);
+        long bishopAndQueens = p.piecesBB[opColor] & (p.piecesBB[PieceIndex.BISHOPS.id] | p.piecesBB[PieceIndex.QUEENS.id]);
         calculatePinnedFromDir(p, bishopAndQueens, bishopDirs);
     }
 
     public void update(Position p) {
         reset(p);
         calculateAllAttacks(p);
-        calculateCheckRay(p);
+        calculateCheckRay();
         calculateAllPinnedPieces(p);
         //BinaryHelper.printBitboard(checkRay);
     }

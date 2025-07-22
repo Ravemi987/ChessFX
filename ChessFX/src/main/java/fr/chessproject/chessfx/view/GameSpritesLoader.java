@@ -1,6 +1,6 @@
 package fr.chessproject.chessfx.view;
 
-import fr.chessproject.chessfx.model.Piece;
+import fr.chessproject.chessfx.model.PieceType;
 import javafx.scene.image.*;
 
 import java.util.HashMap;
@@ -19,8 +19,8 @@ public class GameSpritesLoader {
         if (piecesImage != null) {
             pieceSpriteScale = (int) piecesImage.getWidth() / 6;
             for (int i = 0; i < 6; i++) {
-                pieceSpritesMap.put(Piece.WHITE_KING + i, setPieceSprite(i, 0, squareSize));
-                pieceSpritesMap.put(Piece.BLACK_KING + i, setPieceSprite(i, 1, squareSize));
+                pieceSpritesMap.put(PieceType.WHITE_KING.id + i, setPieceSprite(i, 0, squareSize));
+                pieceSpritesMap.put(PieceType.BLACK_KING.id + i, setPieceSprite(i, 1, squareSize));
             }
         }
     }
