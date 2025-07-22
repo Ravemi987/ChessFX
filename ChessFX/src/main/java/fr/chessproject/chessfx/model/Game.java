@@ -9,8 +9,7 @@ public class Game {
 
     public Game() {
         currentPos = new Position();
-        currentPos.loadFEN("rnbqkbnr/pPppppp1/8/8/8/8/PPPPPPpP/RNBQKBNR w KQkq - 0 1");
-        //currentPos.loadFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        currentPos.loadFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         initMoves();
     }
 
