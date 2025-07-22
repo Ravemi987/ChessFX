@@ -880,4 +880,31 @@ public class Position {
     public AttackInfo getAttackInfo() {
         return attackInfo;
     }
+
+    public void printBoard() {
+        char[] piecesChars = " KQBNRPkqbnrp".toCharArray();
+
+        for (int rank = 7; rank >= 0; rank--)  {
+            System.out.println("+---+---+---+---+---+---+---+---+");
+            for (int file = 0; file < 8; file++) {
+                int square = rank * 8 + file;
+                PieceType piece = pieceOnSquare((byte) square);
+
+                System.out.print("| ");
+
+                if (piece == PieceType.NONE) {
+                    System.out.print("  ");
+                } else {
+                    System.out.print(piecesChars[piece.id] + " ");
+                }
+
+                if (file == 7) {
+                    System.out.print("|  " + (rank + 1));
+                }
+            }
+            System.out.print("\n");
+        }
+        System.out.println("+---+---+---+---+---+---+---+---+");
+        System.out.println("  a   b   c   d   e   f   g   h");
+    }
 }
