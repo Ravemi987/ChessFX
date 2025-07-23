@@ -2,7 +2,7 @@ package fr.chessproject.chessfx.model;
 
 public class Move {
 
-    private final int moveData;
+    private int moveData;
     private static final char[] promotionsChars = new char[]{'n', 'b', 'r', 'q'};
 
     /*
@@ -64,6 +64,8 @@ public class Move {
                 ((promoted & 0x0F) << 22);
     }
 
+    /* getters */
+
     public byte getFrom() {
         return (byte) (moveData & 0x3F);
     }
@@ -95,6 +97,14 @@ public class Move {
     public byte getEnPassant() {
         return (byte) ((moveData >>> 26) & 0x3F);
     }
+
+    /* setters */
+
+    public void setPromoted(byte promoted) {
+        moveData = (moveData & ~(0x0F << 22)) | ((promoted & 0x0F) << 22);
+    }
+
+    /* others */
 
     public boolean isCapture() {
         return getCapturedPiece() != 0;
@@ -149,8 +159,7 @@ public class Move {
     }
 
     public boolean equals(Move mv) {
-        return getFrom() == mv.getFrom() && getTo() == mv.getTo() &&
-                (getPromotedPiece() == mv.getPromotedPiece() || getPromotedPiece() == 0);
+        return getFrom() == mv.getFrom() && getTo() == mv.getTo() && getPromotedPiece() == mv.getPromotedPiece();
     }
 
     @Override

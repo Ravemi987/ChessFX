@@ -34,7 +34,7 @@ public class Game {
 
     public Move checkMoveFomString(String mvStr) {
         Move mv = Move.convertFromString(mvStr);
-        return  checkMove(mv);
+        return checkMove(mv);
     }
 
     public Move checkMove(Move mv) {
@@ -44,6 +44,10 @@ public class Game {
             }
         }
         return null;
+    }
+
+    public boolean isLegal(Move mv) {
+        return checkMove(mv) != null;
     }
 
     public void playMove(Move mv) {

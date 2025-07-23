@@ -65,6 +65,7 @@ public class MainFrame extends Application {
         primaryStage.centerOnScreen();
         primaryStage.setTitle("Chess");
         primaryStage.setScene(scene);
+        primaryStage.setMaximized(true);
         primaryStage.show();
 
         primaryStage.setOnCloseRequest(event -> {

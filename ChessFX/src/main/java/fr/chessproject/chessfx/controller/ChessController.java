@@ -10,7 +10,6 @@ import fr.chessproject.chessfx.view.Config;
 import fr.chessproject.chessfx.view.MainFrameController;
 import fr.chessproject.chessfx.view.Theme;
 
-import java.util.Arrays;
 import java.util.function.Supplier;
 
 public class ChessController implements CommandListenerObserver {
@@ -49,7 +48,9 @@ public class ChessController implements CommandListenerObserver {
     }
 
     private void handleDisplayCommand() {
-        System.out.println(game.getFen());
+        game.getPosition().printBoard();
+        System.out.print("\n");
+        System.out.println("Fen: " + game.getFen());
     }
 
     private void handlePositionCommand(String[] s) {
