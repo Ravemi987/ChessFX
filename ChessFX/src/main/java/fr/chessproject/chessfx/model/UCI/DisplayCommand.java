@@ -5,7 +5,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DisplayCommand implements UciCommand {
-    private static final Pattern DISPLAY_PATTERN = Pattern.compile("display");
+    private static final Pattern DISPLAY_PATTERN = Pattern.compile("d");
 
     @Override
     public String name() {

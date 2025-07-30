@@ -99,10 +99,6 @@ public class ChessController implements CommandListenerObserver {
         this.frameController = frameController;
     }
 
-    public void initDialog() {
-        frameController.resetGUI();
-    }
-
     public void enableDebugMode() {
         frameController.enableDebugMode();
     }

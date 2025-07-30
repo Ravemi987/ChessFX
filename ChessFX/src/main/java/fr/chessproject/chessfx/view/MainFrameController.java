@@ -4,13 +4,9 @@ import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.model.CommandListenerObserver;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.geometry.Point2D;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 
-import java.io.IOException;
 
 public class MainFrameController implements CommandListenerObserver {
 
@@ -53,14 +49,6 @@ public class MainFrameController implements CommandListenerObserver {
 
     public void updateBoard() {
         gamePanelController.refreshBoard();
-    }
-
-    public void setVisible(boolean visible) {
-        // Implementation for setting visibility
-    }
-
-    public void resetGUI() {
-        // Implementation for resetting the UI
     }
 
     public void enableDebugMode() {
