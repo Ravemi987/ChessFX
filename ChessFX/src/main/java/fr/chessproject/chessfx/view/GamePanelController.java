@@ -1,6 +1,8 @@
 package fr.chessproject.chessfx.view;
 
+import fr.chessproject.chessfx.controller.AnimationManager;
 import fr.chessproject.chessfx.controller.ChessController;
+import fr.chessproject.chessfx.controller.SoundManager;
 import fr.chessproject.chessfx.model.*;
 
 import javafx.animation.AnimationTimer;
@@ -23,7 +25,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class GamePanelController {
+public class GamePanelController implements MoveListener {
 
     // Panes
 
@@ -98,6 +100,28 @@ public class GamePanelController {
     public void initialize() {
         //System.out.println("GamePanelController initialized");
         boardPane.getProperties().put("controller", this);
+    }
+
+    @Override
+    public void onMovePlayed(Move move, Position before, Position after) {
+        if (move.isCapture()) SoundManager.playCaptureSound();
+        else SoundManager.playMoveSound();
+    }
+
+    public void playMove(Move mv) {
+        controller.getGame().playMoveOut(mv);
+
+        if (mv.isCapture()) SoundManager.playCaptureSound();
+        else SoundManager.playMoveSound();
+    }
+
+    public void handleInvalidMoveAnimation(Move mv) {
+        Position pos = controller.getGame().getPosition();
+        if (pos.isInCheck() && pos.isFriendly((byte) selectedPiece) && (mv.getFrom() != mv.getTo())) {
+            byte kingSquare = pos.getKingSquare(pos.getFriendlyColor());
+            AnimationManager.playCheckAnimation(getRow(kingSquare), getCol(kingSquare), coloredSquaresCanvas);
+            SoundManager.playInvalidMoveSound();
+        }
     }
 
     private void setPaneSize(Pane pane, int size) {
@@ -472,10 +496,10 @@ public class GamePanelController {
         boolean alt = currentMouseEvent.isAltDown();
         boolean shift = currentMouseEvent.isShiftDown();
 
-        if (ctrl) return Color.rgb(0, 128, 255, 0.6);   // bleu clair
-        if (alt) return Color.rgb(217, 18, 77, 0.6);      // vert
-        if (shift) return Color.rgb(255, 165, 0, 0.6);  // orange
-        return Color.rgb(105, 66, 220, 0.6);               // rouge par défaut
+        if (ctrl) return Color.rgb(0, 128, 255, 0.6);
+        if (alt) return Color.rgb(217, 18, 77, 0.6);
+        if (shift) return Color.rgb(255, 165, 0, 0.6);
+        return Color.rgb(105, 66, 220, 0.6);
     }
 
     private void renderArrow(Arrow arrow) {
@@ -486,10 +510,10 @@ public class GamePanelController {
         Point2D end = getSquareCenter(arrow.toSquare, squareSize);
 
         gc.setStroke(arrow.color);
-        gc.setLineWidth(15);
+        gc.setLineWidth(0.14 * squareSize);
         gc.setLineCap(StrokeLineCap.ROUND);
 
-        arrow.draw(gc, start, end);
+        arrow.draw(gc, start, end, squareSize);
     }
 
     private void resetSelection() {
@@ -549,10 +573,12 @@ public class GamePanelController {
             unselectPiece();
         } else if (selectedPiece != -1) {
             handleMoveCreation(pos, (byte) selectedPiece, (byte) sq, pos.pieceBitboardOnSquare((byte) selectedPiece), pos.pieceColorOnSquare((byte) selectedPiece), mv -> {
-                Move validMove = controller.getGame().checkMove(mv);
-                if (validMove != null) {
-                    controller.getGame().playMove(validMove);
+                Move move = controller.getGame().checkMove(mv);
+                if (move != null) {
+                    playMove(move);
                     unselectPiece();
+                } else {
+                    handleInvalidMoveAnimation(mv);
                 }
             });
         }
@@ -606,7 +632,7 @@ public class GamePanelController {
                         dragPiece(clickedPiece);
                         selectPiece(clickedPiece);
                     } else {
-                        controller.getGame().playMove(validMove);
+                        playMove(validMove);
                         unselectPiece();
                     }
                 });
@@ -622,7 +648,7 @@ public class GamePanelController {
                     if (validMove == null) {
                         unselectPiece();
                     } else {
-                        controller.getGame().playMove(validMove);
+                        playMove(validMove);
                         unselectPiece();
                     }
                 });
@@ -645,8 +671,9 @@ public class GamePanelController {
         updateMousePos(mouseEvent);
     }
 
-    public void setMainController(ChessController controller) {
+    public void setChessController(ChessController controller) {
         this.controller = controller;
         this.theme = controller.getTheme();
+        controller.getGame().addMoveListener(this);
     }
 }

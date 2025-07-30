@@ -42,9 +42,9 @@ public class MainFrameController implements CommandListenerObserver {
         gamePanelController.init();
     }
 
-    public void setMainController(ChessController chessController) {
+    public void setChessController(ChessController chessController) {
         this.controller = chessController;
-        gamePanelController.setMainController(controller);
+        gamePanelController.setChessController(controller);
     }
 
     public void updateBoard() {

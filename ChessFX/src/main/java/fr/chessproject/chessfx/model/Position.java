@@ -877,8 +877,39 @@ public class Position {
 
     // Helpers
 
+    public boolean isInCheck() {
+        return Long.bitCount(attackInfo.attackers) > 0;
+    }
+
+    public boolean isFriendly(byte sq) {
+        long bbSquare = Square.bitboardForSquare(sq);
+        return ((piecesBB[whitePieces] & bbSquare) != 0) && isWhiteSideToPlay ||
+                ((piecesBB[blackPieces] & bbSquare) != 0) && !isWhiteSideToPlay;
+    }
+
     public AttackInfo getAttackInfo() {
         return attackInfo;
+    }
+
+    public Position copy() {
+        Position newPos = new Position();
+        newPos.occupied = this.occupied;
+        newPos.empty = this.empty;
+        newPos.isWhiteSideToPlay = this.isWhiteSideToPlay;
+        newPos.enPassantSquare = this.enPassantSquare;
+        newPos.isAllowedWhiteShortCastle = this.isAllowedWhiteShortCastle;
+        newPos.isAllowedWhiteLongCastle = this.isAllowedWhiteLongCastle;
+        newPos.isAllowedBlackShortCastle = this.isAllowedBlackShortCastle;
+        newPos.isAllowedBlackLongCastle = this.isAllowedBlackLongCastle;
+
+        newPos.piecesBB = this.piecesBB.clone();
+
+        newPos.moveStateHistory = new Stack<>();
+        for (MoveState ms : this.moveStateHistory) {
+            newPos.moveStateHistory.push(new MoveState(ms));
+        }
+
+        return newPos;
     }
 
     public void printBoard() {
