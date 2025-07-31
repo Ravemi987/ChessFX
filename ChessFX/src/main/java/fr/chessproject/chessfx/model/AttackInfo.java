@@ -1,6 +1,6 @@
 package fr.chessproject.chessfx.model;
 
-import fr.chessproject.chessfx.helpers.BinaryHelper;
+import fr.chessproject.chessfx.helpers.BitboardUtilities;
 
 import java.util.Arrays;
 import java.util.function.BiFunction;
@@ -107,11 +107,11 @@ public class AttackInfo {
         for (int dir: dirs) {
             long ray = Piece.rayAttacks[dir][kingSquare];
             long blockers = ray & p.occupied;
-            byte firstBlocker = BinaryHelper.bitScan(blockers, Piece.isNegative(dir));
+            byte firstBlocker = BitboardUtilities.bitScan(blockers, Piece.isNegative(dir));
             long firstBlockerBB = 1L << firstBlocker;
             blockers &= ~firstBlockerBB;
             if (((firstBlockerBB & p.piecesBB[color]) != 0) && (blockers != 0)) {
-                long secondBlockerBB = 1L << BinaryHelper.bitScan(blockers, Piece.isNegative(dir));
+                long secondBlockerBB = 1L << BitboardUtilities.bitScan(blockers, Piece.isNegative(dir));
                 if ((secondBlockerBB & potentialAttackers) != 0) {
                     pinned |= firstBlockerBB;
                     pinMasks[firstBlocker] = ray;
@@ -132,6 +132,5 @@ public class AttackInfo {
         calculateAllAttacks(p);
         calculateCheckRay();
         calculateAllPinnedPieces(p);
-        BinaryHelper.printBitboard(pinned);
     }
 }

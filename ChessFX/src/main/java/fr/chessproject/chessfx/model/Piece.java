@@ -1,7 +1,8 @@
 package fr.chessproject.chessfx.model;
 
 import fr.chessproject.chessfx.controller.ChessController;
-import fr.chessproject.chessfx.helpers.BinaryHelper;
+import fr.chessproject.chessfx.helpers.BitboardUtilities;
+import fr.chessproject.chessfx.helpers.RandomUtilities;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -9,8 +10,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class Piece {
-
-    public static int random_state = 1804289383;
 
     /* Directions */
 
@@ -267,7 +266,7 @@ public class Piece {
             System.out.print("{");
             for (byte square = 0; square < 64; square++) {
                 rayAttacks[dir][square] = computeRay(dir, square);
-                System.out.print(BinaryHelper.toHexString(rayAttacks[dir][square]) + ", ");
+                System.out.print(BitboardUtilities.toHexString(rayAttacks[dir][square]) + ", ");
             }
             System.out.println("},");
         }
@@ -292,7 +291,7 @@ public class Piece {
         System.out.print("private final long[] kingAttacksTableStatic = new long[]{");
         for (byte square = 0; square < 64; square++) {
             kingAttacksTableStatic[square] = computeKingMoves(square);
-            System.out.print(BinaryHelper.toHexString(kingAttacksTableStatic[square]) + ", ");
+            System.out.print(BitboardUtilities.toHexString(kingAttacksTableStatic[square]) + ", ");
         }
         System.out.print("}");
     }
@@ -314,7 +313,7 @@ public class Piece {
         System.out.print("private final long[] knightAttacksTableStatic = new long[]{");
         for (byte square = 0; square < 64; square++) {
             knightAttacksTableStatic[square] = computeKnightMoves(square);
-            System.out.print(BinaryHelper.toHexString(knightAttacksTableStatic[square]) + ", ");
+            System.out.print(BitboardUtilities.toHexString(knightAttacksTableStatic[square]) + ", ");
         }
         System.out.print("}");
     }
@@ -332,13 +331,13 @@ public class Piece {
     private static void precomputePawnsMoves() {
         System.out.print("private final long[] whitePawnsAttacksTableStatic = new long[]{");
         for (byte square = 0; square < 64; square++) {
-            System.out.print(BinaryHelper.toHexString(computeWhitePawnMoves(square)) + ", ");
+            System.out.print(BitboardUtilities.toHexString(computeWhitePawnMoves(square)) + ", ");
         }
         System.out.print("}\n\n");
 
         System.out.print("private final long[] blackPawnsAttacksTableStatic = new long[]{");
         for (byte square = 0; square < 64; square++) {
-            System.out.print(BinaryHelper.toHexString(computeBlackPawnMoves(square)) + ", ");
+            System.out.print(BitboardUtilities.toHexString(computeBlackPawnMoves(square)) + ", ");
         }
         System.out.print("}\n");
     }
@@ -363,7 +362,7 @@ public class Piece {
         long attacks = rayAttacks[dir8][square];
         long blocker = attacks & occupied;
         if (blocker != 0) {
-            byte bSquare = BinaryHelper.bitScan(blocker, isNegative(dir8));
+            byte bSquare = BitboardUtilities.bitScan(blocker, isNegative(dir8));
             attacks ^= rayAttacks[dir8][bSquare];
         }
         return attacks;
@@ -476,31 +475,8 @@ public class Piece {
 
     /* Magic Bitboards */
 
-    public static int getRandom32Bits() {
-        int number = random_state;
-
-        number ^= number << 13;
-        number ^= number >> 17;
-        number ^= number << 5;
-
-        random_state = number;
-
-        return number;
-    }
-
-    public static long getRandom64Bits() {
-        long n1, n2, n3, n4;
-
-        n1 = (long)(getRandom32Bits()) & 0xFFFF;
-        n2 = (long)(getRandom32Bits()) & 0xFFFF;
-        n3 = (long)(getRandom32Bits()) & 0xFFFF;
-        n4 = (long)(getRandom32Bits()) & 0xFFFF;
-
-        return n1 | (n2 << 16) | (n3 << 32) | (n4 << 48);
-    }
-
     private static long generateMagicNumber() {
-        return getRandom64Bits() & getRandom64Bits() & getRandom64Bits();
+        return RandomUtilities.getRandom64Bits() & RandomUtilities.getRandom64Bits() & RandomUtilities.getRandom64Bits();
     }
 
     private static long rookRelevantMask(byte sq) {
@@ -634,7 +610,7 @@ public class Piece {
             if (sq % 8 == 0) {
                 writer.write('\n');
             }
-            writer.write((bishop ? BinaryHelper.toHexString(bishopRelevantMask(sq)) : BinaryHelper.toHexString(rookRelevantMask(sq))) + ",");
+            writer.write((bishop ? BitboardUtilities.toHexString(bishopRelevantMask(sq)) : BitboardUtilities.toHexString(rookRelevantMask(sq))) + ",");
         }
         writer.write("""
                 
@@ -652,7 +628,7 @@ public class Piece {
                 writer.write('\n');
             }
             long magic = findMagic(sq, (bishop ? bishopRelevantsBits[sq] : rookRelevantsBits[sq]), bishop);
-            writer.write(BinaryHelper.toHexString(magic) + ",");
+            writer.write(BitboardUtilities.toHexString(magic) + ",");
         }
         writer.write("""
                 
@@ -684,7 +660,7 @@ public class Piece {
         for (int sq = 0; sq < 64; sq++) {
             writer.write("    {");
             for (int index = 0; index < movesLookup[sq].length; index++) {
-                writer.write(BinaryHelper.toHexString(movesLookup[sq][index]));
+                writer.write(BitboardUtilities.toHexString(movesLookup[sq][index]));
                 if (index < movesLookup[sq].length - 1) {
                     writer.write(", ");
                 }

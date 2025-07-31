@@ -2,10 +2,7 @@ package fr.chessproject.chessfx.controller;
 
 import fr.chessproject.chessfx.main.Divide;
 import fr.chessproject.chessfx.main.Perft;
-import fr.chessproject.chessfx.model.CommandListenerObserver;
-import fr.chessproject.chessfx.model.Game;
-import fr.chessproject.chessfx.model.Move;
-import fr.chessproject.chessfx.model.Piece;
+import fr.chessproject.chessfx.model.*;
 import fr.chessproject.chessfx.view.Config;
 import fr.chessproject.chessfx.view.MainFrameController;
 import fr.chessproject.chessfx.view.Theme;
@@ -24,6 +21,7 @@ public class ChessController implements CommandListenerObserver {
     public ChessController() {
         rookMovesLookup = Piece.generateMovesLookup(false);
         bishopMovesLookup = Piece.generateMovesLookup(true);
+        Zobrist.generateKeys();
         nThreads = Runtime.getRuntime().availableProcessors();
         this.game = new Game();
         this.config = new Config();
@@ -51,6 +49,7 @@ public class ChessController implements CommandListenerObserver {
         game.getPosition().printBoard();
         System.out.print("\n");
         System.out.println("Fen: " + game.getFen());
+        System.out.println("Zobrist Key: " + game.getPosition().getZobristKey());
     }
 
     private void handlePositionCommand(String[] s) {
@@ -130,6 +129,6 @@ public class ChessController implements CommandListenerObserver {
     }
 
     public Supplier<Long> getDebugBitboard() {
-        return this::getAttackInfoPinnedPices;
+        return this::getEpBitboard;
     }
 }

@@ -1,6 +1,6 @@
 package fr.chessproject.chessfx.helpers;
 
-public class BinaryHelper {
+public class BitboardUtilities {
 
     public static String toBinaryString(long hexValue) {
         String binaryString = Long.toBinaryString(hexValue);

@@ -1,6 +1,6 @@
 package fr.chessproject.chessfx.model;
 
-import fr.chessproject.chessfx.helpers.BinaryHelper;
+import fr.chessproject.chessfx.helpers.BitboardUtilities;
 
 import java.util.Stack;
 import java.util.function.BiConsumer;
@@ -20,10 +20,7 @@ public class Position {
     private final byte blackKing = PieceIndex.BLACK_KING.id;
     private final byte whiteKing = PieceIndex.WHITE_KING.id;
 
-    public boolean isAllowedBlackShortCastle;
-    public boolean isAllowedBlackLongCastle;
-    public boolean isAllowedWhiteShortCastle;
-    public boolean isAllowedWhiteLongCastle;
+    public int castlingRights;
 
     public boolean isWhiteSideToPlay;
     public byte enPassantSquare;
@@ -35,6 +32,7 @@ public class Position {
     public long empty;
     private Stack<MoveState> moveStateHistory;
     private final AttackInfo attackInfo;
+    private long zobristKey;
 
     public Position() {
         reset();
@@ -48,7 +46,7 @@ public class Position {
         enPassantSquare = -1;
         halfMoveClock = 0;
         fullMoveCounter = 1;
-        isAllowedBlackShortCastle = isAllowedBlackLongCastle = isAllowedWhiteShortCastle = isAllowedWhiteLongCastle = false;
+        castlingRights = 0;
         moveStateHistory = new Stack<>();
     }
 
@@ -73,7 +71,11 @@ public class Position {
         return enPassantSquare;
     }
 
-    /* ################### FEN ################### */
+    public long getZobristKey() {
+        return zobristKey;
+    }
+
+    /* ================ FEN ================ */
 
     public void loadFEN(String fen) {
         String[] fenArr = fen.split(" ");
@@ -96,6 +98,8 @@ public class Position {
         if (returnCode != 0) {
             System.out.println("Invalid FEN");
         }
+
+        zobristKey = Zobrist.initialize(this);
     }
 
     public int setBoardFromFEN(String fenBoard) {
@@ -157,13 +161,13 @@ public class Position {
             if (c == '-') {
                 return 0;
             } else if (c == 'K') {
-                isAllowedWhiteShortCastle = true;
+                setWhiteShortCastle();
             } else if (c == 'Q') {
-                isAllowedWhiteLongCastle = true;
+                setWhiteLongCastle();
             } else if (c == 'k') {
-                isAllowedBlackShortCastle = true;
+                setBlackShortCastle();
             } else if (c == 'q') {
-                isAllowedBlackLongCastle = true;
+                setBlackLongCastle();
             } else {
                 return -1;
             }
@@ -248,10 +252,10 @@ public class Position {
 
     private String getCastlingFEN() {
         StringBuilder sb = new StringBuilder();
-        if (isAllowedWhiteShortCastle) sb.append('K');
-        if (isAllowedWhiteLongCastle) sb.append('Q');
-        if (isAllowedBlackShortCastle) sb.append('k');
-        if (isAllowedBlackLongCastle) sb.append('q');
+        if (isAllowedWhiteShortCastle()) sb.append('K');
+        if (isAllowedWhiteLongCastle()) sb.append('Q');
+        if (isAllowedBlackShortCastle()) sb.append('k');
+        if (isAllowedBlackLongCastle()) sb.append('q');
         return (sb.isEmpty()) ? "-" : sb.toString();
     }
 
@@ -262,7 +266,7 @@ public class Position {
         return (char) ('a' + file) + Integer.toString(rank + 1);
     }
 
-    /* ###################  SQUAREDATTACK ################### */
+    /* ===================  SQUAREDATTACK =================== */
 
     public boolean isSquareAttacked(byte sq, byte opColor) {
         long knightsSq = piecesBB[opColor] & piecesBB[knights];
@@ -283,7 +287,7 @@ public class Position {
         return (queensSq & Piece.queenAttacksLookup(occupied, sq)) != 0;
     }
 
-    /* ################### PIECES MOVES ################### */
+    /* ================== PIECES MOVES ================== */
 
     private void extractQuietMoves(MoveList mvList, byte sqFrom, byte pieceBB, byte colorBB, long legalMovesBB) {
         while(legalMovesBB != 0) {
@@ -492,23 +496,72 @@ public class Position {
     }
 
     public void whiteKingMoves(MoveList mvList, int check) {
-        byte whiteKingSquare = BinaryHelper.bitScanForward(piecesBB[whiteKing]);
-        byte blackKingSquare = BinaryHelper.bitScanForward(piecesBB[blackKing]);
+        byte whiteKingSquare = BitboardUtilities.bitScanForward(piecesBB[whiteKing]);
+        byte blackKingSquare = BitboardUtilities.bitScanForward(piecesBB[blackKing]);
         extractKingAttacks(mvList, check, whitePieces, blackPieces, whiteKingSquare, blackKingSquare, whiteKing,
                 this::generateWhiteShortCastling, this::generateWhiteLongCastling
         );
     }
 
     public void blackKingMoves(MoveList mvList, int check) {
-        byte whiteKingSquare = BinaryHelper.bitScanForward(piecesBB[whiteKing]);
-        byte blackKingSquare = BinaryHelper.bitScanForward(piecesBB[blackKing]);
+        byte whiteKingSquare = BitboardUtilities.bitScanForward(piecesBB[whiteKing]);
+        byte blackKingSquare = BitboardUtilities.bitScanForward(piecesBB[blackKing]);
         extractKingAttacks(mvList, check, blackPieces, whitePieces, blackKingSquare, whiteKingSquare, blackKing,
                 this::generateBlackShortCastling, this::generateBlackLongCastling
         );
     }
 
+    public boolean isAllowedWhiteShortCastle() {
+        return (castlingRights & 1) != 0;
+    }
+
+    public boolean isAllowedWhiteLongCastle() {
+        return (castlingRights & 2) != 0;
+    }
+
+    public boolean isAllowedBlackShortCastle() {
+        return (castlingRights & 4) != 0;
+    }
+
+    public boolean isAllowedBlackLongCastle() {
+        return (castlingRights & 8) != 0;
+    }
+
+    public void setWhiteShortCastle() {
+        castlingRights |= 1;
+
+    }
+
+    public void unsetWhiteShortCastle() {
+        castlingRights &= ~1;
+    }
+
+    public void setWhiteLongCastle() {
+        castlingRights |= 2;
+    }
+
+    public void unsetWhiteLongCastle() {
+        castlingRights &= ~2;
+    }
+
+    public void setBlackShortCastle() {
+        castlingRights |= 4;
+    }
+
+    public void unsetBlackShortCastle() {
+        castlingRights &= ~4;
+    }
+
+    public void setBlackLongCastle() {
+        castlingRights |= 8;
+    }
+
+    public void unsetBlackLongCastle() {
+        castlingRights &= ~8;
+    }
+
     private void generateBlackShortCastling(MoveList mvList, int check) {
-        if (check == 0 && isAllowedBlackShortCastle
+        if (check == 0 && isAllowedBlackShortCastle()
                 && Square.isEmpty(Square.F8, occupied)
                 && Square.isEmpty(Square.G8, occupied)
                 && (!isSquareAttacked(Square.F8, whitePieces))
@@ -519,7 +572,7 @@ public class Position {
     }
 
     private void generateBlackLongCastling(MoveList mvList, int check) {
-        if (check == 0 && isAllowedBlackLongCastle
+        if (check == 0 && isAllowedBlackLongCastle()
                 && Square.isEmpty(Square.B8, occupied)
                 && Square.isEmpty(Square.C8, occupied)
                 && Square.isEmpty(Square.D8, occupied)
@@ -531,7 +584,7 @@ public class Position {
     }
 
     private void generateWhiteShortCastling(MoveList mvList, int check) {
-        if (check == 0 && isAllowedWhiteShortCastle
+        if (check == 0 && isAllowedWhiteShortCastle()
                 && Square.isEmpty(Square.F1, occupied)
                 && Square.isEmpty(Square.G1, occupied)
                 && (!isSquareAttacked(Square.F1, blackPieces))
@@ -542,7 +595,7 @@ public class Position {
     }
 
     private void generateWhiteLongCastling(MoveList mvList, int check) {
-        if (check == 0 && isAllowedWhiteLongCastle
+        if (check == 0 && isAllowedWhiteLongCastle()
                 && Square.isEmpty(Square.B1, occupied)
                 && Square.isEmpty(Square.C1, occupied)
                 && Square.isEmpty(Square.D1, occupied)
@@ -683,7 +736,7 @@ public class Position {
         return move.getFrom() == Square.E1 && move.getTo() == Square.C1 && move.getPiece() == whiteKing;
     }
 
-    /* ################### MAKEMOVE AND UNMAKEMOVE ################### */
+    /* ================== makeMove and unmakeMove ================== */
 
     private void playCastlingBitboardOnly(boolean isShort, byte friendlyColor, byte pieceType,
                                           byte E, byte G, byte C, byte H, byte A, byte F, byte D) {
@@ -715,23 +768,23 @@ public class Position {
         // Rook captured
         if (move.getCapturedPiece() == rooks) {
             switch (move.getTo()) {
-                case Square.A8: isAllowedBlackLongCastle = false; break;
-                case Square.H8: isAllowedBlackShortCastle = false; break;
+                case Square.A8: unsetBlackLongCastle(); break;
+                case Square.H8: unsetBlackShortCastle(); break;
             }
         }
 
         // Rook moved
         if (move.getPiece() == rooks) {
             switch (move.getFrom()) {
-                case Square.A1: isAllowedWhiteLongCastle = false; break;
-                case Square.H1: isAllowedWhiteShortCastle = false; break;
+                case Square.A1: unsetWhiteLongCastle(); break;
+                case Square.H1: unsetWhiteShortCastle(); break;
             }
         }
 
         // King moved
         if (move.getPiece() == whiteKing) {
-            isAllowedWhiteLongCastle = false;
-            isAllowedWhiteShortCastle = false;
+            unsetWhiteLongCastle();
+            unsetWhiteShortCastle();
         }
     }
 
@@ -739,23 +792,23 @@ public class Position {
         // Rook captured
         if (move.getCapturedPiece() == rooks) {
             switch (move.getTo()) {
-                case Square.A1: isAllowedWhiteLongCastle = false; break;
-                case Square.H1: isAllowedWhiteShortCastle = false; break;
+                case Square.A1: unsetWhiteLongCastle(); break;
+                case Square.H1: unsetBlackShortCastle(); break;
             }
         }
 
         // Rook moved
         if (move.getPiece() == rooks) {
             switch (move.getFrom()) {
-                case Square.A8: isAllowedBlackLongCastle = false; break;
-                case Square.H8: isAllowedBlackShortCastle = false; break;
+                case Square.A8: unsetBlackLongCastle(); break;
+                case Square.H8: unsetBlackShortCastle(); break;
             }
         }
 
         // King moved
         if (move.getPiece() == blackKing) {
-            isAllowedBlackLongCastle = false;
-            isAllowedBlackShortCastle = false;
+            unsetBlackLongCastle();
+            unsetBlackShortCastle();
         }
     }
 
@@ -808,12 +861,12 @@ public class Position {
     public void makeWhiteMove(Move move) {
         if (isWhiteShortCastling(move)) {
             playWhiteCastlingBitboardOnly(true);
-            isAllowedWhiteShortCastle = false;
-            isAllowedWhiteLongCastle = false;
+            unsetWhiteShortCastle();
+            unsetWhiteLongCastle();
         } else if (isWhiteLongCastling(move)) {
             playWhiteCastlingBitboardOnly(false);
-            isAllowedWhiteShortCastle = false;
-            isAllowedWhiteLongCastle = false;
+            unsetWhiteShortCastle();
+            unsetWhiteLongCastle();
         } else {
             makeMoveBitboardOnly(move, blackPieces);
             updateWhiteCastlingRights(move);
@@ -823,12 +876,12 @@ public class Position {
     public void makeBlackMove(Move move) {
         if (isBlackShortCastling(move)) {
             playBlackCastlingBitboardOnly(true);
-            isAllowedBlackShortCastle = false;
-            isAllowedBlackLongCastle = false;
+            unsetBlackShortCastle();
+            unsetWhiteLongCastle();
         } else if (isBlackLongCastling(move)) {
             playBlackCastlingBitboardOnly(false);
-            isAllowedBlackShortCastle = false;
-            isAllowedBlackLongCastle = false;
+            unsetBlackShortCastle();
+            unsetBlackLongCastle();
         } else {
             makeMoveBitboardOnly(move, whitePieces);
             updateBlackCastlingRights(move);
@@ -847,10 +900,7 @@ public class Position {
         MoveState previousState;
         if (!moveStateHistory.isEmpty()) {
             previousState = moveStateHistory.pop();
-            this.isAllowedBlackShortCastle = previousState.isAllowedBlackShortCastle;
-            this.isAllowedBlackLongCastle = previousState.isAllowedBlackLongCastle;
-            this.isAllowedWhiteShortCastle = previousState.isAllowedWhiteShortCastle;
-            this.isAllowedWhiteLongCastle = previousState.isAllowedWhiteLongCastle;
+            this.castlingRights = previousState.castlingRights;
             this.isWhiteSideToPlay = previousState.isWhiteSideToPlay;
             this.enPassantSquare = previousState.enPassantSquare;
         }
@@ -899,10 +949,7 @@ public class Position {
         newPos.empty = this.empty;
         newPos.isWhiteSideToPlay = this.isWhiteSideToPlay;
         newPos.enPassantSquare = this.enPassantSquare;
-        newPos.isAllowedWhiteShortCastle = this.isAllowedWhiteShortCastle;
-        newPos.isAllowedWhiteLongCastle = this.isAllowedWhiteLongCastle;
-        newPos.isAllowedBlackShortCastle = this.isAllowedBlackShortCastle;
-        newPos.isAllowedBlackLongCastle = this.isAllowedBlackLongCastle;
+        newPos.castlingRights = this.castlingRights;
 
         newPos.piecesBB = this.piecesBB.clone();
 
