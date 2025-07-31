@@ -152,7 +152,7 @@ public class GamePanelController implements MoveListener {
         renderBoard();
         renderCoordinates();
         renderPieces();
-        drawBitboard(bitboardCanvas.getGraphicsContext2D(), controller.getDebugBitboard());
+        //drawBitboard(bitboardCanvas.getGraphicsContext2D(), controller.getDebugBitboard());
         setupMouseEvents();
         startGameLoop();
     }
@@ -161,7 +161,7 @@ public class GamePanelController implements MoveListener {
         renderColoredSquares();
         renderPieces();
         renderDragging();
-        drawBitboard(bitboardCanvas.getGraphicsContext2D(), controller.getDebugBitboard());
+        //drawBitboard(bitboardCanvas.getGraphicsContext2D(), controller.getDebugBitboard());
     }
 
     public void refreshBoard() {
