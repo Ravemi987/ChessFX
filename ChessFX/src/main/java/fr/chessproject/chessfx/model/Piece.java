@@ -444,8 +444,8 @@ public class Piece {
     /* Helpers */
 
     public static byte fromChar(char chr) {
-        int index = " KQBNRPkqbnrp".indexOf(chr);
-        return (index < 1) ? PieceType.NONE.id : (byte)index;
+        int index = "KQBNRPkqbnrp".indexOf(chr);
+        return (index < 0) ? PieceType.NONE.id : (byte)index;
     }
 
     public static boolean isWhite(PieceType piece) {

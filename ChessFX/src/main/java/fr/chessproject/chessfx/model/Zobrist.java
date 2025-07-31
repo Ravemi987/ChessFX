@@ -30,7 +30,7 @@ public class Zobrist {
     }
 
     public static long getPieceSquareKey(PieceType piece, byte square) {
-        return pieceSquareKeys[piece.id - 1][square];
+        return pieceSquareKeys[piece.id][square];
     }
 
     public static long getCastlingKey(int castlingRights) {
