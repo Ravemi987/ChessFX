@@ -92,7 +92,7 @@ public class Game {
         return currentPos.getAttackInfo().enemyAttacks;
     }
 
-    public long getAttackInfoPinnedPices() {
+    public long getAttackInfoPinnedPieces() {
         return currentPos.getAttackInfo().pinned;
     }
 

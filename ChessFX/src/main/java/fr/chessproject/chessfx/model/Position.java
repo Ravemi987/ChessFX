@@ -875,10 +875,12 @@ public class Position {
         makeMoveBitboardOnly(move, whitePieces);
     }
 
-    // Helpers
-
     public boolean isInCheck() {
         return Long.bitCount(attackInfo.attackers) > 0;
+    }
+
+    public boolean isPinned(byte piece) {
+        return (attackInfo.pinned & (1L << piece)) != 0;
     }
 
     public boolean isFriendly(byte sq) {

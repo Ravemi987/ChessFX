@@ -117,7 +117,8 @@ public class GamePanelController implements MoveListener {
 
     public void handleInvalidMoveAnimation(Move mv) {
         Position pos = controller.getGame().getPosition();
-        if (pos.isInCheck() && pos.isFriendly((byte) selectedPiece) && (mv.getFrom() != mv.getTo())) {
+        if ((pos.isInCheck() || pos.isPinned((byte) selectedPiece)) &&
+                pos.isFriendly((byte) selectedPiece) && (mv.getFrom() != mv.getTo())) {
             byte kingSquare = pos.getKingSquare(pos.getFriendlyColor());
             AnimationManager.playCheckAnimation(getRow(kingSquare), getCol(kingSquare), coloredSquaresCanvas);
             SoundManager.playInvalidMoveSound();

@@ -132,6 +132,6 @@ public class AttackInfo {
         calculateAllAttacks(p);
         calculateCheckRay();
         calculateAllPinnedPieces(p);
-        //BinaryHelper.printBitboard(checkRay);
+        BinaryHelper.printBitboard(pinned);
     }
 }
