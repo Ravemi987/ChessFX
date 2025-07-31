@@ -73,7 +73,7 @@ public class ChessController implements CommandListenerObserver {
             if (finalMove == null) {
                 return;
             }
-            game.playMove(finalMove);
+            game.playMoveIn(finalMove);
 
         }
         frameController.updateBoard();
@@ -99,10 +99,6 @@ public class ChessController implements CommandListenerObserver {
         this.frameController = frameController;
     }
 
-    public void initDialog() {
-        frameController.resetGUI();
-    }
-
     public void enableDebugMode() {
         frameController.enableDebugMode();
     }
@@ -126,7 +122,7 @@ public class ChessController implements CommandListenerObserver {
     }
 
     public long getAttackInfoPinnedPices() {
-        return game.getAttackInfoPinnedPices();
+        return game.getAttackInfoPinnedPieces();
     }
 
     public long getEpBitboard() {
@@ -134,6 +130,6 @@ public class ChessController implements CommandListenerObserver {
     }
 
     public Supplier<Long> getDebugBitboard() {
-        return this::getEpBitboard;
+        return this::getAttackInfoPinnedPices;
     }
 }

@@ -18,11 +18,11 @@ public class Arrow {
         this.color = color;
     }
 
-    public void draw(GraphicsContext gc, Point2D start, Point2D end) {
+    public void draw(GraphicsContext gc, Point2D start, Point2D end, int squareSize) {
         gc.strokeLine(start.getX(), start.getY(), end.getX(), end.getY());
 
         double angle = Math.atan2(end.getY() - start.getY(), end.getX() - start.getX());
-        double arrowLength = 30;
+        double arrowLength = 0.24 * squareSize;
         double arrowAngle = Math.toRadians(40);
 
         double x1 = end.getX() - arrowLength * Math.cos(angle - arrowAngle);

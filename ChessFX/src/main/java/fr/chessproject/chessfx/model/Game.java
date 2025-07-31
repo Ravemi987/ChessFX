@@ -1,11 +1,14 @@
 package fr.chessproject.chessfx.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Game {
 
     private Position currentPos;
-
     private MoveList validMoves;
     private Move lastMove;
+    private final List<MoveListener> moveListeners = new ArrayList<>();
 
     public Game() {
         currentPos = new Position();
@@ -50,7 +53,22 @@ public class Game {
         return checkMove(mv) != null;
     }
 
-    public void playMove(Move mv) {
+    public void addMoveListener(MoveListener listener) {
+        moveListeners.add(listener);
+    }
+
+    public void playMoveIn(Move mv) {
+        Position previous = currentPos.copy();
+        currentPos.makeMove(mv);
+        validMoves = currentPos.generateLegalMoves();
+        lastMove = mv;
+
+        for (MoveListener listener: moveListeners) {
+            listener.onMovePlayed(mv, previous, currentPos);
+        }
+    }
+
+    public void playMoveOut(Move mv) {
         currentPos.makeMove(mv);
         validMoves = currentPos.generateLegalMoves();
         lastMove = mv;
@@ -74,7 +92,7 @@ public class Game {
         return currentPos.getAttackInfo().enemyAttacks;
     }
 
-    public long getAttackInfoPinnedPices() {
+    public long getAttackInfoPinnedPieces() {
         return currentPos.getAttackInfo().pinned;
     }
 

@@ -4,6 +4,7 @@ module fr.chessproject.chessfx {
     requires javafx.swing;
     requires jdk.compiler;
     requires java.desktop;
+    requires javafx.media;
 
     exports fr.chessproject.chessfx.controller;
     opens fr.chessproject.chessfx.controller to javafx.fxml;
