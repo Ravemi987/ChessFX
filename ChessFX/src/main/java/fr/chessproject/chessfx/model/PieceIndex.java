@@ -4,13 +4,13 @@ public enum PieceIndex {
     NONE(-1),
     WHITE_PIECES(0),
     BLACK_PIECES(1),
-    PAWNS(2),
-    KNIGHTS(3),
+    KINGS(2),
+    QUEENS(3),
     BISHOPS(4),
-    ROOKS(5),
-    QUEENS(6),
-    BLACK_KING(7),
-    WHITE_KING(8);
+    KNIGHTS(5),
+    ROOKS(6),
+    PAWNS(7);
+
 
     public final byte id;
 

@@ -1,19 +1,19 @@
 package fr.chessproject.chessfx.model;
 
 public enum PieceType {
-    NONE(-1),
-    WHITE_KING(0),
-    WHITE_QUEEN(1),
-    WHITE_BISHOP(2),
-    WHITE_KNIGHT(3),
-    WHITE_ROOK(4),
-    WHITE_PAWN(5),
-    BLACK_KING(6),
-    BLACK_QUEEN(7),
-    BLACK_BISHOP(8),
-    BLACK_KNIGHT(9),
-    BLACK_ROOK(10),
-    BLACK_PAWN(11);
+    NONE(0),
+    WHITE_KING(1),
+    WHITE_QUEEN(2),
+    WHITE_BISHOP(3),
+    WHITE_KNIGHT(4),
+    WHITE_ROOK(5),
+    WHITE_PAWN(6),
+    BLACK_KING(7),
+    BLACK_QUEEN(8),
+    BLACK_BISHOP(9),
+    BLACK_KNIGHT(10),
+    BLACK_ROOK(11),
+    BLACK_PAWN(12);
 
     public final byte id;
 
@@ -29,6 +29,6 @@ public enum PieceType {
     }
 
     public static PieceType from(byte pieceIndex, byte color) {
-        return fromId((byte) (color * 6 + pieceIndex));
+        return fromId((byte) (color * 6 + pieceIndex - 1));
     }
 }

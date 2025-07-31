@@ -10,15 +10,14 @@ public class Position {
 
     /* Bitboards indexes */
 
-    private final byte whitePieces = PieceIndex.WHITE_PIECES.id;
-    private final byte blackPieces = PieceIndex.BLACK_PIECES.id;
-    private final byte pawns = PieceIndex.PAWNS.id;
-    private final byte knights = PieceIndex.KNIGHTS.id;
-    private final byte bishops = PieceIndex.BISHOPS.id;
-    private final byte rooks = PieceIndex.ROOKS.id;
-    private final byte queens = PieceIndex.QUEENS.id;
-    private final byte blackKing = PieceIndex.BLACK_KING.id;
-    private final byte whiteKing = PieceIndex.WHITE_KING.id;
+    public final byte kings = PieceIndex.KINGS.id;
+    public final byte queens = PieceIndex.QUEENS.id;
+    public final byte bishops = PieceIndex.BISHOPS.id;
+    public final byte knights = PieceIndex.KNIGHTS.id;
+    public final byte rooks = PieceIndex.ROOKS.id;
+    public final byte pawns = PieceIndex.PAWNS.id;
+    public final byte whitePieces = PieceIndex.WHITE_PIECES.id;
+    public final byte blackPieces = PieceIndex.BLACK_PIECES.id;
 
     public int castlingRights;
 
@@ -40,7 +39,7 @@ public class Position {
     }
 
     public void reset() {
-        this.piecesBB = new long[9];
+        this.piecesBB = new long[8];
         occupied = empty = 0x0L;
         isWhiteSideToPlay = true;
         enPassantSquare = -1;
@@ -55,7 +54,7 @@ public class Position {
     }
 
     public byte getKingSquare(byte color) {
-        long kingBB = piecesBB[color == 0 ? whiteKing : blackKing];
+        long kingBB = piecesBB[kings] & piecesBB[color];
         return (byte) Long.numberOfTrailingZeros(kingBB);
     }
 
@@ -115,6 +114,7 @@ public class Position {
                 byte sq = (byte) (row * 8 + col);
                 long pos = Square.bitboardForSquare(sq);
                 PieceType piece = PieceType.fromId(Piece.fromChar(c));
+
                 if (piece == PieceType.NONE) {
                     return -1;
                 }
@@ -141,8 +141,7 @@ public class Position {
         else if (Piece.isBishop(piece)) piecesBB[bishops] |= pos;
         else if (Piece.isRook(piece)) piecesBB[rooks] |= pos;
         else if (Piece.isQueen(piece)) piecesBB[queens] |= pos;
-        else if (piece == PieceType.WHITE_KING) piecesBB[whiteKing] |= pos;
-        else if (piece == PieceType.BLACK_KING) piecesBB[blackKing] |= pos;
+        else if (Piece.isKing(piece)) piecesBB[kings] |= pos;
     }
 
     public int setSideToMove(String fenSide) {
@@ -245,8 +244,7 @@ public class Position {
         if ((piecesBB[bishops] & pos) != 0) return (piecesBB[whitePieces] & pos) != 0 ? 'B' : 'b';
         if ((piecesBB[rooks] & pos) != 0) return (piecesBB[whitePieces] & pos) != 0 ? 'R' : 'r';
         if ((piecesBB[queens] & pos) != 0) return (piecesBB[whitePieces] & pos) != 0 ? 'Q' : 'q';
-        if ((piecesBB[whiteKing] & pos) != 0) return 'K';
-        if ((piecesBB[blackKing] & pos) != 0) return 'k';
+        if ((piecesBB[kings] & pos) != 0) return (piecesBB[whitePieces] & pos) != 0 ? 'K' : 'k';
         return ' ';
     }
 
@@ -272,10 +270,10 @@ public class Position {
         long knightsSq = piecesBB[opColor] & piecesBB[knights];
         if ((knightsSq & Piece.knightAttacks(sq)) != 0) return true;
         long pawnsSq = piecesBB[opColor] & piecesBB[pawns];
-        if ((pawnsSq & (opColor == 1 ? Piece.whitePawnAttacks(sq) : Piece.blackPawnAttacks(sq))) != 0) return true;
+        if ((pawnsSq & (opColor == blackPieces ? Piece.whitePawnAttacks(sq) : Piece.blackPawnAttacks(sq))) != 0) return true;
         if (isSquaredAttackBySliders(sq, opColor)) return true;
 
-        return ((piecesBB[opColor == 0 ? whiteKing : blackKing] & Piece.kingAttacks(sq)) != 0);
+        return (piecesBB[kings] & (opColor == whitePieces ?  piecesBB[whitePieces] : piecesBB[blackPieces]) & Piece.kingAttacks(sq)) != 0;
     }
 
     public boolean isSquaredAttackBySliders(byte sq, byte opColor) {
@@ -402,7 +400,7 @@ public class Position {
         long toBB = 0x1L << epSquare;
         long enemyBB = 0x1L << enemySq;
         long fromToBB = fromBB ^ toBB;
-        byte opColor = (byte) ((color + 1) % 2);
+        byte opColor = getOpponentColor();
 
         applyAndRestoreEnPassant(fromToBB, enemyBB, color, opColor);
         boolean isLegal = !isSquaredAttackBySliders(getKingSquare(color), opColor);
@@ -496,17 +494,17 @@ public class Position {
     }
 
     public void whiteKingMoves(MoveList mvList, int check) {
-        byte whiteKingSquare = BitboardUtilities.bitScanForward(piecesBB[whiteKing]);
-        byte blackKingSquare = BitboardUtilities.bitScanForward(piecesBB[blackKing]);
-        extractKingAttacks(mvList, check, whitePieces, blackPieces, whiteKingSquare, blackKingSquare, whiteKing,
+        byte whiteKingSquare = BitboardUtilities.bitScanForward(piecesBB[kings] & piecesBB[whitePieces]);
+        byte blackKingSquare = BitboardUtilities.bitScanForward(piecesBB[kings] & piecesBB[blackPieces]);
+        extractKingAttacks(mvList, check, whitePieces, blackPieces, whiteKingSquare, blackKingSquare, kings,
                 this::generateWhiteShortCastling, this::generateWhiteLongCastling
         );
     }
 
     public void blackKingMoves(MoveList mvList, int check) {
-        byte whiteKingSquare = BitboardUtilities.bitScanForward(piecesBB[whiteKing]);
-        byte blackKingSquare = BitboardUtilities.bitScanForward(piecesBB[blackKing]);
-        extractKingAttacks(mvList, check, blackPieces, whitePieces, blackKingSquare, whiteKingSquare, blackKing,
+        byte whiteKingSquare = BitboardUtilities.bitScanForward(piecesBB[kings] & piecesBB[whitePieces]);
+        byte blackKingSquare = BitboardUtilities.bitScanForward(piecesBB[kings] & piecesBB[blackPieces]);
+        extractKingAttacks(mvList, check, blackPieces, whitePieces, blackKingSquare, whiteKingSquare, kings,
                 this::generateBlackShortCastling, this::generateBlackLongCastling
         );
     }
@@ -566,7 +564,7 @@ public class Position {
                 && Square.isEmpty(Square.G8, occupied)
                 && (!isSquareAttacked(Square.F8, whitePieces))
                 && (!isSquareAttacked(Square.G8, whitePieces))) {
-            Move mv = new Move(Square.E8, Square.G8, blackKing, blackPieces);
+            Move mv = new Move(Square.E8, Square.G8, kings, blackPieces);
             mvList.addMove(mv);
         }
     }
@@ -578,7 +576,7 @@ public class Position {
                 && Square.isEmpty(Square.D8, occupied)
                 && (!isSquareAttacked(Square.C8, whitePieces))
                 && (!isSquareAttacked(Square.D8, whitePieces))) {
-            Move mv = new Move(Square.E8, Square.C8, blackKing, blackPieces);
+            Move mv = new Move(Square.E8, Square.C8, kings, blackPieces);
             mvList.addMove(mv);
         }
     }
@@ -589,7 +587,7 @@ public class Position {
                 && Square.isEmpty(Square.G1, occupied)
                 && (!isSquareAttacked(Square.F1, blackPieces))
                 && (!isSquareAttacked(Square.G1, blackPieces))) {
-            Move mv = new Move(Square.E1, Square.G1, whiteKing, whitePieces);
+            Move mv = new Move(Square.E1, Square.G1, kings, whitePieces);
             mvList.addMove(mv);
         }
     }
@@ -601,7 +599,7 @@ public class Position {
                 && Square.isEmpty(Square.D1, occupied)
                 && (!isSquareAttacked(Square.C1, blackPieces))
                 && (!isSquareAttacked(Square.D1, blackPieces))) {
-            Move mv = new Move(Square.E1, Square.C1, whiteKing, whitePieces);
+            Move mv = new Move(Square.E1, Square.C1, kings, whitePieces);
             mvList.addMove(mv);
         }
     }
@@ -682,8 +680,7 @@ public class Position {
         if ((piecesBB[bishops] & bbSquare) != 0) return bishops;
         if ((piecesBB[queens] & bbSquare) != 0) return queens;
         if ((piecesBB[rooks] & bbSquare) != 0) return rooks;
-        if ((piecesBB[blackKing] & bbSquare) != 0) return blackKing;
-        if ((piecesBB[whiteKing] & bbSquare) != 0) return whiteKing;
+        if ((piecesBB[kings] & bbSquare) != 0) return kings;
         return -1;
     }
 
@@ -697,15 +694,13 @@ public class Position {
     public PieceType pieceOnSquare(byte sq) {
         long bbSquare = Square.bitboardForSquare(sq);
 
-        if ((bbSquare & piecesBB[blackKing]) != 0) return PieceType.BLACK_KING;
-        else if ((bbSquare & piecesBB[whiteKing]) != 0) return PieceType.WHITE_KING;
-
-        else if ((piecesBB[whitePieces] & bbSquare) != 0) {
+        if ((piecesBB[whitePieces] & bbSquare) != 0) {
             if ((piecesBB[pawns] & bbSquare) != 0) return PieceType.WHITE_PAWN;
             else if ((piecesBB[knights] & bbSquare) != 0) return PieceType.WHITE_KNIGHT;
             else if ((piecesBB[bishops] & bbSquare) != 0) return PieceType.WHITE_BISHOP;
             else if ((piecesBB[rooks] & bbSquare) != 0) return PieceType.WHITE_ROOK;
             else if ((piecesBB[queens] & bbSquare) != 0) return PieceType.WHITE_QUEEN;
+            else if ((piecesBB[kings] & bbSquare) != 0) return PieceType.WHITE_KING;
             return PieceType.NONE;
         }
 
@@ -715,25 +710,30 @@ public class Position {
             else if ((piecesBB[bishops] & bbSquare) != 0) return PieceType.BLACK_BISHOP;
             else if ((piecesBB[rooks] & bbSquare) != 0) return PieceType.BLACK_ROOK;
             else if ((piecesBB[queens] & bbSquare) != 0) return PieceType.BLACK_QUEEN;
+            else if ((piecesBB[kings] & bbSquare) != 0) return PieceType.BLACK_KING;
         }
 
         return PieceType.NONE;
     }
 
     private boolean isBlackShortCastling(Move move) {
-        return move.getFrom() == Square.E8 && move.getTo() == Square.G8 && move.getPiece() == blackKing;
+        return move.getFrom() == Square.E8 && move.getTo() == Square.G8
+                && move.getPiece() == kings && move.getColor() == blackPieces;
     }
 
     private boolean isBlackLongCastling(Move move) {
-        return move.getFrom() == Square.E8 && move.getTo() == Square.C8 && move.getPiece() == blackKing;
+        return move.getFrom() == Square.E8 && move.getTo() == Square.C8
+                && move.getPiece() == kings && move.getColor() == blackPieces;
     }
 
     private boolean isWhiteShortCastling(Move move) {
-        return move.getFrom() == Square.E1 && move.getTo() == Square.G1 && move.getPiece() == whiteKing;
+        return move.getFrom() == Square.E1 && move.getTo() == Square.G1
+                && move.getPiece() == kings && move.getColor() == whitePieces;
     }
 
     private boolean isWhiteLongCastling(Move move) {
-        return move.getFrom() == Square.E1 && move.getTo() == Square.C1 && move.getPiece() == whiteKing;
+        return move.getFrom() == Square.E1 && move.getTo() == Square.C1
+                && move.getPiece() == kings && move.getColor() == whitePieces;
     }
 
     /* ================== makeMove and unmakeMove ================== */
@@ -755,12 +755,12 @@ public class Position {
     }
 
     private void playBlackCastlingBitboardOnly(boolean isShort) {
-        playCastlingBitboardOnly(isShort, blackPieces, blackKing,
+        playCastlingBitboardOnly(isShort, blackPieces, kings,
                 Square.E8, Square.G8, Square.C8, Square.H8, Square.A8, Square.F8, Square.D8);
     }
 
     private void playWhiteCastlingBitboardOnly(boolean isShort) {
-        playCastlingBitboardOnly(isShort, whitePieces, whiteKing,
+        playCastlingBitboardOnly(isShort, whitePieces, kings,
                 Square.E1, Square.G1, Square.C1, Square.H1, Square.A1, Square.F1, Square.D1);
     }
 
@@ -782,7 +782,7 @@ public class Position {
         }
 
         // King moved
-        if (move.getPiece() == whiteKing) {
+        if (move.getPiece() == kings) {
             unsetWhiteLongCastle();
             unsetWhiteShortCastle();
         }
@@ -793,7 +793,7 @@ public class Position {
         if (move.getCapturedPiece() == rooks) {
             switch (move.getTo()) {
                 case Square.A1: unsetWhiteLongCastle(); break;
-                case Square.H1: unsetBlackShortCastle(); break;
+                case Square.H1: unsetWhiteShortCastle(); break;
             }
         }
 
@@ -806,7 +806,7 @@ public class Position {
         }
 
         // King moved
-        if (move.getPiece() == blackKing) {
+        if (move.getPiece() == kings) {
             unsetBlackLongCastle();
             unsetBlackShortCastle();
         }
@@ -877,7 +877,7 @@ public class Position {
         if (isBlackShortCastling(move)) {
             playBlackCastlingBitboardOnly(true);
             unsetBlackShortCastle();
-            unsetWhiteLongCastle();
+            unsetBlackLongCastle();
         } else if (isBlackLongCastling(move)) {
             playBlackCastlingBitboardOnly(false);
             unsetBlackShortCastle();

@@ -444,12 +444,12 @@ public class Piece {
     /* Helpers */
 
     public static byte fromChar(char chr) {
-        int index = "KQBNRPkqbnrp".indexOf(chr);
-        return (index < 0) ? PieceType.NONE.id : (byte)index;
+        int index = " KQBNRPkqbnrp".indexOf(chr);
+        return (index < PieceType.WHITE_KING.id) ? PieceType.NONE.id : (byte)index;
     }
 
     public static boolean isWhite(PieceType piece) {
-        return piece.id > 0 && piece.id < 7;
+        return piece.id >= PieceType.WHITE_KING.id && piece.id < PieceType.BLACK_KING.id;
     }
 
     public static boolean isPawn(PieceType piece) {
@@ -470,6 +470,10 @@ public class Piece {
 
     public static boolean isQueen(PieceType piece) {
         return piece == PieceType.WHITE_QUEEN || piece == PieceType.BLACK_QUEEN;
+    }
+
+    public static boolean isKing(PieceType piece) {
+        return piece == PieceType.WHITE_KING || piece == PieceType.BLACK_KING;
     }
 
 

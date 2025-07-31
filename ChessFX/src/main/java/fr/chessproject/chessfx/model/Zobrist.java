@@ -29,8 +29,8 @@ public class Zobrist {
         sideToMoveKey = RandomUtilities.getRandom64Bits();
     }
 
-    public static long getPieceSquareKey(PieceType piece, byte square) {
-        return pieceSquareKeys[piece.id][square];
+    public static long getPieceSquareKey(byte piece, byte color, byte square) {
+        return pieceSquareKeys[PieceType.from(piece, color).id][square];
     }
 
     public static long getCastlingKey(int castlingRights) {
@@ -52,18 +52,18 @@ public class Zobrist {
         for (byte square = 0; square < 64; square++) {
             PieceType piece = p.pieceOnSquare(square);
             if (piece != PieceType.NONE) {
-                finalKey ^= getPieceSquareKey(piece, square);
+                finalKey ^= pieceSquareKeys[piece.id - 1][square];
             }
         }
 
         if (p.enPassantSquare != -1) {
-            finalKey ^= getEnPassantKey(p.enPassantSquare);
+            finalKey ^= enPassantKeys[p.enPassantSquare];
         }
 
-        finalKey ^= getCastlingKey(p.castlingRights);
+        finalKey ^= castlingKeys[p.castlingRights];
 
         if (!p.isWhiteSideToPlay) {
-            finalKey ^= getSideToMoveKey();
+            finalKey ^= sideToMoveKey;
         }
 
         return finalKey;
