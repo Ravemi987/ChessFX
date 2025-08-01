@@ -28,7 +28,7 @@ public enum PieceType {
         return NONE;
     }
 
-    public static PieceType from(byte pieceIndex, byte color) {
-        return fromId((byte) (color * 6 + pieceIndex - 1));
+    public static byte from(byte pieceIndex, byte color) {
+        return (byte) (color * 6 + pieceIndex - 1);
     }
 }

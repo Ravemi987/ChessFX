@@ -9,6 +9,8 @@ public class Game {
     private MoveList validMoves;
     private Move lastMove;
     private final List<MoveListener> moveListeners = new ArrayList<>();
+    private final List<Move> moveHistory = new ArrayList<>();
+    private final List<Long> hashHistory = new ArrayList<>();
 
     public Game() {
         currentPos = new Position();
@@ -33,6 +35,8 @@ public class Game {
     public void initMoves() {
         validMoves = currentPos.generateLegalMoves();
         lastMove = null;
+        hashHistory.clear();
+        hashHistory.add(currentPos.getHash());
     }
 
     public Move checkMoveFomString(String mvStr) {
@@ -60,6 +64,8 @@ public class Game {
     public void playMoveIn(Move mv) {
         Position previous = currentPos.copy();
         currentPos.makeMove(mv);
+        moveHistory.add(mv);
+        hashHistory.add(currentPos.getHash());
         validMoves = currentPos.generateLegalMoves();
         lastMove = mv;
 
@@ -70,6 +76,8 @@ public class Game {
 
     public void playMoveOut(Move mv) {
         currentPos.makeMove(mv);
+        moveHistory.add(mv);
+        hashHistory.add(currentPos.getHash());
         validMoves = currentPos.generateLegalMoves();
         lastMove = mv;
     }

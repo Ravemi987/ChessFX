@@ -4,6 +4,7 @@ import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.model.Move;
 import fr.chessproject.chessfx.model.MoveList;
 import fr.chessproject.chessfx.model.Position;
+import fr.chessproject.chessfx.model.Zobrist;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -65,6 +66,7 @@ public class Perft {
 
         if (depth < 2) return 1;
 
+        long hash1 = pos.hash;
         pos.makeMove(mv);
 
         var moveList = pos.generateLegalMoves();
@@ -77,6 +79,16 @@ public class Perft {
         }
 
         pos.unmakeMove(mv);
+        long hash2 = pos.hash;
+
+        if (hash1 != hash2) {
+            System.err.println("Zobrist hash mismatch unmake");
+        }
+
+        long recomputed = Zobrist.computeHash(pos);
+        if (recomputed != hash2) {
+            System.err.println("Zobrist mismatch recompute");
+        }
 
         return nodes;
     }

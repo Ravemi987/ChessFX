@@ -49,7 +49,8 @@ public class ChessController implements CommandListenerObserver {
         game.getPosition().printBoard();
         System.out.print("\n");
         System.out.println("Fen: " + game.getFen());
-        System.out.println("Zobrist Key: " + game.getPosition().getZobristKey());
+        System.out.println("Zobrist Key: " + game.getPosition().getHash());
+        System.out.println("Recomputer Zobrist Key: " + Zobrist.computeHash(game.getPosition()));
     }
 
     private void handlePositionCommand(String[] s) {

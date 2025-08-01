@@ -30,7 +30,7 @@ public class Zobrist {
     }
 
     public static long getPieceSquareKey(byte piece, byte color, byte square) {
-        return pieceSquareKeys[PieceType.from(piece, color).id][square];
+        return pieceSquareKeys[PieceType.from(piece, color) - 1][square];
     }
 
     public static long getCastlingKey(int castlingRights) {
@@ -46,7 +46,7 @@ public class Zobrist {
         return sideToMoveKey;
     }
 
-    public static long initialize(Position p) {
+    public static long computeHash(Position p) {
         long finalKey = 0L;
 
         for (byte square = 0; square < 64; square++) {
@@ -57,7 +57,7 @@ public class Zobrist {
         }
 
         if (p.enPassantSquare != -1) {
-            finalKey ^= enPassantKeys[p.enPassantSquare];
+            finalKey ^= enPassantKeys[p.enPassantSquare % 8];
         }
 
         finalKey ^= castlingKeys[p.castlingRights];
