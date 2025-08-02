@@ -1,6 +1,6 @@
 package fr.chessproject.chessfx.model;
 
-import fr.chessproject.chessfx.helpers.BinaryHelper;
+import fr.chessproject.chessfx.helpers.BitboardUtilities;
 
 import java.util.Stack;
 import java.util.function.BiConsumer;
@@ -10,20 +10,16 @@ public class Position {
 
     /* Bitboards indexes */
 
-    private final byte whitePieces = PieceIndex.WHITE_PIECES.id;
-    private final byte blackPieces = PieceIndex.BLACK_PIECES.id;
-    private final byte pawns = PieceIndex.PAWNS.id;
-    private final byte knights = PieceIndex.KNIGHTS.id;
-    private final byte bishops = PieceIndex.BISHOPS.id;
-    private final byte rooks = PieceIndex.ROOKS.id;
-    private final byte queens = PieceIndex.QUEENS.id;
-    private final byte blackKing = PieceIndex.BLACK_KING.id;
-    private final byte whiteKing = PieceIndex.WHITE_KING.id;
+    public final byte kings = PieceIndex.KINGS.id;
+    public final byte queens = PieceIndex.QUEENS.id;
+    public final byte bishops = PieceIndex.BISHOPS.id;
+    public final byte knights = PieceIndex.KNIGHTS.id;
+    public final byte rooks = PieceIndex.ROOKS.id;
+    public final byte pawns = PieceIndex.PAWNS.id;
+    public final byte whitePieces = PieceIndex.WHITE_PIECES.id;
+    public final byte blackPieces = PieceIndex.BLACK_PIECES.id;
 
-    public boolean isAllowedBlackShortCastle;
-    public boolean isAllowedBlackLongCastle;
-    public boolean isAllowedWhiteShortCastle;
-    public boolean isAllowedWhiteLongCastle;
+    public int castlingRights;
 
     public boolean isWhiteSideToPlay;
     public byte enPassantSquare;
@@ -35,6 +31,7 @@ public class Position {
     public long empty;
     private Stack<MoveState> moveStateHistory;
     private final AttackInfo attackInfo;
+    public long hash;
 
     public Position() {
         reset();
@@ -42,13 +39,13 @@ public class Position {
     }
 
     public void reset() {
-        this.piecesBB = new long[9];
+        this.piecesBB = new long[8];
         occupied = empty = 0x0L;
         isWhiteSideToPlay = true;
         enPassantSquare = -1;
         halfMoveClock = 0;
         fullMoveCounter = 1;
-        isAllowedBlackShortCastle = isAllowedBlackLongCastle = isAllowedWhiteShortCastle = isAllowedWhiteLongCastle = false;
+        castlingRights = 0;
         moveStateHistory = new Stack<>();
     }
 
@@ -57,7 +54,7 @@ public class Position {
     }
 
     public byte getKingSquare(byte color) {
-        long kingBB = piecesBB[color == 0 ? whiteKing : blackKing];
+        long kingBB = piecesBB[kings] & piecesBB[color];
         return (byte) Long.numberOfTrailingZeros(kingBB);
     }
 
@@ -73,7 +70,38 @@ public class Position {
         return enPassantSquare;
     }
 
-    /* ################### FEN ################### */
+    public long getHash() {
+        return hash;
+    }
+
+    public boolean isInCheck() {
+        return Long.bitCount(attackInfo.attackers) > 0;
+    }
+
+    public boolean isPinned(byte piece) {
+        return (attackInfo.pinned & (1L << piece)) != 0;
+    }
+
+    public boolean isFriendly(byte sq) {
+        long bbSquare = Square.bitboardForSquare(sq);
+        return ((piecesBB[whitePieces] & bbSquare) != 0) && isWhiteSideToPlay ||
+                ((piecesBB[blackPieces] & bbSquare) != 0) && !isWhiteSideToPlay;
+    }
+
+    public int getHalfMoveClock() {
+        return halfMoveClock;
+    }
+
+    public boolean isInsufficientMaterial() {
+        return (occupied == piecesBB[kings]) ||
+                (occupied == (piecesBB[kings] | piecesBB[knights]) && Long.bitCount(piecesBB[knights]) == 1) ||
+                (occupied == (piecesBB[kings] | piecesBB[bishops]) && Long.bitCount(piecesBB[bishops]) == 1) ||
+                (occupied == (piecesBB[kings] | piecesBB[bishops]) && Long.bitCount(piecesBB[bishops]) == 2 &&
+                        BitboardUtilities.areSameColorsBishops(piecesBB[bishops]));
+    }
+
+
+    /* ================ FEN ================ */
 
     public void loadFEN(String fen) {
         String[] fenArr = fen.split(" ");
@@ -96,6 +124,8 @@ public class Position {
         if (returnCode != 0) {
             System.out.println("Invalid FEN");
         }
+
+        hash = Zobrist.computeHash(this);
     }
 
     public int setBoardFromFEN(String fenBoard) {
@@ -111,6 +141,7 @@ public class Position {
                 byte sq = (byte) (row * 8 + col);
                 long pos = Square.bitboardForSquare(sq);
                 PieceType piece = PieceType.fromId(Piece.fromChar(c));
+
                 if (piece == PieceType.NONE) {
                     return -1;
                 }
@@ -137,8 +168,7 @@ public class Position {
         else if (Piece.isBishop(piece)) piecesBB[bishops] |= pos;
         else if (Piece.isRook(piece)) piecesBB[rooks] |= pos;
         else if (Piece.isQueen(piece)) piecesBB[queens] |= pos;
-        else if (piece == PieceType.WHITE_KING) piecesBB[whiteKing] |= pos;
-        else if (piece == PieceType.BLACK_KING) piecesBB[blackKing] |= pos;
+        else if (Piece.isKing(piece)) piecesBB[kings] |= pos;
     }
 
     public int setSideToMove(String fenSide) {
@@ -157,13 +187,13 @@ public class Position {
             if (c == '-') {
                 return 0;
             } else if (c == 'K') {
-                isAllowedWhiteShortCastle = true;
+                setWhiteShortCastle();
             } else if (c == 'Q') {
-                isAllowedWhiteLongCastle = true;
+                setWhiteLongCastle();
             } else if (c == 'k') {
-                isAllowedBlackShortCastle = true;
+                setBlackShortCastle();
             } else if (c == 'q') {
-                isAllowedBlackLongCastle = true;
+                setBlackLongCastle();
             } else {
                 return -1;
             }
@@ -241,17 +271,16 @@ public class Position {
         if ((piecesBB[bishops] & pos) != 0) return (piecesBB[whitePieces] & pos) != 0 ? 'B' : 'b';
         if ((piecesBB[rooks] & pos) != 0) return (piecesBB[whitePieces] & pos) != 0 ? 'R' : 'r';
         if ((piecesBB[queens] & pos) != 0) return (piecesBB[whitePieces] & pos) != 0 ? 'Q' : 'q';
-        if ((piecesBB[whiteKing] & pos) != 0) return 'K';
-        if ((piecesBB[blackKing] & pos) != 0) return 'k';
+        if ((piecesBB[kings] & pos) != 0) return (piecesBB[whitePieces] & pos) != 0 ? 'K' : 'k';
         return ' ';
     }
 
     private String getCastlingFEN() {
         StringBuilder sb = new StringBuilder();
-        if (isAllowedWhiteShortCastle) sb.append('K');
-        if (isAllowedWhiteLongCastle) sb.append('Q');
-        if (isAllowedBlackShortCastle) sb.append('k');
-        if (isAllowedBlackLongCastle) sb.append('q');
+        if (isAllowedWhiteShortCastle()) sb.append('K');
+        if (isAllowedWhiteLongCastle()) sb.append('Q');
+        if (isAllowedBlackShortCastle()) sb.append('k');
+        if (isAllowedBlackLongCastle()) sb.append('q');
         return (sb.isEmpty()) ? "-" : sb.toString();
     }
 
@@ -262,16 +291,16 @@ public class Position {
         return (char) ('a' + file) + Integer.toString(rank + 1);
     }
 
-    /* ###################  SQUAREDATTACK ################### */
+    /* ===================  SQUAREDATTACK =================== */
 
     public boolean isSquareAttacked(byte sq, byte opColor) {
         long knightsSq = piecesBB[opColor] & piecesBB[knights];
         if ((knightsSq & Piece.knightAttacks(sq)) != 0) return true;
         long pawnsSq = piecesBB[opColor] & piecesBB[pawns];
-        if ((pawnsSq & (opColor == 1 ? Piece.whitePawnAttacks(sq) : Piece.blackPawnAttacks(sq))) != 0) return true;
+        if ((pawnsSq & (opColor == blackPieces ? Piece.whitePawnAttacks(sq) : Piece.blackPawnAttacks(sq))) != 0) return true;
         if (isSquaredAttackBySliders(sq, opColor)) return true;
 
-        return ((piecesBB[opColor == 0 ? whiteKing : blackKing] & Piece.kingAttacks(sq)) != 0);
+        return (piecesBB[kings] & (opColor == whitePieces ?  piecesBB[whitePieces] : piecesBB[blackPieces]) & Piece.kingAttacks(sq)) != 0;
     }
 
     public boolean isSquaredAttackBySliders(byte sq, byte opColor) {
@@ -283,7 +312,7 @@ public class Position {
         return (queensSq & Piece.queenAttacksLookup(occupied, sq)) != 0;
     }
 
-    /* ################### PIECES MOVES ################### */
+    /* ================== PIECES MOVES ================== */
 
     private void extractQuietMoves(MoveList mvList, byte sqFrom, byte pieceBB, byte colorBB, long legalMovesBB) {
         while(legalMovesBB != 0) {
@@ -398,7 +427,7 @@ public class Position {
         long toBB = 0x1L << epSquare;
         long enemyBB = 0x1L << enemySq;
         long fromToBB = fromBB ^ toBB;
-        byte opColor = (byte) ((color + 1) % 2);
+        byte opColor = getOpponentColor();
 
         applyAndRestoreEnPassant(fromToBB, enemyBB, color, opColor);
         boolean isLegal = !isSquaredAttackBySliders(getKingSquare(color), opColor);
@@ -492,63 +521,123 @@ public class Position {
     }
 
     public void whiteKingMoves(MoveList mvList, int check) {
-        byte whiteKingSquare = BinaryHelper.bitScanForward(piecesBB[whiteKing]);
-        byte blackKingSquare = BinaryHelper.bitScanForward(piecesBB[blackKing]);
-        extractKingAttacks(mvList, check, whitePieces, blackPieces, whiteKingSquare, blackKingSquare, whiteKing,
+        byte whiteKingSquare = BitboardUtilities.bitScanForward(piecesBB[kings] & piecesBB[whitePieces]);
+        byte blackKingSquare = BitboardUtilities.bitScanForward(piecesBB[kings] & piecesBB[blackPieces]);
+        extractKingAttacks(mvList, check, whitePieces, blackPieces, whiteKingSquare, blackKingSquare, kings,
                 this::generateWhiteShortCastling, this::generateWhiteLongCastling
         );
     }
 
     public void blackKingMoves(MoveList mvList, int check) {
-        byte whiteKingSquare = BinaryHelper.bitScanForward(piecesBB[whiteKing]);
-        byte blackKingSquare = BinaryHelper.bitScanForward(piecesBB[blackKing]);
-        extractKingAttacks(mvList, check, blackPieces, whitePieces, blackKingSquare, whiteKingSquare, blackKing,
+        byte whiteKingSquare = BitboardUtilities.bitScanForward(piecesBB[kings] & piecesBB[whitePieces]);
+        byte blackKingSquare = BitboardUtilities.bitScanForward(piecesBB[kings] & piecesBB[blackPieces]);
+        extractKingAttacks(mvList, check, blackPieces, whitePieces, blackKingSquare, whiteKingSquare, kings,
                 this::generateBlackShortCastling, this::generateBlackLongCastling
         );
     }
 
+    public boolean isAllowedWhiteShortCastle() {
+        return (castlingRights & 1) != 0;
+    }
+
+    public boolean isAllowedWhiteLongCastle() {
+        return (castlingRights & 2) != 0;
+    }
+
+    public boolean isAllowedBlackShortCastle() {
+        return (castlingRights & 4) != 0;
+    }
+
+    public boolean isAllowedBlackLongCastle() {
+        return (castlingRights & 8) != 0;
+    }
+
+    public void setCastlingZobristKey(int offset) {
+        hash ^= Zobrist.getCastlingKey(castlingRights);
+        castlingRights |= offset;
+        hash ^= Zobrist.getCastlingKey(castlingRights);
+    }
+
+    public void unsetCastlingZobristKey(int offset) {
+        hash ^= Zobrist.getCastlingKey(castlingRights);
+        castlingRights &= ~offset;
+        hash ^= Zobrist.getCastlingKey(castlingRights);
+    }
+
+    public void setWhiteShortCastle() {
+        setCastlingZobristKey(1);
+    }
+
+    public void unsetWhiteShortCastle() {
+        unsetCastlingZobristKey(1);
+    }
+
+    public void setWhiteLongCastle() {
+        setCastlingZobristKey(2);
+    }
+
+    public void unsetWhiteLongCastle() {
+        unsetCastlingZobristKey(2);
+    }
+
+    public void setBlackShortCastle() {
+        setCastlingZobristKey(4);
+    }
+
+    public void unsetBlackShortCastle() {
+        unsetCastlingZobristKey(4);
+    }
+
+    public void setBlackLongCastle() {
+        setCastlingZobristKey(8);
+    }
+
+    public void unsetBlackLongCastle() {
+        unsetCastlingZobristKey(8);
+    }
+
     private void generateBlackShortCastling(MoveList mvList, int check) {
-        if (check == 0 && isAllowedBlackShortCastle
+        if (check == 0 && isAllowedBlackShortCastle()
                 && Square.isEmpty(Square.F8, occupied)
                 && Square.isEmpty(Square.G8, occupied)
                 && (!isSquareAttacked(Square.F8, whitePieces))
                 && (!isSquareAttacked(Square.G8, whitePieces))) {
-            Move mv = new Move(Square.E8, Square.G8, blackKing, blackPieces);
+            Move mv = new Move(Square.E8, Square.G8, kings, blackPieces);
             mvList.addMove(mv);
         }
     }
 
     private void generateBlackLongCastling(MoveList mvList, int check) {
-        if (check == 0 && isAllowedBlackLongCastle
+        if (check == 0 && isAllowedBlackLongCastle()
                 && Square.isEmpty(Square.B8, occupied)
                 && Square.isEmpty(Square.C8, occupied)
                 && Square.isEmpty(Square.D8, occupied)
                 && (!isSquareAttacked(Square.C8, whitePieces))
                 && (!isSquareAttacked(Square.D8, whitePieces))) {
-            Move mv = new Move(Square.E8, Square.C8, blackKing, blackPieces);
+            Move mv = new Move(Square.E8, Square.C8, kings, blackPieces);
             mvList.addMove(mv);
         }
     }
 
     private void generateWhiteShortCastling(MoveList mvList, int check) {
-        if (check == 0 && isAllowedWhiteShortCastle
+        if (check == 0 && isAllowedWhiteShortCastle()
                 && Square.isEmpty(Square.F1, occupied)
                 && Square.isEmpty(Square.G1, occupied)
                 && (!isSquareAttacked(Square.F1, blackPieces))
                 && (!isSquareAttacked(Square.G1, blackPieces))) {
-            Move mv = new Move(Square.E1, Square.G1, whiteKing, whitePieces);
+            Move mv = new Move(Square.E1, Square.G1, kings, whitePieces);
             mvList.addMove(mv);
         }
     }
 
     private void generateWhiteLongCastling(MoveList mvList, int check) {
-        if (check == 0 && isAllowedWhiteLongCastle
+        if (check == 0 && isAllowedWhiteLongCastle()
                 && Square.isEmpty(Square.B1, occupied)
                 && Square.isEmpty(Square.C1, occupied)
                 && Square.isEmpty(Square.D1, occupied)
                 && (!isSquareAttacked(Square.C1, blackPieces))
                 && (!isSquareAttacked(Square.D1, blackPieces))) {
-            Move mv = new Move(Square.E1, Square.C1, whiteKing, whitePieces);
+            Move mv = new Move(Square.E1, Square.C1, kings, whitePieces);
             mvList.addMove(mv);
         }
     }
@@ -629,8 +718,7 @@ public class Position {
         if ((piecesBB[bishops] & bbSquare) != 0) return bishops;
         if ((piecesBB[queens] & bbSquare) != 0) return queens;
         if ((piecesBB[rooks] & bbSquare) != 0) return rooks;
-        if ((piecesBB[blackKing] & bbSquare) != 0) return blackKing;
-        if ((piecesBB[whiteKing] & bbSquare) != 0) return whiteKing;
+        if ((piecesBB[kings] & bbSquare) != 0) return kings;
         return -1;
     }
 
@@ -642,48 +730,44 @@ public class Position {
     }
 
     public PieceType pieceOnSquare(byte sq) {
-        long bbSquare = Square.bitboardForSquare(sq);
+        long bb = Square.bitboardForSquare(sq);
 
-        if ((bbSquare & piecesBB[blackKing]) != 0) return PieceType.BLACK_KING;
-        else if ((bbSquare & piecesBB[whiteKing]) != 0) return PieceType.WHITE_KING;
+        boolean isWhite = (piecesBB[whitePieces] & bb) != 0;
+        boolean isBlack = (piecesBB[blackPieces] & bb) != 0;
 
-        else if ((piecesBB[whitePieces] & bbSquare) != 0) {
-            if ((piecesBB[pawns] & bbSquare) != 0) return PieceType.WHITE_PAWN;
-            else if ((piecesBB[knights] & bbSquare) != 0) return PieceType.WHITE_KNIGHT;
-            else if ((piecesBB[bishops] & bbSquare) != 0) return PieceType.WHITE_BISHOP;
-            else if ((piecesBB[rooks] & bbSquare) != 0) return PieceType.WHITE_ROOK;
-            else if ((piecesBB[queens] & bbSquare) != 0) return PieceType.WHITE_QUEEN;
-            return PieceType.NONE;
-        }
+        if (!isWhite && !isBlack) return PieceType.NONE;
 
-        else if ((piecesBB[blackPieces] & bbSquare) != 0) {
-            if ((piecesBB[pawns] & bbSquare) != 0) return PieceType.BLACK_PAWN;
-            else if ((piecesBB[knights] & bbSquare) != 0) return PieceType.BLACK_KNIGHT;
-            else if ((piecesBB[bishops] & bbSquare) != 0) return PieceType.BLACK_BISHOP;
-            else if ((piecesBB[rooks] & bbSquare) != 0) return PieceType.BLACK_ROOK;
-            else if ((piecesBB[queens] & bbSquare) != 0) return PieceType.BLACK_QUEEN;
-        }
+        if ((piecesBB[pawns] & bb) != 0) return isWhite ? PieceType.WHITE_PAWN : PieceType.BLACK_PAWN;
+        if ((piecesBB[knights] & bb) != 0) return isWhite ? PieceType.WHITE_KNIGHT : PieceType.BLACK_KNIGHT;
+        if ((piecesBB[bishops] & bb) != 0) return isWhite ? PieceType.WHITE_BISHOP : PieceType.BLACK_BISHOP;
+        if ((piecesBB[rooks] & bb) != 0) return isWhite ? PieceType.WHITE_ROOK : PieceType.BLACK_ROOK;
+        if ((piecesBB[queens] & bb) != 0) return isWhite ? PieceType.WHITE_QUEEN : PieceType.BLACK_QUEEN;
+        if ((piecesBB[kings] & bb) != 0) return isWhite ? PieceType.WHITE_KING : PieceType.BLACK_KING;
 
         return PieceType.NONE;
     }
 
     private boolean isBlackShortCastling(Move move) {
-        return move.getFrom() == Square.E8 && move.getTo() == Square.G8 && move.getPiece() == blackKing;
+        return move.getFrom() == Square.E8 && move.getTo() == Square.G8
+                && move.getPiece() == kings && move.getColor() == blackPieces;
     }
 
     private boolean isBlackLongCastling(Move move) {
-        return move.getFrom() == Square.E8 && move.getTo() == Square.C8 && move.getPiece() == blackKing;
+        return move.getFrom() == Square.E8 && move.getTo() == Square.C8
+                && move.getPiece() == kings && move.getColor() == blackPieces;
     }
 
     private boolean isWhiteShortCastling(Move move) {
-        return move.getFrom() == Square.E1 && move.getTo() == Square.G1 && move.getPiece() == whiteKing;
+        return move.getFrom() == Square.E1 && move.getTo() == Square.G1
+                && move.getPiece() == kings && move.getColor() == whitePieces;
     }
 
     private boolean isWhiteLongCastling(Move move) {
-        return move.getFrom() == Square.E1 && move.getTo() == Square.C1 && move.getPiece() == whiteKing;
+        return move.getFrom() == Square.E1 && move.getTo() == Square.C1
+                && move.getPiece() == kings && move.getColor() == whitePieces;
     }
 
-    /* ################### MAKEMOVE AND UNMAKEMOVE ################### */
+    /* ================== makeMove and unmakeMove ================== */
 
     private void playCastlingBitboardOnly(boolean isShort, byte friendlyColor, byte pieceType,
                                           byte E, byte G, byte C, byte H, byte A, byte F, byte D) {
@@ -699,15 +783,20 @@ public class Position {
         piecesBB[friendlyColor] ^= kingFromToBB ^ rookFromToBB;
         piecesBB[rooks] ^= rookFromToBB;
         piecesBB[pieceType] ^= kingFromToBB;
+
+        hash ^= Zobrist.getPieceSquareKey(pieceType, friendlyColor, E);
+        hash ^= Zobrist.getPieceSquareKey(pieceType, friendlyColor, isShort ? G : C);
+        hash ^= Zobrist.getPieceSquareKey(rooks, friendlyColor, isShort ? H : A);
+        hash ^= Zobrist.getPieceSquareKey(rooks, friendlyColor, isShort ? F : D);
     }
 
     private void playBlackCastlingBitboardOnly(boolean isShort) {
-        playCastlingBitboardOnly(isShort, blackPieces, blackKing,
+        playCastlingBitboardOnly(isShort, blackPieces, kings,
                 Square.E8, Square.G8, Square.C8, Square.H8, Square.A8, Square.F8, Square.D8);
     }
 
     private void playWhiteCastlingBitboardOnly(boolean isShort) {
-        playCastlingBitboardOnly(isShort, whitePieces, whiteKing,
+        playCastlingBitboardOnly(isShort, whitePieces, kings,
                 Square.E1, Square.G1, Square.C1, Square.H1, Square.A1, Square.F1, Square.D1);
     }
 
@@ -715,23 +804,23 @@ public class Position {
         // Rook captured
         if (move.getCapturedPiece() == rooks) {
             switch (move.getTo()) {
-                case Square.A8: isAllowedBlackLongCastle = false; break;
-                case Square.H8: isAllowedBlackShortCastle = false; break;
+                case Square.A8: unsetBlackLongCastle(); break;
+                case Square.H8: unsetBlackShortCastle(); break;
             }
         }
 
         // Rook moved
         if (move.getPiece() == rooks) {
             switch (move.getFrom()) {
-                case Square.A1: isAllowedWhiteLongCastle = false; break;
-                case Square.H1: isAllowedWhiteShortCastle = false; break;
+                case Square.A1: unsetWhiteLongCastle(); break;
+                case Square.H1: unsetWhiteShortCastle(); break;
             }
         }
 
         // King moved
-        if (move.getPiece() == whiteKing) {
-            isAllowedWhiteLongCastle = false;
-            isAllowedWhiteShortCastle = false;
+        if (move.getPiece() == kings) {
+            unsetWhiteLongCastle();
+            unsetWhiteShortCastle();
         }
     }
 
@@ -739,56 +828,76 @@ public class Position {
         // Rook captured
         if (move.getCapturedPiece() == rooks) {
             switch (move.getTo()) {
-                case Square.A1: isAllowedWhiteLongCastle = false; break;
-                case Square.H1: isAllowedWhiteShortCastle = false; break;
+                case Square.A1: unsetWhiteLongCastle(); break;
+                case Square.H1: unsetWhiteShortCastle(); break;
             }
         }
 
         // Rook moved
         if (move.getPiece() == rooks) {
             switch (move.getFrom()) {
-                case Square.A8: isAllowedBlackLongCastle = false; break;
-                case Square.H8: isAllowedBlackShortCastle = false; break;
+                case Square.A8: unsetBlackLongCastle(); break;
+                case Square.H8: unsetBlackShortCastle(); break;
             }
         }
 
         // King moved
-        if (move.getPiece() == blackKing) {
-            isAllowedBlackLongCastle = false;
-            isAllowedBlackShortCastle = false;
+        if (move.getPiece() == kings) {
+            unsetBlackLongCastle();
+            unsetBlackShortCastle();
         }
     }
 
     public void makeMove(Move move) {
         moveStateHistory.push(new MoveState(this));
+        if (enPassantSquare != -1) hash ^= Zobrist.getEnPassantKey(enPassantSquare);
+
         if (isWhiteSideToPlay) makeWhiteMove(move); else makeBlackMove(move);
 
+        if (move.getPiece() == pawns || move.isCapture()) halfMoveClock = 0;
         if (move.getPiece() == pawns && move.isDoublePawnPush()) {
             enPassantSquare = (byte) ((move.getFrom() + move.getTo()) / 2);
         } else {
             enPassantSquare = -1;
         }
 
+        if (enPassantSquare != -1) hash ^= Zobrist.getEnPassantKey(enPassantSquare);
         isWhiteSideToPlay = !isWhiteSideToPlay;
+        hash ^= Zobrist.getSideToMoveKey();
+        halfMoveClock++;
     }
 
     public void makeMoveBitboardOnly(Move move, byte enemyColor) {
-        long fromBB = 0x1L << move.getFrom();
-        long toBB = 0x1L << move.getTo();
+        byte piece = move.getPiece();
+        byte sqFrom = move.getFrom();
+        byte sqTo = move.getTo();
+        byte color = move.getColor();
+        byte cPiece = move.getCapturedPiece();
+        byte cColor = move.getCapturedColor();
+        byte pPiece = move.getPromotedPiece();
+
+        long fromBB = 0x1L << sqFrom;
+        long toBB = 0x1L << sqTo;
         long fromToBB = fromBB ^ toBB;
 
         if (move.isCapture()) {
             if (move.isEnPassant()) {
-                long enemyBB = 0x1L << move.getEnPassant();
+                byte epSq = move.getEnPassant();
+
+                long enemyBB = 0x1L << epSq;
                 piecesBB[pawns] ^= enemyBB;
                 piecesBB[enemyColor] ^= enemyBB;
                 occupied ^= enemyBB ^ fromToBB;
                 empty ^= enemyBB ^ fromToBB;
+
+                hash ^= Zobrist.getPieceSquareKey(pawns, enemyColor, epSq);
             } else {
-                piecesBB[move.getCapturedPiece()] ^= toBB;
-                piecesBB[move.getCapturedColor()] ^= toBB;
+                piecesBB[cPiece] ^= toBB;
+                piecesBB[cColor] ^= toBB;
                 occupied ^= fromBB;
                 empty ^= fromBB;
+
+                hash ^= Zobrist.getPieceSquareKey(cPiece, cColor, sqTo);
             }
         } else {
             occupied ^= fromToBB;
@@ -797,23 +906,29 @@ public class Position {
 
         if (move.isPromotion()) {
             piecesBB[pawns] ^= fromBB;
-            piecesBB[move.getPromotedPiece()] ^= toBB;
+            piecesBB[pPiece] ^= toBB;
+
+            hash ^= Zobrist.getPieceSquareKey(pawns, color, sqFrom);
+            hash ^= Zobrist.getPieceSquareKey(pPiece, color, sqTo);
         } else {
-            piecesBB[move.getPiece()] ^= fromToBB;
+            piecesBB[piece] ^= fromToBB;
+
+            hash ^= Zobrist.getPieceSquareKey(piece, color, sqFrom);
+            hash ^= Zobrist.getPieceSquareKey(piece, color, sqTo);
         }
 
-        piecesBB[move.getColor()] ^= fromToBB;
+        piecesBB[color] ^= fromToBB;
     }
 
     public void makeWhiteMove(Move move) {
         if (isWhiteShortCastling(move)) {
             playWhiteCastlingBitboardOnly(true);
-            isAllowedWhiteShortCastle = false;
-            isAllowedWhiteLongCastle = false;
+            unsetWhiteShortCastle();
+            unsetWhiteLongCastle();
         } else if (isWhiteLongCastling(move)) {
             playWhiteCastlingBitboardOnly(false);
-            isAllowedWhiteShortCastle = false;
-            isAllowedWhiteLongCastle = false;
+            unsetWhiteShortCastle();
+            unsetWhiteLongCastle();
         } else {
             makeMoveBitboardOnly(move, blackPieces);
             updateWhiteCastlingRights(move);
@@ -823,12 +938,12 @@ public class Position {
     public void makeBlackMove(Move move) {
         if (isBlackShortCastling(move)) {
             playBlackCastlingBitboardOnly(true);
-            isAllowedBlackShortCastle = false;
-            isAllowedBlackLongCastle = false;
+            unsetBlackShortCastle();
+            unsetBlackLongCastle();
         } else if (isBlackLongCastling(move)) {
             playBlackCastlingBitboardOnly(false);
-            isAllowedBlackShortCastle = false;
-            isAllowedBlackLongCastle = false;
+            unsetBlackShortCastle();
+            unsetBlackLongCastle();
         } else {
             makeMoveBitboardOnly(move, whitePieces);
             updateBlackCastlingRights(move);
@@ -847,12 +962,10 @@ public class Position {
         MoveState previousState;
         if (!moveStateHistory.isEmpty()) {
             previousState = moveStateHistory.pop();
-            this.isAllowedBlackShortCastle = previousState.isAllowedBlackShortCastle;
-            this.isAllowedBlackLongCastle = previousState.isAllowedBlackLongCastle;
-            this.isAllowedWhiteShortCastle = previousState.isAllowedWhiteShortCastle;
-            this.isAllowedWhiteLongCastle = previousState.isAllowedWhiteLongCastle;
+            this.castlingRights = previousState.castlingRights;
             this.isWhiteSideToPlay = previousState.isWhiteSideToPlay;
             this.enPassantSquare = previousState.enPassantSquare;
+            this.hash = previousState.hash;
         }
     }
 
@@ -875,20 +988,6 @@ public class Position {
         makeMoveBitboardOnly(move, whitePieces);
     }
 
-    public boolean isInCheck() {
-        return Long.bitCount(attackInfo.attackers) > 0;
-    }
-
-    public boolean isPinned(byte piece) {
-        return (attackInfo.pinned & (1L << piece)) != 0;
-    }
-
-    public boolean isFriendly(byte sq) {
-        long bbSquare = Square.bitboardForSquare(sq);
-        return ((piecesBB[whitePieces] & bbSquare) != 0) && isWhiteSideToPlay ||
-                ((piecesBB[blackPieces] & bbSquare) != 0) && !isWhiteSideToPlay;
-    }
-
     public AttackInfo getAttackInfo() {
         return attackInfo;
     }
@@ -899,10 +998,8 @@ public class Position {
         newPos.empty = this.empty;
         newPos.isWhiteSideToPlay = this.isWhiteSideToPlay;
         newPos.enPassantSquare = this.enPassantSquare;
-        newPos.isAllowedWhiteShortCastle = this.isAllowedWhiteShortCastle;
-        newPos.isAllowedWhiteLongCastle = this.isAllowedWhiteLongCastle;
-        newPos.isAllowedBlackShortCastle = this.isAllowedBlackShortCastle;
-        newPos.isAllowedBlackLongCastle = this.isAllowedBlackLongCastle;
+        newPos.castlingRights = this.castlingRights;
+        newPos.hash = this.hash;
 
         newPos.piecesBB = this.piecesBB.clone();
 

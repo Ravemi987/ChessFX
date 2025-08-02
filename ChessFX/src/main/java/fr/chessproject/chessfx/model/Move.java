@@ -139,7 +139,7 @@ public class Move {
 
         if (mvStr.length() == 5) {
             char promoChar = mvStr.charAt(4);
-            byte promotedPiece = (byte) (3 + new String(promotionsChars).indexOf(promoChar)); // à définir
+            byte promotedPiece = (byte) (3 + new String(promotionsChars).indexOf(promoChar));
             return new Move((byte) fromIndex, (byte) toIndex, promotedPiece);
         } else {
             return new Move((byte) fromIndex, (byte) toIndex);

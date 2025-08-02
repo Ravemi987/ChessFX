@@ -1,6 +1,6 @@
 package fr.chessproject.chessfx.helpers;
 
-public class BinaryHelper {
+public class BitboardUtilities {
 
     public static String toBinaryString(long hexValue) {
         String binaryString = Long.toBinaryString(hexValue);
@@ -25,6 +25,20 @@ public class BinaryHelper {
         } else {
             return bitScanForward(b);
         }
+    }
+
+    public static boolean areSameColorsBishops(long bishopsBB) {
+        int count = Long.bitCount(bishopsBB);
+        if (count != 2) return false;
+
+        int first = Long.numberOfTrailingZeros(bishopsBB);
+        bishopsBB &= bishopsBB - 1;
+        int second = Long.numberOfTrailingZeros(bishopsBB);
+
+        boolean firstColor = ((first / 8 + first % 8) % 2 == 0);
+        boolean secondColor = ((second / 8 + second % 8) % 2 == 0);
+
+        return firstColor == secondColor;
     }
 
     public static void printBitboard(long bitboard)
