@@ -1,16 +1,19 @@
 package fr.chessproject.chessfx.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Game {
 
     private Position currentPos;
     private MoveList validMoves;
     private Move lastMove;
+    private boolean gameInProgress = true;
     private final List<MoveListener> moveListeners = new ArrayList<>();
     private final List<Move> moveHistory = new ArrayList<>();
-    private final List<Long> hashHistory = new ArrayList<>();
+    private final Map<Long, Integer> hashHistory = new HashMap<>();
 
     public Game() {
         currentPos = new Position();
@@ -32,11 +35,19 @@ public class Game {
         return currentPos;
     }
 
+    public void setInProgress(boolean enabled) {
+        this.gameInProgress = enabled;
+    }
+
+    public boolean isInProgress() {
+        return gameInProgress;
+    }
+
     public void initMoves() {
         validMoves = currentPos.generateLegalMoves();
         lastMove = null;
         hashHistory.clear();
-        hashHistory.add(currentPos.getHash());
+        hashHistory.put(currentPos.getHash(), 1);
     }
 
     public Move checkMoveFomString(String mvStr) {
@@ -61,23 +72,40 @@ public class Game {
         moveListeners.add(listener);
     }
 
-    public void playMoveIn(Move mv) {
+    public void updateHashHistory() {
+        long currentHash = currentPos.getHash();
+        if (hashHistory.containsKey(currentHash)) {
+            hashHistory.put(currentHash, hashHistory.get(currentHash) + 1);
+        } else {
+            hashHistory.put(currentHash, 1);
+        }
+    }
+
+    public void playMoveCLI(Move mv) {
+        if (gameInProgress && isOver()) return;
+
         Position previous = currentPos.copy();
         currentPos.makeMove(mv);
         moveHistory.add(mv);
-        hashHistory.add(currentPos.getHash());
+        updateHashHistory();
         validMoves = currentPos.generateLegalMoves();
         lastMove = mv;
 
         for (MoveListener listener: moveListeners) {
-            listener.onMovePlayed(mv, previous, currentPos);
+            if (gameInProgress && isOver()) {
+                listener.onGameOver();
+            } else {
+                listener.onMovePlayed(mv, previous, currentPos);
+            }
         }
     }
 
-    public void playMoveOut(Move mv) {
+    public void playMoveGUI(Move mv) {
+        if (gameInProgress && isOver()) return;
+
         currentPos.makeMove(mv);
         moveHistory.add(mv);
-        hashHistory.add(currentPos.getHash());
+        updateHashHistory();
         validMoves = currentPos.generateLegalMoves();
         lastMove = mv;
     }
@@ -88,6 +116,42 @@ public class Game {
 
     public MoveList getValidMoves() {
         return validMoves;
+    }
+
+    public boolean isStalemate() {
+        return validMoves.getMvCount() == 0 & !currentPos.isInCheck();
+    }
+
+    public boolean isThreefoldRepetition() {
+       return hashHistory.containsValue(3);
+    }
+
+    public boolean isFiftyMoveRule() {
+        return currentPos.getHalfMoveClock() >= 100;
+    }
+
+    public boolean isInsufficientMaterial() {
+        return currentPos.isInsufficientMaterial();
+    }
+
+    public boolean isCheckmate() {
+        return validMoves.getMvCount() == 0 && currentPos.isInCheck();
+    }
+
+    public boolean isDraw() {
+        return isStalemate() || isThreefoldRepetition() || isFiftyMoveRule() || isInsufficientMaterial();
+    }
+
+    public boolean canClaimDraw() {
+        return isThreefoldRepetition() || isFiftyMoveRule();
+    }
+
+    public boolean isAutoDraw() {
+        return isStalemate() || isInsufficientMaterial();
+    }
+
+    public boolean isOver() {
+        return isCheckmate() || isDraw();
     }
 
     // Helpers

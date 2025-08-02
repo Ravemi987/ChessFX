@@ -1,6 +1,5 @@
 package fr.chessproject.chessfx.view;
 
-import fr.chessproject.chessfx.controller.AnimationManager;
 import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.controller.SoundManager;
 import fr.chessproject.chessfx.model.*;
@@ -73,6 +72,7 @@ public class GamePanelController implements MoveListener {
     private int mouseYOnBoard;
     private boolean suppressRightClick;
     private boolean isBoardReversed;
+    private boolean interactionsEnabled = true;
 
     private MouseEvent currentMouseEvent;
     private int arrowStartSquare;
@@ -108,19 +108,35 @@ public class GamePanelController implements MoveListener {
         else SoundManager.playMoveSound();
     }
 
-    public void playMove(Move mv) {
-        controller.getGame().playMoveOut(mv);
-
-        if (mv.isCapture()) SoundManager.playCaptureSound();
-        else SoundManager.playMoveSound();
+    @Override
+    public void onGameOver() {
+        setInteractionsEnabled(false);
     }
 
-    public void handleInvalidMoveAnimation(Move mv) {
+    public void onNewGame() {
+        setInteractionsEnabled(true);
+    }
+
+    public void setInteractionsEnabled(boolean enabled) {
+        this.interactionsEnabled = enabled;
+        boardMaskPane.setDisable(!enabled);
+    }
+
+    public void playMove(Move mv) {
+        Game game = controller.getGame();
+        game.playMoveGUI(mv);
+        if (mv.isCapture()) SoundManager.playCaptureSound();
+        else SoundManager.playMoveSound();
+
+        if (game.isInProgress() && game.isOver()) {
+            onGameOver();
+        }
+    }
+
+    public void handleInvalidMove(Move mv) {
         Position pos = controller.getGame().getPosition();
         if ((pos.isInCheck() || pos.isPinned((byte) selectedPiece)) &&
                 pos.isFriendly((byte) selectedPiece) && (mv.getFrom() != mv.getTo())) {
-            byte kingSquare = pos.getKingSquare(pos.getFriendlyColor());
-            AnimationManager.playCheckAnimation(getRow(kingSquare), getCol(kingSquare), coloredSquaresCanvas);
             SoundManager.playInvalidMoveSound();
         }
     }
@@ -579,7 +595,7 @@ public class GamePanelController implements MoveListener {
                     playMove(move);
                     unselectPiece();
                 } else {
-                    handleInvalidMoveAnimation(mv);
+                    handleInvalidMove(mv);
                 }
             });
         }

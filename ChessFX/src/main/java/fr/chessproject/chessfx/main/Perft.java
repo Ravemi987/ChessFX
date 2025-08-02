@@ -67,6 +67,9 @@ public class Perft {
         if (depth < 2) return 1;
 
         long hash1 = pos.hash;
+        long recomputed1 = Zobrist.computeHash(pos);
+        assert recomputed1 == hash1;
+
         pos.makeMove(mv);
 
         var moveList = pos.generateLegalMoves();
@@ -79,16 +82,11 @@ public class Perft {
         }
 
         pos.unmakeMove(mv);
+
         long hash2 = pos.hash;
-
-        if (hash1 != hash2) {
-            System.err.println("Zobrist hash mismatch unmake");
-        }
-
-        long recomputed = Zobrist.computeHash(pos);
-        if (recomputed != hash2) {
-            System.err.println("Zobrist mismatch recompute");
-        }
+        assert hash1 == hash2;
+        long recomputed2 = Zobrist.computeHash(pos);
+        assert recomputed2 == hash2;
 
         return nodes;
     }

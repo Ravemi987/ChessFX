@@ -74,6 +74,33 @@ public class Position {
         return hash;
     }
 
+    public boolean isInCheck() {
+        return Long.bitCount(attackInfo.attackers) > 0;
+    }
+
+    public boolean isPinned(byte piece) {
+        return (attackInfo.pinned & (1L << piece)) != 0;
+    }
+
+    public boolean isFriendly(byte sq) {
+        long bbSquare = Square.bitboardForSquare(sq);
+        return ((piecesBB[whitePieces] & bbSquare) != 0) && isWhiteSideToPlay ||
+                ((piecesBB[blackPieces] & bbSquare) != 0) && !isWhiteSideToPlay;
+    }
+
+    public int getHalfMoveClock() {
+        return halfMoveClock;
+    }
+
+    public boolean isInsufficientMaterial() {
+        return (occupied == piecesBB[kings]) ||
+                (occupied == (piecesBB[kings] | piecesBB[knights]) && Long.bitCount(piecesBB[knights]) == 1) ||
+                (occupied == (piecesBB[kings] | piecesBB[bishops]) && Long.bitCount(piecesBB[bishops]) == 1) ||
+                (occupied == (piecesBB[kings] | piecesBB[bishops]) && Long.bitCount(piecesBB[bishops]) == 2 &&
+                        BitboardUtilities.areSameColorsBishops(piecesBB[bishops]));
+    }
+
+
     /* ================ FEN ================ */
 
     public void loadFEN(String fen) {
@@ -823,11 +850,11 @@ public class Position {
 
     public void makeMove(Move move) {
         moveStateHistory.push(new MoveState(this));
-
         if (enPassantSquare != -1) hash ^= Zobrist.getEnPassantKey(enPassantSquare);
 
         if (isWhiteSideToPlay) makeWhiteMove(move); else makeBlackMove(move);
 
+        if (move.getPiece() == pawns || move.isCapture()) halfMoveClock = 0;
         if (move.getPiece() == pawns && move.isDoublePawnPush()) {
             enPassantSquare = (byte) ((move.getFrom() + move.getTo()) / 2);
         } else {
@@ -837,6 +864,7 @@ public class Position {
         if (enPassantSquare != -1) hash ^= Zobrist.getEnPassantKey(enPassantSquare);
         isWhiteSideToPlay = !isWhiteSideToPlay;
         hash ^= Zobrist.getSideToMoveKey();
+        halfMoveClock++;
     }
 
     public void makeMoveBitboardOnly(Move move, byte enemyColor) {
@@ -958,20 +986,6 @@ public class Position {
         if (isBlackLongCastling(move)) {undoBlackCastling(false); return;}
 
         makeMoveBitboardOnly(move, whitePieces);
-    }
-
-    public boolean isInCheck() {
-        return Long.bitCount(attackInfo.attackers) > 0;
-    }
-
-    public boolean isPinned(byte piece) {
-        return (attackInfo.pinned & (1L << piece)) != 0;
-    }
-
-    public boolean isFriendly(byte sq) {
-        long bbSquare = Square.bitboardForSquare(sq);
-        return ((piecesBB[whitePieces] & bbSquare) != 0) && isWhiteSideToPlay ||
-                ((piecesBB[blackPieces] & bbSquare) != 0) && !isWhiteSideToPlay;
     }
 
     public AttackInfo getAttackInfo() {

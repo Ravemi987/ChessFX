@@ -73,7 +73,7 @@ public class ChessController implements CommandListenerObserver {
             if (finalMove == null) {
                 return;
             }
-            game.playMoveIn(finalMove);
+            game.playMoveCLI(finalMove);
 
         }
         frameController.updateBoard();
