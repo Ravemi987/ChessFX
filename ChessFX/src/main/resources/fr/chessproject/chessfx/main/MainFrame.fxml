@@ -1,9 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
 
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.VBox?>
 <BorderPane id="mainFrame" fx:id="mainFrame" stylesheets="@MainFrameStyle.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fr.chessproject.chessfx.view.MainFrameController">
     <center>
-        <fx:include fx:id="boardPane" source="../view/GamePanel.fxml" />
+        <VBox id="centerContainer" fx:id="centerContainer" alignment="CENTER">
+            <fx:include fx:id="boardPane" source="../view/GamePanel.fxml" />
+
+            <HBox id="toolbar" fx:id="toolbar" alignment="CENTER_RIGHT" styleClass="toolbar">
+                <Button id="newGameButton" fx:id="newGameButton"/>
+                <Button id="flipBoardButton" fx:id="flipBoardButton"/>
+                <Button id="firstMoveButton" fx:id="firstMoveButton"/>
+                <Button id="prevMoveButton" fx:id="prevMoveButton"/>
+                <Button id="nextMoveButton" fx:id="nextMoveButton"/>
+                <Button id="lastMoveButton" fx:id="lastMoveButton"/>
+            </HBox>
+        </VBox>
     </center>
 </BorderPane>
