@@ -1,5 +1,6 @@
 package fr.chessproject.chessfx.view;
 
+import fr.chessproject.chessfx.controller.AnimationManager;
 import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.controller.SoundManager;
 import fr.chessproject.chessfx.model.*;
@@ -72,7 +73,6 @@ public class GamePanelController implements MoveListener {
     private int mouseYOnBoard;
     private boolean suppressRightClick;
     private boolean isBoardReversed;
-    private boolean interactionsEnabled = true;
 
     private MouseEvent currentMouseEvent;
     private int arrowStartSquare;
@@ -100,66 +100,6 @@ public class GamePanelController implements MoveListener {
     public void initialize() {
         //System.out.println("GamePanelController initialized");
         boardPane.getProperties().put("controller", this);
-    }
-
-    @Override
-    public void onMovePlayed(Move move, Position before, Position after) {
-        if (move.isCapture()) SoundManager.playCaptureSound();
-        else SoundManager.playMoveSound();
-    }
-
-    @Override
-    public void onGameOver() {
-        setInteractionsEnabled(false);
-    }
-
-    public void onNewGame() {
-        setInteractionsEnabled(true);
-    }
-
-    public void setInteractionsEnabled(boolean enabled) {
-        this.interactionsEnabled = enabled;
-        boardMaskPane.setDisable(!enabled);
-    }
-
-    public void playMove(Move mv) {
-        Game game = controller.getGame();
-        game.playMoveGUI(mv);
-        if (mv.isCapture()) SoundManager.playCaptureSound();
-        else SoundManager.playMoveSound();
-
-        if (game.isInProgress() && game.isOver()) {
-            onGameOver();
-        }
-    }
-
-    public void handleInvalidMove(Move mv) {
-        Position pos = controller.getGame().getPosition();
-        if ((pos.isInCheck() || pos.isPinned((byte) selectedPiece)) &&
-                pos.isFriendly((byte) selectedPiece) && (mv.getFrom() != mv.getTo())) {
-            SoundManager.playInvalidMoveSound();
-        }
-    }
-
-    private void setPaneSize(Pane pane, int size) {
-        pane.setPrefSize(size, size);
-        pane.setMinSize(size, size);
-        pane.setMaxSize(size, size);
-    }
-
-    private void setBoardSize(int size) {
-        int squareSize = size / 8;
-        int actualBoardSize = squareSize * 8;
-
-        setPaneSize(boardPane, actualBoardSize);
-
-        for (Canvas canvas : List.of(boardCanvas, coordsCanvas, piecesCanvas,
-                draggingCanvas, coloredSquaresCanvas, drawingCanvas, arrowsCanvas, bitboardCanvas)) {
-            canvas.setWidth(actualBoardSize);
-            canvas.setHeight(actualBoardSize);
-        }
-
-        setPaneSize(boardMaskPane, actualBoardSize);
     }
 
     public void init() {
@@ -220,6 +160,77 @@ public class GamePanelController implements MoveListener {
             }
         };
         gameLoop.start();
+    }
+
+    private void setPaneSize(Pane pane, int size) {
+        pane.setPrefSize(size, size);
+        pane.setMinSize(size, size);
+        pane.setMaxSize(size, size);
+    }
+
+    private void setBoardSize(int size) {
+        int squareSize = size / 8;
+        int actualBoardSize = squareSize * 8;
+
+        setPaneSize(boardPane, actualBoardSize);
+
+        for (Canvas canvas : List.of(boardCanvas, coordsCanvas, piecesCanvas,
+                draggingCanvas, coloredSquaresCanvas, drawingCanvas, arrowsCanvas, bitboardCanvas)) {
+            canvas.setWidth(actualBoardSize);
+            canvas.setHeight(actualBoardSize);
+        }
+
+        setPaneSize(boardMaskPane, actualBoardSize);
+    }
+
+    @Override
+    public void onMovePlayed(Move move, Position before, Position after) {
+        if (move.isCapture()) SoundManager.playCaptureSound();
+        else SoundManager.playMoveSound();
+    }
+
+    @Override
+    public void onGameOver() {
+        setInteractionsEnabled(false);
+    }
+
+    public void onNewGame() {
+        setInteractionsEnabled(true);
+    }
+
+    public void flipBoard() {
+        isBoardReversed = !isBoardReversed;
+        renderCoordinates();
+        renderColoredSquares();
+        renderPieces();
+        renderDragging();
+    }
+
+    public void setInteractionsEnabled(boolean enabled) {
+        boardMaskPane.setDisable(!enabled);
+    }
+
+    public void playMove(Move mv) {
+        Game game = controller.getGame();
+        game.playMoveGUI(mv);
+        if (mv.isCapture()) SoundManager.playCaptureSound();
+        else SoundManager.playMoveSound();
+
+        if (game.isInProgress() && game.isOver()) {
+            onGameOver();
+        }
+    }
+
+    public void handleInvalidMove(Move mv) {
+        Position pos = controller.getGame().getPosition();
+        if ((pos.isInCheck() || pos.isPinned((byte) selectedPiece)) &&
+                pos.isFriendly((byte) selectedPiece) && (mv.getFrom() != mv.getTo())) {
+            SoundManager.playInvalidMoveSound();
+            AnimationManager.playCheckAnimation(
+                    getRow(pos.getKingSquare(pos.getFriendlyColor())),
+                    getCol(pos.getKingSquare(pos.getFriendlyColor())), coloredSquaresCanvas
+            );
+        }
     }
 
     private void renderBoard() {

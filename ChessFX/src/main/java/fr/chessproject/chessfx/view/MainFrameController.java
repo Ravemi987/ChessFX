@@ -84,7 +84,36 @@ public class MainFrameController implements CommandListenerObserver {
     }
 
     public void init() {
+        newGameButton.setOnAction(_ -> handleNewGame());
+        flipBoardButton.setOnAction(_ -> handleFlipBoard());
+        firstMoveButton.setOnAction(_ -> goToFirstMove());
+        prevMoveButton.setOnAction(_ -> goToPreviousMove());
+        nextMoveButton.setOnAction(_ -> goToNextMove());
+        lastMoveButton.setOnAction(_ -> goToLastMove());
+
         gamePanelController.init();
+    }
+
+    private void handleNewGame() {
+        controller.startNewGame();
+        gamePanelController.onNewGame();
+        gamePanelController.refreshBoard();
+    }
+
+    private void handleFlipBoard() {
+        gamePanelController.flipBoard();
+    }
+
+    private void goToFirstMove() {
+    }
+
+    private void goToPreviousMove() {
+    }
+
+    private void goToNextMove() {
+    }
+
+    private void goToLastMove() {
     }
 
     public void setChessController(ChessController chessController) {

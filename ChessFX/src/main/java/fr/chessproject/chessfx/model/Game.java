@@ -10,21 +10,39 @@ public class Game {
     private Position currentPos;
     private MoveList validMoves;
     private Move lastMove;
-    private boolean gameInProgress = true;
+    private boolean gameInProgress = false;
     private final List<MoveListener> moveListeners = new ArrayList<>();
     private final List<Move> moveHistory = new ArrayList<>();
     private final Map<Long, Integer> hashHistory = new HashMap<>();
+    private static final String startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
     public Game() {
-        currentPos = new Position();
-        currentPos.loadFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-        initMoves();
+        reset();
     }
 
     public void setFen(String fen) {
         currentPos = new Position();
         currentPos.loadFEN(fen);
         initMoves();
+    }
+
+    public void reset() {
+        currentPos = new Position();
+        currentPos.loadFEN(startFen);
+        initMoves();
+    }
+
+    public void initMoves() {
+        validMoves = currentPos.generateLegalMoves();
+        lastMove = null;
+        moveHistory.clear();
+        hashHistory.clear();
+        hashHistory.put(currentPos.getHash(), 1);
+        gameInProgress = false;
+    }
+
+    public void start() {
+        this.gameInProgress = true;
     }
 
     public String getFen() {
@@ -35,19 +53,8 @@ public class Game {
         return currentPos;
     }
 
-    public void setInProgress(boolean enabled) {
-        this.gameInProgress = enabled;
-    }
-
     public boolean isInProgress() {
         return gameInProgress;
-    }
-
-    public void initMoves() {
-        validMoves = currentPos.generateLegalMoves();
-        lastMove = null;
-        hashHistory.clear();
-        hashHistory.put(currentPos.getHash(), 1);
     }
 
     public Move checkMoveFomString(String mvStr) {

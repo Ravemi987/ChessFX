@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 public class ChessController implements CommandListenerObserver {
 
     private MainFrameController frameController;
-    private final Game game;
+    private Game game;
     private final Config config;
     private int nThreads;
     public static long[][] rookMovesLookup;
@@ -93,6 +93,11 @@ public class ChessController implements CommandListenerObserver {
         if (s[0].equals("threads")) {
             nThreads = Integer.parseInt(s[1]);
         }
+    }
+
+    public void startNewGame() {
+        game.reset();
+        game.start();
     }
 
     public void setFrameController(MainFrameController frameController) {

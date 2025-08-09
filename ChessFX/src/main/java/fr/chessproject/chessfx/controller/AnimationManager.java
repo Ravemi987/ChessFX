@@ -11,6 +11,7 @@ import javafx.scene.paint.Stop;
 import javafx.util.Duration;
 
 public class AnimationManager {
+    private static final double INSET = 0.05;
 
     public static void playCheckAnimation(int row, int col, Canvas canvas) {
         int squareSize = (int) (canvas.getWidth() / 8);
@@ -34,14 +35,8 @@ public class AnimationManager {
                     gc.fillOval(centerX - radius, centerY - radius, radius * 2, radius * 2);
                 }),
                 new KeyFrame(Duration.seconds(0.2), e -> gc.clearRect(
-                        col * squareSize, row * squareSize, squareSize, squareSize
-                )),
-                new KeyFrame(Duration.seconds(0.4), e -> {
-                    gc.setFill(gradient);
-                    gc.fillOval(centerX - radius, centerY - radius, radius * 2, radius * 2);
-                }),
-                new KeyFrame(Duration.seconds(0.6), e -> gc.clearRect(
-                        col * squareSize, row * squareSize, squareSize, squareSize
+                        col * squareSize + INSET, row * squareSize + INSET,
+                        squareSize - 2 * INSET, squareSize - 2 * INSET
                 ))
         );
 
