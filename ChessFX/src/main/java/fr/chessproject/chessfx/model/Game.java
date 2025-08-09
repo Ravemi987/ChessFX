@@ -10,11 +10,14 @@ public class Game {
     private Position currentPos;
     private MoveList validMoves;
     private Move lastMove;
-    private boolean gameInProgress = false;
     private final List<MoveListener> moveListeners = new ArrayList<>();
     private final List<Move> moveHistory = new ArrayList<>();
     private final Map<Long, Integer> hashHistory = new HashMap<>();
     private static final String startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+    private GameMode gameMode = GameMode.FREE_PLAY;
+    private GameState gameState = GameState.NOT_STARTED;
+
 
     public Game() {
         reset();
@@ -24,6 +27,7 @@ public class Game {
         currentPos = new Position();
         currentPos.loadFEN(fen);
         initMoves();
+        startCompetitiveGame();
     }
 
     public void reset() {
@@ -38,11 +42,15 @@ public class Game {
         moveHistory.clear();
         hashHistory.clear();
         hashHistory.put(currentPos.getHash(), 1);
-        gameInProgress = false;
     }
 
-    public void start() {
-        this.gameInProgress = true;
+    public void startCompetitiveGame() {
+        this.gameMode = GameMode.COMPETITIVE;
+        this.gameState = GameState.IN_PROGRESS;
+
+        for (MoveListener listener: moveListeners) {
+            listener.onGameStarted();
+        }
     }
 
     public String getFen() {
@@ -53,8 +61,15 @@ public class Game {
         return currentPos;
     }
 
-    public boolean isInProgress() {
-        return gameInProgress;
+    public GameState getGameState() {
+        return gameState;
+    }
+
+    public boolean cannotPlay() {
+        if (gameMode == GameMode.FREE_PLAY) {
+            return false;
+        }
+        return gameState != GameState.IN_PROGRESS && gameState != GameState.NOT_STARTED;
     }
 
     public Move checkMoveFomString(String mvStr) {
@@ -89,7 +104,7 @@ public class Game {
     }
 
     public void playMoveCLI(Move mv) {
-        if (gameInProgress && isOver()) return;
+        if (cannotPlay()) return;
 
         Position previous = currentPos.copy();
         currentPos.makeMove(mv);
@@ -97,9 +112,10 @@ public class Game {
         updateHashHistory();
         validMoves = currentPos.generateLegalMoves();
         lastMove = mv;
+        updateGameState();
 
         for (MoveListener listener: moveListeners) {
-            if (gameInProgress && isOver()) {
+            if (cannotPlay()) {
                 listener.onGameOver();
             } else {
                 listener.onMovePlayed(mv, previous, currentPos);
@@ -108,13 +124,14 @@ public class Game {
     }
 
     public void playMoveGUI(Move mv) {
-        if (gameInProgress && isOver()) return;
+        if (cannotPlay()) return;
 
         currentPos.makeMove(mv);
         moveHistory.add(mv);
         updateHashHistory();
         validMoves = currentPos.generateLegalMoves();
         lastMove = mv;
+        updateGameState();
     }
 
     public Move getLastMove() {
@@ -145,20 +162,24 @@ public class Game {
         return validMoves.getMvCount() == 0 && currentPos.isInCheck();
     }
 
-    public boolean isDraw() {
-        return isStalemate() || isThreefoldRepetition() || isFiftyMoveRule() || isInsufficientMaterial();
-    }
-
     public boolean canClaimDraw() {
         return isThreefoldRepetition() || isFiftyMoveRule();
     }
 
-    public boolean isAutoDraw() {
-        return isStalemate() || isInsufficientMaterial();
-    }
-
-    public boolean isOver() {
-        return isCheckmate() || isDraw();
+    public void updateGameState() {
+        if (isCheckmate()) {
+            gameState = currentPos.getTurn() == PieceIndex.WHITE_PIECES.id ? GameState.BLACK_WON : GameState.WHITE_WON;
+        } else if (isStalemate()) {
+            gameState = GameState.STALEMATE;
+        } else if (isThreefoldRepetition()) {
+            gameState = GameState.THREEFOLD_REPETITION;
+        } else if (isFiftyMoveRule()) {
+            gameState = GameState.FIFTY_MOVE_RULE;
+        } else if (isInsufficientMaterial()) {
+            gameState = GameState.INSUFFICIENT_MATERIAL;
+        } else {
+            gameState = GameState.IN_PROGRESS;
+        }
     }
 
     // Helpers

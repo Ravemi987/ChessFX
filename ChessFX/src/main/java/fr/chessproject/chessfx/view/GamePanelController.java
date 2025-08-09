@@ -33,6 +33,8 @@ public class GamePanelController implements MoveListener {
     public StackPane boardPane;
     @FXML
     public Pane boardMaskPane;
+    @FXML
+    public Pane popupLayer;
 
     //Canvas
 
@@ -181,6 +183,7 @@ public class GamePanelController implements MoveListener {
         }
 
         setPaneSize(boardMaskPane, actualBoardSize);
+        setPaneSize(popupLayer, actualBoardSize);
     }
 
     @Override
@@ -192,9 +195,11 @@ public class GamePanelController implements MoveListener {
     @Override
     public void onGameOver() {
         setInteractionsEnabled(false);
+        EndGamePopup.show(controller, popupLayer, (int) (boardCanvas.getWidth() / 8));
     }
 
-    public void onNewGame() {
+    @Override
+    public void onGameStarted() {
         setInteractionsEnabled(true);
     }
 
@@ -216,7 +221,7 @@ public class GamePanelController implements MoveListener {
         if (mv.isCapture()) SoundManager.playCaptureSound();
         else SoundManager.playMoveSound();
 
-        if (game.isInProgress() && game.isOver()) {
+        if (game.cannotPlay()) {
             onGameOver();
         }
     }

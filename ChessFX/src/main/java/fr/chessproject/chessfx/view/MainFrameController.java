@@ -96,7 +96,7 @@ public class MainFrameController implements CommandListenerObserver {
 
     private void handleNewGame() {
         controller.startNewGame();
-        gamePanelController.onNewGame();
+        gamePanelController.onGameStarted();
         gamePanelController.refreshBoard();
     }
 

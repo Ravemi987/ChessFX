@@ -66,6 +66,10 @@ public class Position {
         return isWhiteSideToPlay ? blackPieces : whitePieces;
     }
 
+    public byte getTurn() {
+        return getFriendlyColor();
+    }
+
     public byte getEpSquare() {
         return enPassantSquare;
     }

@@ -28,21 +28,6 @@ public class PromotionPopup {
         put(PieceType.BLACK_BISHOP, PieceIndex.BISHOPS.id);
     }};
 
-    private static boolean isAncestorOf(Node parent, Node child) {
-        while (child != null) {
-            if (child == parent) return true;
-            child = child.getParent();
-        }
-        return false;
-    }
-
-    private static void consumeEvents(Pane pane) {
-        pane.setOnMousePressed(Event::consume);
-        pane.setOnMouseReleased(Event::consume);
-        pane.setOnMouseDragged(Event::consume);
-        pane.setOnMouseMoved(Event::consume);
-    }
-
     private static VBox setupPopUp(double x, double y, boolean isWhite, int iconSize, boolean isBoardReversed) {
         double spacing = 10;
         VBox vbox = new VBox(spacing);
@@ -64,14 +49,14 @@ public class PromotionPopup {
         vbox.setTranslateX(x);
         vbox.setTranslateY(y);
 
-        consumeEvents(vbox);
+        ChessPopUp.consumeEvents(vbox);
 
         return vbox;
     }
 
     private static void setupIconsEventsFilters(StackPane stack) {
-        stack.setOnMouseEntered(e -> stack.setStyle("-fx-background-color: #eeeeee;"));
-        stack.setOnMouseExited(e -> stack.setStyle("-fx-background-color: white;"));
+        stack.setOnMouseEntered(_ -> stack.setStyle("-fx-background-color: #eeeeee;"));
+        stack.setOnMouseExited(_ -> stack.setStyle("-fx-background-color: white;"));
         stack.setOnMouseReleased(Event::consume);
         stack.setOnMouseClicked(Event::consume);
     }
@@ -99,7 +84,7 @@ public class PromotionPopup {
             @Override
             public void handle(MouseEvent event) {
                 Node target = event.getPickResult().getIntersectedNode();
-                if (!isAncestorOf(vbox, target)) {
+                if (!ChessPopUp.isAncestorOf(vbox, target)) {
                     event.consume();
                     if (event.getButton() == MouseButton.SECONDARY) suppressNextRightClick.run();
                     root.getChildren().remove(vbox);

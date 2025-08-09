@@ -11,7 +11,6 @@ public enum PieceIndex {
     ROOKS(6),
     PAWNS(7);
 
-
     public final byte id;
 
     PieceIndex(int id) {

@@ -6,7 +6,8 @@ BorderPane > .center {
     -fx-margin: 20px;
 }
 
-.toolbar {
+.button {
+    -fx-cursor: hand;
 }
 
 .newGameButton, .flipBoardButton, .firstMoveButton, .lastMoveButton, .nextMoveButton, .prevMoveButton {
@@ -15,10 +16,10 @@ BorderPane > .center {
     -fx-background-color: -color;
     -fx-border-width: 4px;
     -fx-border-color: -color;
-    -fx-border-radius: 4px;
+    -fx-border-radius: 20px;
     -fx-padding: 10px;
 
-    -w: 75px;
+    -w: 100px;
     -h: 50px;
     -fx-min-height: -h;
     -fx-min-width: -w;
@@ -37,7 +38,7 @@ BorderPane > .center {
 .newGameButton .icon, .flipBoardButton .icon, .firstMoveButton .icon,
 .lastMoveButton .icon {
     -fx-background-color: -icon-paint;
-    -size: 30px;
+    -size: 25px;
     -fx-min-height: -size;
     -fx-min-width: -size;
     -fx-max-height: -size;
@@ -46,8 +47,8 @@ BorderPane > .center {
 
 .nextMoveButton .icon, .prevMoveButton .icon {
     -fx-background-color: -icon-paint;
-    -h: 30px;
-    -w: 20px;
+    -h: 25px;
+    -w: 15px;
     -fx-min-height: -h;
     -fx-min-width: -w;
     -fx-max-height: -h;

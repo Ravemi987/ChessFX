@@ -97,7 +97,7 @@ public class ChessController implements CommandListenerObserver {
 
     public void startNewGame() {
         game.reset();
-        game.start();
+        game.startCompetitiveGame();
     }
 
     public void setFrameController(MainFrameController frameController) {
