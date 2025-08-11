@@ -6,12 +6,9 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.layout.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.stage.Screen;
 
 import java.util.List;
-import java.util.Objects;
 
 
 public class MainFrameController implements CommandListenerObserver {
@@ -65,22 +62,13 @@ public class MainFrameController implements CommandListenerObserver {
         for (Button btn : List.of(
                 newGameButton, flipBoardButton, firstMoveButton,
                 prevMoveButton, nextMoveButton, lastMoveButton)) {
-            loadButtonIcon(btn);
+            ButtonUtilities.loadButtonIcon(btn);
         }
 
         toolbar.setMinWidth(((SCREEN_SIZE * 0.85) / 8) * 8);
         toolbar.setMaxWidth(((SCREEN_SIZE * 0.85) / 8) * 8);
         toolbar.setMinHeight(75);
         toolbar.setMaxHeight(75);
-    }
-
-    private void loadButtonIcon(Button btn) {
-        btn.getStyleClass().add(btn.getId());
-        btn.setPickOnBounds(true);
-
-        Region icon = new Region();
-        icon.getStyleClass().add("icon");
-        btn.setGraphic(icon);
     }
 
     public void init() {
@@ -94,26 +82,36 @@ public class MainFrameController implements CommandListenerObserver {
         gamePanelController.init();
     }
 
+    private void closePopups() {
+        EndGamePopup.close(gamePanelController.getPopupLayer());
+        PromotionPopup.close(gamePanelController.getBoardMaskPane());
+    }
+
     private void handleNewGame() {
         controller.startNewGame();
-        gamePanelController.onGameStarted();
         gamePanelController.refreshBoard();
+        closePopups();
     }
 
     private void handleFlipBoard() {
         gamePanelController.flipBoard();
+        closePopups();
     }
 
     private void goToFirstMove() {
+        closePopups();
     }
 
     private void goToPreviousMove() {
+        closePopups();
     }
 
     private void goToNextMove() {
+        closePopups();
     }
 
     private void goToLastMove() {
+        closePopups();
     }
 
     public void setChessController(ChessController chessController) {

@@ -122,6 +122,14 @@ public class GamePanelController implements MoveListener {
         //drawBitboard(bitboardCanvas.getGraphicsContext2D(), controller.getDebugBitboard());
     }
 
+    public Pane getPopupLayer() {
+        return popupLayer;
+    }
+
+    public Pane getBoardMaskPane() {
+        return boardMaskPane;
+    }
+
     public void refreshBoard() {
         render();
     }

@@ -17,6 +17,12 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class PromotionPopup {
+
+    private static VBox vbox;
+    private static Pane root;
+    private static Runnable suppressNextRightClick;
+    private static Runnable onCancelled;
+
     private static final Map<PieceType, Byte> spritesToPieces = new HashMap<>() {{
         put(PieceType.WHITE_QUEEN, PieceIndex.QUEENS.id);
         put(PieceType.WHITE_KNIGHT, PieceIndex.KNIGHTS.id);
@@ -27,6 +33,18 @@ public class PromotionPopup {
         put(PieceType.BLACK_ROOK, PieceIndex.ROOKS.id);
         put(PieceType.BLACK_BISHOP, PieceIndex.BISHOPS.id);
     }};
+
+    private static final EventHandler<MouseEvent> outsideClickHandler = new EventHandler<>() {
+        @Override
+        public void handle(MouseEvent event) {
+            Node target = event.getPickResult().getIntersectedNode();
+            if (!ChessPopUp.isAncestorOf(vbox, target)) {
+                event.consume();
+                if (event.getButton() == MouseButton.SECONDARY) suppressNextRightClick.run();
+                close(root);
+            }
+        }
+    };
 
     private static VBox setupPopUp(double x, double y, boolean isWhite, int iconSize, boolean isBoardReversed) {
         double spacing = 10;
@@ -78,21 +96,10 @@ public class PromotionPopup {
         PieceType[] pieces = getPiecesOrder(isWhite, isBoardReversed);
         int iconSize = squareSize - 2;
 
-        VBox vbox = setupPopUp(x, y, isWhite, iconSize, isBoardReversed);
-
-        EventHandler<MouseEvent> outsideClickHandler = new EventHandler<>() {
-            @Override
-            public void handle(MouseEvent event) {
-                Node target = event.getPickResult().getIntersectedNode();
-                if (!ChessPopUp.isAncestorOf(vbox, target)) {
-                    event.consume();
-                    if (event.getButton() == MouseButton.SECONDARY) suppressNextRightClick.run();
-                    root.getChildren().remove(vbox);
-                    root.removeEventFilter(MouseEvent.MOUSE_PRESSED, this);
-                    onCancelled.run();
-                }
-            }
-        };
+        vbox = setupPopUp(x, y, isWhite, iconSize, isBoardReversed);
+        PromotionPopup.root = root;
+        PromotionPopup.suppressNextRightClick = suppressNextRightClick;
+        PromotionPopup.onCancelled = onCancelled;
 
         for (PieceType piece : pieces) {
             ImageView img = new ImageView(spritesLoader.getPieceSprite(piece.id));
@@ -120,5 +127,13 @@ public class PromotionPopup {
 
         root.getChildren().add(vbox);
         root.addEventFilter(MouseEvent.MOUSE_PRESSED, outsideClickHandler);
+    }
+
+    public static void close(Pane root) {
+        if (vbox != null && root.getChildren().contains(vbox)) {
+            root.getChildren().remove(vbox);
+            root.removeEventFilter(MouseEvent.MOUSE_PRESSED, outsideClickHandler);
+            onCancelled.run();
+        }
     }
 }

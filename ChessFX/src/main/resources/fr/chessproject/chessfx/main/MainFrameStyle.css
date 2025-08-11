@@ -79,3 +79,39 @@ BorderPane > .center {
 .prevMoveButton .icon {
     -fx-shape: "M17.921,1.505a1.5,1.5,0,0,1-.44,1.06L9.809,10.237a2.5,2.5,0,0,0,0,3.536l7.662,7.662a1.5,1.5,0,0,1-2.121,2.121L7.688,15.9a5.506,5.506,0,0,1,0-7.779L15.36.444a1.5,1.5,0,0,1,2.561,1.061Z";
 }
+
+/* ---------------- */
+
+.closeButton {
+    -icon-paint: rgb(199,198,198);
+    -color: rgb(56,54,52);
+    -fx-background-color: -color;
+    -fx-border-width: 4px;
+    -fx-border-color: -color;
+    -fx-border-radius: 20px;
+    -fx-padding: 10px;
+
+    -w: 100px;
+    -h: 50px;
+    -fx-min-height: -h;
+    -fx-min-width: -w;
+    -fx-max-height: -h;
+    -fx-max-width: -w;
+}
+
+.closeButton:hover {
+    -icon-paint: rgb(226,226,225);
+    -color: rgb(64,63,61);
+    -fx-background-color: -color;
+    -fx-border-color: -color;
+}
+
+.closeButton .icon {
+    -fx-background-color: -icon-paint;
+    -size: 20px;
+    -fx-min-height: -size;
+    -fx-min-width: -size;
+    -fx-max-height: -size;
+    -fx-max-width: -size;
+    -fx-shape: "M301.258,256.01L502.645,54.645c12.501-12.501,12.501-32.769,0-45.269c-12.501-12.501-32.769-12.501-45.269,0l0,0   L256.01,210.762L54.645,9.376c-12.501-12.501-32.769-12.501-45.269,0s-12.501,32.769,0,45.269L210.762,256.01L9.376,457.376   c-12.501,12.501-12.501,32.769,0,45.269s32.769,12.501,45.269,0L256.01,301.258l201.365,201.387   c12.501,12.501,32.769,12.501,45.269,0c12.501-12.501,12.501-32.769,0-45.269L301.258,256.01z";
+}

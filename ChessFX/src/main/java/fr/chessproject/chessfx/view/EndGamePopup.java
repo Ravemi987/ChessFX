@@ -8,9 +8,9 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -18,10 +18,24 @@ import javafx.scene.text.Text;
 
 public class EndGamePopup {
 
-    private static VBox setupPopUp(Pane root, int squareSize) {
-        VBox vbox = new VBox(10);
+    private static BorderPane popupBox;
+    private static Pane root;
 
-        vbox.setStyle(
+    private static final EventHandler<MouseEvent> clickHandler = new EventHandler<>() {
+        @Override
+        public void handle(MouseEvent event) {
+            Node target = event.getPickResult().getIntersectedNode();
+            if (!ChessPopUp.isAncestorOf(popupBox, target)) {
+                event.consume();
+                close(root);
+            }
+        }
+    };
+
+    private static BorderPane setupPopUp(Pane root, int squareSize) {
+        BorderPane popupBox = new BorderPane();
+
+        popupBox.setStyle(
                 "-fx-background-color: rgb(49, 46, 43);" +
                         "-fx-border-color: rgb(38, 37, 34);" +
                         "-fx-border-width: 4px;" +
@@ -33,37 +47,31 @@ public class EndGamePopup {
 
         double popupWidth = squareSize * 2.5;
         double popupHeight = squareSize * 3.5;
-        vbox.setPrefSize(popupWidth, popupHeight);
+        popupBox.setPrefSize(popupWidth, popupHeight);
 
-        vbox.setTranslateX(root.getLayoutX() + (root.getWidth() - popupWidth) / 2);
-        vbox.setTranslateY(root.getLayoutY() + (root.getHeight() - popupHeight) / 2);
+        popupBox.setTranslateX(root.getLayoutX() + (root.getWidth() - popupWidth) / 2);
+        popupBox.setTranslateY(root.getLayoutY() + (root.getHeight() - popupHeight) / 2);
 
         ChessPopUp.consumeEvents(root);
         root.setPickOnBounds(true);
 
-        return vbox;
+        return popupBox;
     }
 
     public static void show(ChessController controller, Pane root, int squareSize) {
         Game game = controller.getGame();
         GameState state = game.getGameState();
+        EndGamePopup.root = root;
+
         String message = getMessageForState(state);
 
         Text messageText = new Text(message);
         messageText.setFont(Font.font("open-sans", 20));
         messageText.setFill(Color.rgb(199,198,198));
 
-        Button closeButton = new Button("x");
-        closeButton.setPrefSize(100, 0.5);
-        closeButton.setStyle(
-                "-fx-background-color: rgb(56,54,52);" +
-                "-fx-border-color: rgb(56,54,52);" +
-                "-fx-border-width: 4px;" +
-                "-fx-border-radius: 8px;" +
-                "-fx-padding: 10;" +
-                "-fx-font-size: 20;" +
-                "-fx-text-fill: white;"
-        );
+        Button closeButton = new Button();
+        closeButton.setId("closeButton");
+        ButtonUtilities.loadButtonIcon(closeButton);
 
         StackPane topBar = new StackPane(closeButton);
         StackPane.setAlignment(closeButton, Pos.TOP_RIGHT);
@@ -71,32 +79,25 @@ public class EndGamePopup {
         StackPane content = new StackPane(messageText);
         StackPane.setAlignment(messageText, Pos.CENTER);
 
-        VBox vbox = setupPopUp(root, squareSize);
-        vbox.getChildren().add(topBar);
-        vbox.getChildren().add(content);
-
-        EventHandler<MouseEvent> clickHandler = new EventHandler<>() {
-            @Override
-            public void handle(MouseEvent event) {
-                Node target = event.getPickResult().getIntersectedNode();
-                if (!ChessPopUp.isAncestorOf(vbox, target)) {
-                    event.consume();
-                    root.getChildren().remove(vbox);
-                    root.removeEventFilter(MouseEvent.MOUSE_PRESSED, this);
-                    root.setPickOnBounds(false);
-                }
-            }
-        };
+        popupBox = setupPopUp(root, squareSize);
+        popupBox.setTop(topBar);
+        popupBox.setCenter(content);
 
         closeButton.setOnAction(e -> {
             e.consume();
-            root.getChildren().remove(vbox);
-            root.removeEventFilter(MouseEvent.MOUSE_PRESSED, clickHandler);
-            root.setPickOnBounds(false);
+            close(root);
         });
 
-        root.getChildren().add(vbox);
+        root.getChildren().add(popupBox);
         root.addEventFilter(MouseEvent.MOUSE_PRESSED, clickHandler);
+    }
+
+    public static void close(Pane root) {
+        if (popupBox != null && root.getChildren().contains(popupBox)) {
+            root.getChildren().remove(popupBox);
+            root.removeEventFilter(MouseEvent.MOUSE_PRESSED, clickHandler);
+            root.setPickOnBounds(false);
+        }
     }
 
     private static String getMessageForState(GameState state) {
