@@ -3,11 +3,8 @@ package fr.chessproject.chessfx.view;
 import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.model.Game;
 import fr.chessproject.chessfx.model.GameState;
-import javafx.event.EventHandler;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -19,18 +16,6 @@ import javafx.scene.text.Text;
 public class EndGamePopup {
 
     private static BorderPane popupBox;
-    private static Pane root;
-
-    private static final EventHandler<MouseEvent> clickHandler = new EventHandler<>() {
-        @Override
-        public void handle(MouseEvent event) {
-            Node target = event.getPickResult().getIntersectedNode();
-            if (!ChessPopUp.isAncestorOf(popupBox, target)) {
-                event.consume();
-                close(root);
-            }
-        }
-    };
 
     private static BorderPane setupPopUp(Pane root, int squareSize) {
         BorderPane popupBox = new BorderPane();
@@ -61,7 +46,6 @@ public class EndGamePopup {
     public static void show(ChessController controller, Pane root, int squareSize) {
         Game game = controller.getGame();
         GameState state = game.getGameState();
-        EndGamePopup.root = root;
 
         String message = getMessageForState(state);
 
@@ -89,13 +73,11 @@ public class EndGamePopup {
         });
 
         root.getChildren().add(popupBox);
-        root.addEventFilter(MouseEvent.MOUSE_PRESSED, clickHandler);
     }
 
     public static void close(Pane root) {
         if (popupBox != null && root.getChildren().contains(popupBox)) {
             root.getChildren().remove(popupBox);
-            root.removeEventFilter(MouseEvent.MOUSE_PRESSED, clickHandler);
             root.setPickOnBounds(false);
         }
     }

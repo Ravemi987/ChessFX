@@ -3,6 +3,7 @@ package fr.chessproject.chessfx.controller;
 import fr.chessproject.chessfx.main.Divide;
 import fr.chessproject.chessfx.main.Perft;
 import fr.chessproject.chessfx.model.*;
+import fr.chessproject.chessfx.view.Clock;
 import fr.chessproject.chessfx.view.Config;
 import fr.chessproject.chessfx.view.MainFrameController;
 import fr.chessproject.chessfx.view.Theme;
@@ -12,7 +13,7 @@ import java.util.function.Supplier;
 public class ChessController implements CommandListenerObserver {
 
     private MainFrameController frameController;
-    private Game game;
+    private final Game game;
     private final Config config;
     private int nThreads;
     public static long[][] rookMovesLookup;
@@ -50,7 +51,7 @@ public class ChessController implements CommandListenerObserver {
         System.out.print("\n");
         System.out.println("Fen: " + game.getFen());
         System.out.println("Zobrist Key: " + game.getPosition().getHash());
-        System.out.println("Recomputer Zobrist Key: " + Zobrist.computeHash(game.getPosition()));
+        System.out.println("Recomputed Zobrist Key: " + Zobrist.computeHash(game.getPosition()));
     }
 
     private void handlePositionCommand(String[] s) {
@@ -93,6 +94,10 @@ public class ChessController implements CommandListenerObserver {
         if (s[0].equals("threads")) {
             nThreads = Integer.parseInt(s[1]);
         }
+    }
+
+    public void setGameClocks(Clock clk1, Clock clk2) {
+        game.setClocks(clk1, clk2);
     }
 
     public void startNewGame() {

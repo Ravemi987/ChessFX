@@ -2,11 +2,12 @@ package fr.chessproject.chessfx.view;
 
 import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.model.CommandListenerObserver;
+import fr.chessproject.chessfx.model.PieceIndex;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.layout.*;
-import javafx.stage.Screen;
+import fr.chessproject.chessfx.helpers.Constants;
 
 import java.util.List;
 
@@ -15,11 +16,8 @@ public class MainFrameController implements CommandListenerObserver {
 
     @FXML
     public BorderPane mainFrame;
-
     @FXML
     public Pane boardPane;
-    @FXML
-    public HBox toolbar;
     @FXML
     public Button newGameButton;
     @FXML
@@ -32,14 +30,30 @@ public class MainFrameController implements CommandListenerObserver {
     public Button nextMoveButton;
     @FXML
     public Button lastMoveButton;
+
     @FXML
     public VBox centerContainer;
+    @FXML
+    public VBox rightContainer;
+
+    @FXML
+    public HBox topbar;
+    @FXML
+    public HBox bottombar;
+    @FXML
+    public HBox toolbar;
+
+    @FXML
+    public StackPane clock_pane_1;
+    @FXML
+    public StackPane clock_pane_2;
 
     private ChessController controller;
 
     private GamePanelController gamePanelController;
 
-    private final double SCREEN_SIZE = Screen.getPrimary().getVisualBounds().getHeight();
+    private Clock clock1;
+    private Clock clock2;
 
     public MainFrameController() {
         //System.out.println("MainFrameController created");
@@ -53,10 +67,31 @@ public class MainFrameController implements CommandListenerObserver {
         }
     }
 
+    private void initCenterContainer() {
+        centerContainer.setMaxWidth(Constants.BOARD_SIZE);
+        centerContainer.setMinWidth(Constants.BOARD_SIZE);
+        centerContainer.setPrefWidth(Constants.BOARD_SIZE);
+
+        topbar.setPrefHeight(Constants.SCREEN_SIZE - ((double) Constants.REAL_BOARD_SIZE / 2) - 10);
+        bottombar.setPrefHeight(Constants.SCREEN_SIZE - ((double) Constants.REAL_BOARD_SIZE / 2) - 10);
+
+        clock_pane_1.setPrefWidth(1.7 * ((double) Constants.REAL_BOARD_SIZE / 8));
+        clock_pane_2.setPrefWidth(1.7 * ((double) Constants.REAL_BOARD_SIZE / 8));
+    }
+
+    private void initRightContainer() {
+        rightContainer.setMaxHeight(Constants.BOARD_SIZE);
+        rightContainer.setMinHeight(Constants.BOARD_SIZE);
+        rightContainer.setPrefHeight(Constants.BOARD_SIZE);
+    }
+
     @FXML
     public void initialize() {
         //System.out.println("MainFrameController initialized");
         gamePanelController = (GamePanelController) boardPane.getProperties().get("controller");
+        initCenterContainer();
+        initRightContainer();
+
         toolbar.setSpacing(10);
 
         for (Button btn : List.of(
@@ -65,10 +100,10 @@ public class MainFrameController implements CommandListenerObserver {
             ButtonUtilities.loadButtonIcon(btn);
         }
 
-        toolbar.setMinWidth(((SCREEN_SIZE * 0.85) / 8) * 8);
-        toolbar.setMaxWidth(((SCREEN_SIZE * 0.85) / 8) * 8);
-        toolbar.setMinHeight(75);
-        toolbar.setMaxHeight(75);
+        toolbar.setMaxWidth(Region.USE_PREF_SIZE);
+
+        clock1 = new Clock(clock_pane_1, PieceIndex.WHITE_PIECES, false);
+        clock2 = new Clock(clock_pane_2, PieceIndex.BLACK_PIECES, false);
     }
 
     public void init() {
@@ -116,6 +151,7 @@ public class MainFrameController implements CommandListenerObserver {
 
     public void setChessController(ChessController chessController) {
         this.controller = chessController;
+        controller.setGameClocks(clock1, clock2);
         gamePanelController.setChessController(controller);
     }
 

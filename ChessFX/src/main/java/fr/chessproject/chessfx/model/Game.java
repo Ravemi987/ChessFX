@@ -1,5 +1,7 @@
 package fr.chessproject.chessfx.model;
 
+import fr.chessproject.chessfx.view.Clock;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +20,10 @@ public class Game {
     private GameMode gameMode = GameMode.FREE_PLAY;
     private GameState gameState = GameState.NOT_STARTED;
 
+    private Clock clock1;
+    private Clock clock2;
+    private double initialTimePerPlayer = 20;
+    private double incrementPerMove = 1;
 
     public Game() {
         reset();
@@ -27,7 +33,13 @@ public class Game {
         currentPos = new Position();
         currentPos.loadFEN(fen);
         initMoves();
-        startCompetitiveGame();
+    }
+
+    public void setClocks(Clock clk1, Clock clk2) {
+        this.clock1 = clk1;
+        this.clock2 = clk2;
+        clock1.init(initialTimePerPlayer);
+        clock2.init(initialTimePerPlayer);
     }
 
     public void reset() {
@@ -51,6 +63,8 @@ public class Game {
         for (MoveListener listener: moveListeners) {
             listener.onGameStarted();
         }
+
+        clock1.resume();
     }
 
     public String getFen() {
@@ -103,35 +117,54 @@ public class Game {
         }
     }
 
-    public void playMoveCLI(Move mv) {
-        if (cannotPlay()) return;
+    private void stopClocks() {
+        clock1.stop();
+        clock2.stop();
+    }
 
-        Position previous = currentPos.copy();
+    private void switchClock(Clock old, Clock now) {
+        old.pause();
+        old.setTime(old.getTime() + incrementPerMove);
+        now.resume();
+    }
+
+    public void updateClocks() {
+        if (clock1.isTicking()) {
+            switchClock(clock1, clock2);
+        } else {
+            switchClock(clock2, clock1);
+        }
+    }
+
+    public void changeTurn(Move mv) {
         currentPos.makeMove(mv);
         moveHistory.add(mv);
         updateHashHistory();
         validMoves = currentPos.generateLegalMoves();
         lastMove = mv;
         updateGameState();
+
+        if (gameMode == GameMode.COMPETITIVE) {
+            updateClocks();
+        }
+    }
+
+    public void playMoveCLI(Move mv) {
+        if (cannotPlay()) stopClocks();
+        changeTurn(mv);
 
         for (MoveListener listener: moveListeners) {
             if (cannotPlay()) {
                 listener.onGameOver();
             } else {
-                listener.onMovePlayed(mv, previous, currentPos);
+                listener.onMovePlayed(mv);
             }
         }
     }
 
     public void playMoveGUI(Move mv) {
-        if (cannotPlay()) return;
-
-        currentPos.makeMove(mv);
-        moveHistory.add(mv);
-        updateHashHistory();
-        validMoves = currentPos.generateLegalMoves();
-        lastMove = mv;
-        updateGameState();
+        if (cannotPlay()) stopClocks();
+        changeTurn(mv);
     }
 
     public Move getLastMove() {

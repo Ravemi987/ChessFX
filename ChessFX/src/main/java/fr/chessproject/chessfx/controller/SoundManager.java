@@ -1,42 +1,31 @@
 package fr.chessproject.chessfx.controller;
 
-import javafx.scene.media.AudioClip;
-
-import java.util.Objects;
+import javax.sound.sampled.*;
+import java.io.IOException;
+import java.net.URL;
 
 public class SoundManager {
 
-    private static final AudioClip moveSound;
-    private static final AudioClip captureSound;
-    private static final AudioClip invalidMoveSound;
+    private static final Clip moveClip;
+    private static final Clip captureClip;
+    private static final Clip invalidClip;
 
     static {
-        moveSound = loadSound("/sounds/move.wav");
-        captureSound = loadSound("/sounds/capture.wav");
-        invalidMoveSound = loadSound("/sounds/illegal.wav");
-
-        if (moveSound != null) {
-            moveSound.setVolume(0);
-            moveSound.play();
-        }
-        if (captureSound != null) {
-            captureSound.setVolume(0);
-            captureSound.play();
-        }
-        if( invalidMoveSound != null) {
-            invalidMoveSound.setVolume(0);
-            invalidMoveSound.play();
-        }
-
-        if (moveSound != null) moveSound.setVolume(1.0);
-        if (captureSound != null) captureSound.setVolume(1.0);
-        if (invalidMoveSound != null) invalidMoveSound.setVolume(1.0);
+        moveClip = loadClip("/sounds/move.wav");
+        captureClip = loadClip("/sounds/capture.wav");
+        invalidClip = loadClip("/sounds/illegal.wav");
     }
 
-    private static AudioClip loadSound(String path) {
+    private static Clip loadClip(String path) {
         try {
-            return new AudioClip(Objects.requireNonNull(SoundManager.class.getResource(path)).toExternalForm());
-        } catch (Exception e) {
+            URL url = SoundManager.class.getResource(path);
+            if (url == null) throw new IllegalArgumentException("Sound file not found: " + path);
+
+            AudioInputStream ais = AudioSystem.getAudioInputStream(url);
+            Clip clip = AudioSystem.getClip();
+            clip.open(ais); // précharge en mémoire
+            return clip;
+        } catch (UnsupportedAudioFileException | IOException | LineUnavailableException e) {
             System.err.println("Failed to load sound: " + path);
             e.printStackTrace();
             return null;
@@ -44,14 +33,21 @@ public class SoundManager {
     }
 
     public static void playMoveSound() {
-        if (moveSound != null) moveSound.play();
+        playClip(moveClip);
     }
 
     public static void playCaptureSound() {
-        if (captureSound != null) captureSound.play();
+        playClip(captureClip);
     }
 
     public static void playInvalidMoveSound() {
-        if (invalidMoveSound != null) invalidMoveSound.play();
+        playClip(invalidClip);
+    }
+
+    private static void playClip(Clip clip) {
+        if (clip == null) return;
+        if (clip.isRunning()) clip.stop();
+        clip.setFramePosition(20);
+        clip.start();
     }
 }

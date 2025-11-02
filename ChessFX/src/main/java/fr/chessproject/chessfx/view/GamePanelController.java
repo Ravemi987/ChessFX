@@ -3,6 +3,7 @@ package fr.chessproject.chessfx.view;
 import fr.chessproject.chessfx.controller.AnimationManager;
 import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.controller.SoundManager;
+import fr.chessproject.chessfx.helpers.Constants;
 import fr.chessproject.chessfx.model.*;
 
 import javafx.animation.AnimationTimer;
@@ -18,7 +19,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import javafx.stage.Screen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +59,6 @@ public class GamePanelController implements MoveListener {
 
     private static final double TICKS_PER_SECOND = 120;
     private static final double NS_PER_TICK = 1_000_000_000 / TICKS_PER_SECOND;
-    private final double SCREEN_SIZE = Screen.getPrimary().getVisualBounds().getHeight();
 
     private Theme theme;
     private GameSpritesLoader spritesLoader;
@@ -102,10 +101,10 @@ public class GamePanelController implements MoveListener {
     public void initialize() {
         //System.out.println("GamePanelController initialized");
         boardPane.getProperties().put("controller", this);
+        setBoardSize();
     }
 
     public void init() {
-        setBoardSize((int) (SCREEN_SIZE * 0.85));
         loadGraphics();
         renderBoard();
         renderCoordinates();
@@ -163,7 +162,6 @@ public class GamePanelController implements MoveListener {
             @Override
             public void handle(long now) {
                 if (now - lastUpdate >= NS_PER_TICK) {
-                    updateGameState();
                     renderDragging();
                     lastUpdate = now;
                 }
@@ -178,24 +176,21 @@ public class GamePanelController implements MoveListener {
         pane.setMaxSize(size, size);
     }
 
-    private void setBoardSize(int size) {
-        int squareSize = size / 8;
-        int actualBoardSize = squareSize * 8;
-
-        setPaneSize(boardPane, actualBoardSize);
+    private void setBoardSize() {
+        setPaneSize(boardPane, Constants.REAL_BOARD_SIZE);
 
         for (Canvas canvas : List.of(boardCanvas, coordsCanvas, piecesCanvas,
                 draggingCanvas, coloredSquaresCanvas, drawingCanvas, arrowsCanvas, bitboardCanvas)) {
-            canvas.setWidth(actualBoardSize);
-            canvas.setHeight(actualBoardSize);
+            canvas.setWidth(Constants.REAL_BOARD_SIZE);
+            canvas.setHeight(Constants.REAL_BOARD_SIZE);
         }
 
-        setPaneSize(boardMaskPane, actualBoardSize);
-        setPaneSize(popupLayer, actualBoardSize);
+        setPaneSize(boardMaskPane, Constants.REAL_BOARD_SIZE);
+        setPaneSize(popupLayer, Constants.REAL_BOARD_SIZE);
     }
 
     @Override
-    public void onMovePlayed(Move move, Position before, Position after) {
+    public void onMovePlayed(Move move) {
         if (move.isCapture()) SoundManager.playCaptureSound();
         else SoundManager.playMoveSound();
     }
@@ -279,9 +274,6 @@ public class GamePanelController implements MoveListener {
             showHover(gc);
             draggerUpdateBlit(gc);
         }
-    }
-
-    private void updateGameState() {
     }
 
     public void loadGraphics() {
