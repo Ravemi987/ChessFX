@@ -52,9 +52,6 @@ public class MainFrameController implements CommandListenerObserver {
 
     private GamePanelController gamePanelController;
 
-    private Clock clock1;
-    private Clock clock2;
-
     public MainFrameController() {
         //System.out.println("MainFrameController created");
     }
@@ -101,9 +98,6 @@ public class MainFrameController implements CommandListenerObserver {
         }
 
         toolbar.setMaxWidth(Region.USE_PREF_SIZE);
-
-        clock1 = new Clock(clock_pane_1, PieceIndex.WHITE_PIECES, false);
-        clock2 = new Clock(clock_pane_2, PieceIndex.BLACK_PIECES, false);
     }
 
     public void init() {
@@ -151,7 +145,7 @@ public class MainFrameController implements CommandListenerObserver {
 
     public void setChessController(ChessController chessController) {
         this.controller = chessController;
-        controller.setGameClocks(clock1, clock2);
+        controller.setGameClocks(clock_pane_1, clock_pane_2);
         gamePanelController.setChessController(controller);
     }
 

@@ -1,7 +1,9 @@
 package fr.chessproject.chessfx.view;
 
+import fr.chessproject.chessfx.model.Game;
 import fr.chessproject.chessfx.model.PieceIndex;
 import javafx.animation.AnimationTimer;
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
@@ -21,15 +23,17 @@ public class Clock {
     private long lastUpdate = 0;
 
     private AnimationTimer timer;
+    private Game game;
 
 
-    public Clock(StackPane root, PieceIndex color, boolean isBoardReversed) {
+    public Clock(StackPane root, PieceIndex color, boolean isBoardReversed, Game game) {
         Font courierPrimeBold = Font.loadFont(
                 getClass().getResourceAsStream("/fonts/courier-prime.bold.ttf"), 45
         );
 
         this.isBoardReversed = isBoardReversed;
         this.color = color;
+        this.game = game;
 
         this.messageLabel = new Label();
         this.messageLabel.setFont(Font.font(courierPrimeBold.getName(), 45));
@@ -45,13 +49,15 @@ public class Clock {
         updateTimer();
     }
 
-    public void stop() {
+    public void reset(double initialTime) {
         isTicking = false;
-
         if (timer != null) {
             timer.stop();
             timer = null;
         }
+        lastUpdate = 0L;
+        this.remainingTime = initialTime;
+        updateTimer();
     }
 
     public boolean hasTimeout() {
@@ -81,6 +87,13 @@ public class Clock {
         return remainingTime;
     }
 
+    private void checkTimeout() {
+        if (hasTimeout()) {
+            if (timer != null) timer.stop();
+            Platform.runLater(() -> game.onTimeout());
+        }
+    }
+
     private void startTimer() {
         if (timer == null) {
             timer = new AnimationTimer() {
@@ -90,6 +103,7 @@ public class Clock {
                         if (lastUpdate > 0) {
                             double delta = (now - lastUpdate) / 1_000_000_000.0;
                             remainingTime = Math.max(0, remainingTime - delta);
+                            checkTimeout();
                             updateTimer();
                         }
                     }

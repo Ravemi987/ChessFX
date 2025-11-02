@@ -7,6 +7,7 @@ import fr.chessproject.chessfx.view.Clock;
 import fr.chessproject.chessfx.view.Config;
 import fr.chessproject.chessfx.view.MainFrameController;
 import fr.chessproject.chessfx.view.Theme;
+import javafx.scene.layout.StackPane;
 
 import java.util.function.Supplier;
 
@@ -96,7 +97,7 @@ public class ChessController implements CommandListenerObserver {
         }
     }
 
-    public void setGameClocks(Clock clk1, Clock clk2) {
+    public void setGameClocks(StackPane clk1, StackPane clk2) {
         game.setClocks(clk1, clk2);
     }
 

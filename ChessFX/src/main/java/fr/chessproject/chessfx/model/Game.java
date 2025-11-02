@@ -1,11 +1,9 @@
 package fr.chessproject.chessfx.model;
 
 import fr.chessproject.chessfx.view.Clock;
+import javafx.scene.layout.StackPane;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Game {
 
@@ -22,7 +20,7 @@ public class Game {
 
     private Clock clock1;
     private Clock clock2;
-    private double initialTimePerPlayer = 20;
+    private double initialTimePerPlayer = 3;
     private double incrementPerMove = 1;
 
     public Game() {
@@ -35,9 +33,9 @@ public class Game {
         initMoves();
     }
 
-    public void setClocks(Clock clk1, Clock clk2) {
-        this.clock1 = clk1;
-        this.clock2 = clk2;
+    public void setClocks(StackPane clk1, StackPane clk2) {
+        this.clock1 = new Clock(clk1, PieceIndex.WHITE_PIECES, false, this);
+        this.clock2 = new Clock(clk2, PieceIndex.BLACK_PIECES, false, this);;
         clock1.init(initialTimePerPlayer);
         clock2.init(initialTimePerPlayer);
     }
@@ -60,6 +58,9 @@ public class Game {
         this.gameMode = GameMode.COMPETITIVE;
         this.gameState = GameState.IN_PROGRESS;
 
+        clock1.reset(initialTimePerPlayer);
+        clock2.reset(initialTimePerPlayer);
+
         for (MoveListener listener: moveListeners) {
             listener.onGameStarted();
         }
@@ -77,6 +78,18 @@ public class Game {
 
     public GameState getGameState() {
         return gameState;
+    }
+
+    public void onTimeout() {
+        if (clock1.hasTimeout()) {
+            gameState = GameState.BLACK_WON;
+        } else if (clock2.hasTimeout()) {
+            gameState = GameState.WHITE_WON;
+        }
+
+        for (MoveListener listener: moveListeners) {
+            listener.onGameOver();
+        }
     }
 
     public boolean cannotPlay() {
@@ -117,11 +130,6 @@ public class Game {
         }
     }
 
-    private void stopClocks() {
-        clock1.stop();
-        clock2.stop();
-    }
-
     private void switchClock(Clock old, Clock now) {
         old.pause();
         old.setTime(old.getTime() + incrementPerMove);
@@ -150,7 +158,7 @@ public class Game {
     }
 
     public void playMoveCLI(Move mv) {
-        if (cannotPlay()) stopClocks();
+        if (cannotPlay()) return;
         changeTurn(mv);
 
         for (MoveListener listener: moveListeners) {
@@ -163,7 +171,7 @@ public class Game {
     }
 
     public void playMoveGUI(Move mv) {
-        if (cannotPlay()) stopClocks();
+        if (cannotPlay()) return;
         changeTurn(mv);
     }
 
