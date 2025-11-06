@@ -153,6 +153,10 @@ public class MainFrameController implements CommandListenerObserver {
         gamePanelController.refreshBoard();
     }
 
+    public void preloadSprites() {
+        gamePanelController.preloadSprites();
+    }
+
     public void enableDebugMode() {
         // Implementation for enabling debug mode
     }

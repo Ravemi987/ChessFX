@@ -105,7 +105,7 @@ public class GamePanelController implements MoveListener {
     }
 
     public void init() {
-        loadGraphics();
+        preloadSprites();
         renderBoard();
         renderCoordinates();
         renderPieces();
@@ -276,7 +276,7 @@ public class GamePanelController implements MoveListener {
         }
     }
 
-    public void loadGraphics() {
+    public void preloadSprites() {
         int squareSize = (int) ((boardCanvas.getWidth()) / 8);
         spritesLoader = new GameSpritesLoader(squareSize);
     }
@@ -557,6 +557,8 @@ public class GamePanelController implements MoveListener {
 
     private void handleMoveCreation(Position pos, byte selectedPiece, byte squarePos, byte piece, byte color,
                                     Consumer<Move> onMoveReady) {
+        if (controller.getGame().hasTimeout()) return;
+
         int promotionRow = color == PieceIndex.WHITE_PIECES.id ? 7 : 0;
         boolean isPawnMoving = piece == PieceIndex.PAWNS.id;
         boolean hasToPlay = (promotionRow == 7 && pos.isWhiteSideToPlay) || (promotionRow == 0 && !pos.isWhiteSideToPlay);

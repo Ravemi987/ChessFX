@@ -82,14 +82,19 @@ public class Game {
 
     public void onTimeout() {
         if (clock1.hasTimeout()) {
-            gameState = GameState.BLACK_WON;
+            gameState = GameState.WHITE_TIMEOUT;
         } else if (clock2.hasTimeout()) {
-            gameState = GameState.WHITE_WON;
+            gameState = GameState.BLACK_TIMEOUT;
         }
 
         for (MoveListener listener: moveListeners) {
             listener.onGameOver();
         }
+    }
+
+    public boolean hasTimeout() {
+        return gameState == GameState.WHITE_TIMEOUT
+                || gameState == GameState.BLACK_TIMEOUT;
     }
 
     public boolean cannotPlay() {

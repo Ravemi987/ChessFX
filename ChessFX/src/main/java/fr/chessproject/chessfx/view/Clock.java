@@ -28,7 +28,7 @@ public class Clock {
 
     public Clock(StackPane root, PieceIndex color, boolean isBoardReversed, Game game) {
         Font courierPrimeBold = Font.loadFont(
-                getClass().getResourceAsStream("/fonts/courier-prime.bold.ttf"), 45
+                getClass().getResourceAsStream("/fonts/courier-prime.bold.ttf"), 30
         );
 
         this.isBoardReversed = isBoardReversed;
@@ -36,7 +36,7 @@ public class Clock {
         this.game = game;
 
         this.messageLabel = new Label();
-        this.messageLabel.setFont(Font.font(courierPrimeBold.getName(), 45));
+        this.messageLabel.setFont(Font.font(courierPrimeBold.getName(), 30));
         StackPane.setAlignment(messageLabel, Pos.CENTER);
 
         if (!root.getChildren().contains(messageLabel)) {

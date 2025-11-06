@@ -1,6 +1,7 @@
 package fr.chessproject.chessfx.main;
 
 import fr.chessproject.chessfx.controller.ChessController;
+import fr.chessproject.chessfx.controller.GameInitializer;
 import fr.chessproject.chessfx.model.CommandListener;
 import fr.chessproject.chessfx.view.MainFrameController;
 import javafx.application.Application;
@@ -46,6 +47,8 @@ public class MainFrame extends Application {
         frameController.setChessController(controller);
         commandListener.addObserver(controller);
         commandListener.addObserver(frameController);
+
+        GameInitializer.preloadAll(frameController);
 
         //System.out.println("ChessController set in MainFrameController");
         frameController.init();
