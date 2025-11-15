@@ -7,6 +7,7 @@ import fr.chessproject.chessfx.view.Clock;
 import fr.chessproject.chessfx.view.Config;
 import fr.chessproject.chessfx.view.MainFrameController;
 import fr.chessproject.chessfx.view.Theme;
+import javafx.application.Platform;
 import javafx.scene.layout.StackPane;
 
 import java.util.function.Supplier;
@@ -47,6 +48,10 @@ public class ChessController implements CommandListenerObserver {
         }
     }
 
+    private void updateFrame() {
+        Platform.runLater(() -> frameController.updateBoard());
+    }
+
     private void handleDisplayCommand() {
         game.getPosition().printBoard();
         System.out.print("\n");
@@ -66,7 +71,7 @@ public class ChessController implements CommandListenerObserver {
         }
 
         if (movesStr == null) {
-            frameController.updateBoard();
+            updateFrame();
             return;
         }
 
@@ -78,7 +83,7 @@ public class ChessController implements CommandListenerObserver {
             game.playMoveCLI(finalMove);
 
         }
-        frameController.updateBoard();
+        updateFrame();
     }
 
     private void handleGoCommand(String[] s) {
