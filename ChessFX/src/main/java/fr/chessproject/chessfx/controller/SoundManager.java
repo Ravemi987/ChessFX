@@ -57,7 +57,7 @@ public class SoundManager {
     private static void playClip(Clip clip) {
         if (clip == null) return;
         if (clip.isRunning()) clip.stop();
-        clip.setFramePosition(20);
+        clip.setFramePosition(0);
         clip.start();
     }
 

@@ -20,8 +20,8 @@ public class Game {
 
     private Clock clock1;
     private Clock clock2;
-    private double initialTimePerPlayer = 3;
-    private double incrementPerMove = 1;
+    private double initialTimePerPlayer = 300;
+    private double incrementPerMove = 2;
 
     public Game() {
         reset();
