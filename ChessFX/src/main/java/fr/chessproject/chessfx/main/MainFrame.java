@@ -45,8 +45,11 @@ public class MainFrame extends Application {
 
         controller.setFrameController(frameController);
         frameController.setChessController(controller);
-        commandListener.addObserver(controller);
-        commandListener.addObserver(frameController);
+
+        if (commandListener != null) {
+            commandListener.addObserver(controller);
+            commandListener.addObserver(frameController);
+        }
 
         GameInitializer.preloadAll(frameController);
 

@@ -1,10 +1,11 @@
 module fr.chessproject.chessfx {
-    requires javafx.controls;
-    requires javafx.fxml;
-    requires javafx.swing;
-    requires jdk.compiler;
-    requires java.desktop;
-    requires javafx.media;
+    requires transitive javafx.controls;
+    requires transitive javafx.fxml;
+    requires transitive javafx.swing;
+    requires transitive jdk.compiler;
+    requires transitive java.desktop;
+    requires transitive javafx.media;
+    requires transitive javafx.graphics;
 
     exports fr.chessproject.chessfx.controller;
     opens fr.chessproject.chessfx.controller to javafx.fxml;

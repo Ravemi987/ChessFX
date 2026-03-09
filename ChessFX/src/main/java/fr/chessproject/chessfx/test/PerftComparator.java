@@ -1,3 +1,5 @@
+package fr.chessproject.chessfx.test;
+
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
