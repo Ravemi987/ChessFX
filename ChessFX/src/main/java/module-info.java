@@ -17,16 +17,16 @@ module fr.chessproject.chessfx {
 //    opens fr.chessproject.chessfx.model to javafx.fxml;
     exports fr.chessproject.chessfx.view;
     opens fr.chessproject.chessfx.view to javafx.fxml;
-    exports fr.chessproject.chessfx.model.UCI;
-    opens fr.chessproject.chessfx.model.UCI to javafx.fxml;
-    exports fr.chessproject.chessfx.model.Engine;
-    opens fr.chessproject.chessfx.model.Engine to javafx.fxml;
-    exports fr.chessproject.chessfx.model.Board;
-    opens fr.chessproject.chessfx.model.Board to javafx.fxml;
-    exports fr.chessproject.chessfx.model.Game;
-    opens fr.chessproject.chessfx.model.Game to javafx.fxml;
-    exports fr.chessproject.chessfx.view.Manager;
-    opens fr.chessproject.chessfx.view.Manager to javafx.fxml;
-    exports fr.chessproject.chessfx.view.Components;
-    opens fr.chessproject.chessfx.view.Components to javafx.fxml;
+    exports fr.chessproject.chessfx.model.uci;
+    opens fr.chessproject.chessfx.model.uci to javafx.fxml;
+    exports fr.chessproject.chessfx.model.engine;
+    opens fr.chessproject.chessfx.model.engine to javafx.fxml;
+    exports fr.chessproject.chessfx.model.board;
+    opens fr.chessproject.chessfx.model.board to javafx.fxml;
+    exports fr.chessproject.chessfx.model.game;
+    opens fr.chessproject.chessfx.model.game to javafx.fxml;
+    exports fr.chessproject.chessfx.view.manager;
+    opens fr.chessproject.chessfx.view.manager to javafx.fxml;
+    exports fr.chessproject.chessfx.view.components;
+    opens fr.chessproject.chessfx.view.components to javafx.fxml;
 }

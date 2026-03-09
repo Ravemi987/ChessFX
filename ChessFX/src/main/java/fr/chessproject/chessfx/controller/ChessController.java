@@ -1,17 +1,17 @@
 package fr.chessproject.chessfx.controller;
 
-import fr.chessproject.chessfx.model.Engine.Divide;
-import fr.chessproject.chessfx.model.Engine.Perft;
-import fr.chessproject.chessfx.model.Game.Game;
-import fr.chessproject.chessfx.model.Board.Move;
-import fr.chessproject.chessfx.model.Board.Piece;
-import fr.chessproject.chessfx.model.Board.Zobrist;
-import fr.chessproject.chessfx.model.UCI.CommandListenerObserver;
+import fr.chessproject.chessfx.model.engine.Divide;
+import fr.chessproject.chessfx.model.engine.Perft;
+import fr.chessproject.chessfx.model.game.Game;
+import fr.chessproject.chessfx.model.board.Move;
+import fr.chessproject.chessfx.model.board.Piece;
+import fr.chessproject.chessfx.model.board.Zobrist;
+import fr.chessproject.chessfx.model.uci.CommandListenerObserver;
 import fr.chessproject.chessfx.view.Config;
 import fr.chessproject.chessfx.view.MainFrameController;
 import fr.chessproject.chessfx.view.Theme;
 import javafx.application.Platform;
-import javafx.scene.layout.StackPane;
+// import javafx.scene.layout.StackPane;
 
 import java.util.function.Supplier;
 
