@@ -1,10 +1,10 @@
-package fr.chessproject.chessfx.main;
+package fr.chessproject.chessfx.model.Engine;
 
 import fr.chessproject.chessfx.controller.ChessController;
-import fr.chessproject.chessfx.model.Move;
-import fr.chessproject.chessfx.model.MoveList;
-import fr.chessproject.chessfx.model.Position;
-import fr.chessproject.chessfx.model.Zobrist;
+import fr.chessproject.chessfx.model.Board.Move;
+import fr.chessproject.chessfx.model.Board.MoveList;
+import fr.chessproject.chessfx.model.Board.Position;
+import fr.chessproject.chessfx.model.Board.Zobrist;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

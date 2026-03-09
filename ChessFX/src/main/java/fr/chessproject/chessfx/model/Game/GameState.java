@@ -1,4 +1,4 @@
-package fr.chessproject.chessfx.model;
+package fr.chessproject.chessfx.model.Game;
 
 public enum GameState {
     NOT_STARTED,

@@ -1,6 +1,5 @@
-package fr.chessproject.chessfx.model;
+package fr.chessproject.chessfx.model.Board;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class MoveList {

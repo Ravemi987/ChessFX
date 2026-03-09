@@ -1,4 +1,4 @@
-package fr.chessproject.chessfx.view;
+package fr.chessproject.chessfx.view.Components;
 
 import javafx.event.Event;
 import javafx.scene.Node;

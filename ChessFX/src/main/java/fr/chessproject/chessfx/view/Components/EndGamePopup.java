@@ -1,8 +1,8 @@
-package fr.chessproject.chessfx.view;
+package fr.chessproject.chessfx.view.Components;
 
 import fr.chessproject.chessfx.controller.ChessController;
-import fr.chessproject.chessfx.model.Game;
-import fr.chessproject.chessfx.model.GameState;
+import fr.chessproject.chessfx.model.Game.Game;
+import fr.chessproject.chessfx.model.Game.GameState;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;

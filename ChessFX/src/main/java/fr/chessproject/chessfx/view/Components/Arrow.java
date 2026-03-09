@@ -1,4 +1,4 @@
-package fr.chessproject.chessfx.view;
+package fr.chessproject.chessfx.view.Components;
 
 import javafx.scene.canvas.GraphicsContext;
 
@@ -12,7 +12,7 @@ public class Arrow {
     final int toSquare;
     final Color color;
 
-    Arrow(int fromSquare, int toSquare, Color color) {
+    public Arrow(int fromSquare, int toSquare, Color color) {
         this.fromSquare = fromSquare;
         this.toSquare = toSquare;
         this.color = color;
@@ -32,6 +32,18 @@ public class Arrow {
 
         gc.strokeLine(end.getX(), end.getY(), x1, y1);
         gc.strokeLine(end.getX(), end.getY(), x2, y2);
+    }
+
+    public int getFromSquare() {
+        return fromSquare;
+    }
+
+    public int getToSquare() {
+        return toSquare;
+    }
+
+    public Color getColor() {
+        return color;
     }
 
     @Override

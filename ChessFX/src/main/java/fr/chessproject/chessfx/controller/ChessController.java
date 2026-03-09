@@ -1,9 +1,12 @@
 package fr.chessproject.chessfx.controller;
 
-import fr.chessproject.chessfx.main.Divide;
-import fr.chessproject.chessfx.main.Perft;
-import fr.chessproject.chessfx.model.*;
-import fr.chessproject.chessfx.view.Clock;
+import fr.chessproject.chessfx.model.Engine.Divide;
+import fr.chessproject.chessfx.model.Engine.Perft;
+import fr.chessproject.chessfx.model.Game.Game;
+import fr.chessproject.chessfx.model.Board.Move;
+import fr.chessproject.chessfx.model.Board.Piece;
+import fr.chessproject.chessfx.model.Board.Zobrist;
+import fr.chessproject.chessfx.model.UCI.CommandListenerObserver;
 import fr.chessproject.chessfx.view.Config;
 import fr.chessproject.chessfx.view.MainFrameController;
 import fr.chessproject.chessfx.view.Theme;
@@ -31,7 +34,7 @@ public class ChessController implements CommandListenerObserver {
     }
 
     @Override
-    public void onCommandReceived(String command, String[] args) {
+    public void onCommandReceived(String command, String... args) {
         switch (command) {
             case "display":
                 handleDisplayCommand();

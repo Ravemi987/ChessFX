@@ -1,6 +1,6 @@
 package fr.chessproject.chessfx.main;
 
-import fr.chessproject.chessfx.model.CommandListener;
+import fr.chessproject.chessfx.model.UCI.CommandListener;
 
 public class Program {
     

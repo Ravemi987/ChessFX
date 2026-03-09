@@ -1,6 +1,4 @@
-package fr.chessproject.chessfx.model;
-
-import fr.chessproject.chessfx.model.UCI.CommandDispatcher;
+package fr.chessproject.chessfx.model.UCI;
 
 import java.util.*;
 

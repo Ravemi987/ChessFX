@@ -1,6 +1,6 @@
-package fr.chessproject.chessfx.view;
+package fr.chessproject.chessfx.view.Manager;
 
-import fr.chessproject.chessfx.model.PieceType;
+import fr.chessproject.chessfx.model.Board.PieceType;
 import javafx.scene.image.*;
 
 import java.util.HashMap;

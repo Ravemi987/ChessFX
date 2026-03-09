@@ -1,4 +1,4 @@
-package fr.chessproject.chessfx.model;
+package fr.chessproject.chessfx.model.Board;
 
 public class Square {
 

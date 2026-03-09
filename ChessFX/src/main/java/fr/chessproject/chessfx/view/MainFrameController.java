@@ -1,8 +1,10 @@
 package fr.chessproject.chessfx.view;
 
 import fr.chessproject.chessfx.controller.ChessController;
-import fr.chessproject.chessfx.model.CommandListenerObserver;
-import fr.chessproject.chessfx.model.PieceIndex;
+import fr.chessproject.chessfx.model.UCI.CommandListenerObserver;
+import fr.chessproject.chessfx.view.Components.ButtonUtilities;
+import fr.chessproject.chessfx.view.Components.EndGamePopup;
+import fr.chessproject.chessfx.view.Components.PromotionPopup;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;

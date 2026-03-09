@@ -1,7 +1,7 @@
-package fr.chessproject.chessfx.view;
+package fr.chessproject.chessfx.view.Components;
 
-import fr.chessproject.chessfx.model.Game;
-import fr.chessproject.chessfx.model.PieceIndex;
+import fr.chessproject.chessfx.model.Game.Game;
+import fr.chessproject.chessfx.model.Board.PieceIndex;
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.geometry.Pos;

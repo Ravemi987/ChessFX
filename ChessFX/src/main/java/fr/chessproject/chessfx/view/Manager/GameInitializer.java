@@ -1,4 +1,4 @@
-package fr.chessproject.chessfx.controller;
+package fr.chessproject.chessfx.view.Manager;
 
 import fr.chessproject.chessfx.view.MainFrameController;
 

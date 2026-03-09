@@ -1,4 +1,4 @@
-package fr.chessproject.chessfx.view;
+package fr.chessproject.chessfx.view.Components;
 
 import javafx.scene.control.Button;
 import javafx.scene.layout.Region;

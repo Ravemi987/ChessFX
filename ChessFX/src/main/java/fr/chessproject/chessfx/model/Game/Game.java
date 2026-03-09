@@ -1,6 +1,10 @@
-package fr.chessproject.chessfx.model;
+package fr.chessproject.chessfx.model.Game;
 
-import fr.chessproject.chessfx.view.Clock;
+import fr.chessproject.chessfx.model.Board.Move;
+import fr.chessproject.chessfx.model.Board.MoveList;
+import fr.chessproject.chessfx.model.Board.PieceIndex;
+import fr.chessproject.chessfx.model.Board.Position;
+import fr.chessproject.chessfx.view.Components.Clock;
 import javafx.scene.layout.StackPane;
 
 import java.util.*;
