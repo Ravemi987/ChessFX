@@ -5,8 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ff8303b9-09bf-445d-8f74-8a6b1b222e7c" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/ChessFX/src/main/java/fr/chessproject/chessfx/model/Piece.java" beforeDir="false" afterPath="$PROJECT_DIR$/ChessFX/src/main/java/fr/chessproject/chessfx/model/Piece.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ChessFX/src/main/java/fr/chessproject/chessfx/model/Square.java" beforeDir="false" afterPath="$PROJECT_DIR$/ChessFX/src/main/java/fr/chessproject/chessfx/model/Square.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ChessFX/src/main/java/fr/chessproject/chessfx/controller/SoundManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/ChessFX/src/main/java/fr/chessproject/chessfx/controller/SoundManager.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ChessFX/src/main/java/fr/chessproject/chessfx/model/Game.java" beforeDir="false" afterPath="$PROJECT_DIR$/ChessFX/src/main/java/fr/chessproject/chessfx/model/Game.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,9 +40,10 @@
     "Application.ParallelPerft.executor": "Profiler#1",
     "Application.ParallelPerftExecutor.executor": "Profiler#1",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "MagicBitboards",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "GUI",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/Admin_Remi/Documents/GitHub/Chess",
+    "last_opened_file_path": "/home/rairiau/Documents/Github/ChessFX",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -113,8 +114,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-jdk-9823dce3aa75-b114ca120d71-intellij.indexing.shared.core-IU-242.21829.142" />
-        <option value="bundled-js-predefined-d6986cc7102b-7c0b70fcd90d-JavaScript-IU-242.21829.142" />
+        <option value="bundled-jdk-9823dce3aa75-fdfe4dae3a2d-intellij.indexing.shared.core-IU-243.22562.218" />
+        <option value="bundled-js-predefined-d6986cc7102b-deb605915726-JavaScript-IU-243.22562.218" />
       </set>
     </attachedChunks>
   </component>
@@ -212,6 +213,7 @@
       <workItem from="1737655382224" duration="48000" />
       <workItem from="1738494655637" duration="236000" />
       <workItem from="1750517630170" duration="12000" />
+      <workItem from="1763058954878" duration="20000" />
     </task>
     <servers />
   </component>

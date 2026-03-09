@@ -1,0 +1,19 @@
+package fr.chessproject.chessfx.model.Game;
+
+public enum GameState {
+    NOT_STARTED,
+    IN_PROGRESS,
+    WHITE_WON,
+    BLACK_WON,
+    STALEMATE,
+    THREEFOLD_REPETITION,
+    FIFTY_MOVE_RULE,
+    INSUFFICIENT_MATERIAL,
+    DRAW_BY_AGREEMENT,
+    WHITE_RESIGNED,
+    BLACK_RESIGNED,
+    WHITE_TIMEOUT,
+    BLACK_TIMEOUT,
+    WHITE_ILLEGAL_MOVE,
+    BLACK_ILLEGAL_MOVE
+}

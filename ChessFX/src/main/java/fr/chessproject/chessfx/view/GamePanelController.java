@@ -1,9 +1,16 @@
 package fr.chessproject.chessfx.view;
 
 import fr.chessproject.chessfx.controller.ChessController;
-import fr.chessproject.chessfx.controller.SoundManager;
-import fr.chessproject.chessfx.model.*;
-
+import fr.chessproject.chessfx.helpers.Constants;
+import fr.chessproject.chessfx.model.Board.*;
+import fr.chessproject.chessfx.model.Game.Game;
+import fr.chessproject.chessfx.model.Game.MoveListener;
+import fr.chessproject.chessfx.view.Components.Arrow;
+import fr.chessproject.chessfx.view.Components.EndGamePopup;
+import fr.chessproject.chessfx.view.Components.PromotionPopup;
+import fr.chessproject.chessfx.view.Manager.AnimationManager;
+import fr.chessproject.chessfx.view.Manager.GameSpritesLoader;
+import fr.chessproject.chessfx.view.Manager.SoundManager;
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
@@ -17,7 +24,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-import javafx.stage.Screen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +38,8 @@ public class GamePanelController implements MoveListener {
     public StackPane boardPane;
     @FXML
     public Pane boardMaskPane;
+    @FXML
+    public Pane popupLayer;
 
     //Canvas
 
@@ -56,7 +64,6 @@ public class GamePanelController implements MoveListener {
 
     private static final double TICKS_PER_SECOND = 120;
     private static final double NS_PER_TICK = 1_000_000_000 / TICKS_PER_SECOND;
-    private final double SCREEN_SIZE = Screen.getPrimary().getVisualBounds().getHeight();
 
     private Theme theme;
     private GameSpritesLoader spritesLoader;
@@ -72,7 +79,6 @@ public class GamePanelController implements MoveListener {
     private int mouseYOnBoard;
     private boolean suppressRightClick;
     private boolean isBoardReversed;
-    private boolean interactionsEnabled = true;
 
     private MouseEvent currentMouseEvent;
     private int arrowStartSquare;
@@ -100,71 +106,11 @@ public class GamePanelController implements MoveListener {
     public void initialize() {
         //System.out.println("GamePanelController initialized");
         boardPane.getProperties().put("controller", this);
-    }
-
-    @Override
-    public void onMovePlayed(Move move, Position before, Position after) {
-        if (move.isCapture()) SoundManager.playCaptureSound();
-        else SoundManager.playMoveSound();
-    }
-
-    @Override
-    public void onGameOver() {
-        setInteractionsEnabled(false);
-    }
-
-    public void onNewGame() {
-        setInteractionsEnabled(true);
-    }
-
-    public void setInteractionsEnabled(boolean enabled) {
-        this.interactionsEnabled = enabled;
-        boardMaskPane.setDisable(!enabled);
-    }
-
-    public void playMove(Move mv) {
-        Game game = controller.getGame();
-        game.playMoveGUI(mv);
-        if (mv.isCapture()) SoundManager.playCaptureSound();
-        else SoundManager.playMoveSound();
-
-        if (game.isInProgress() && game.isOver()) {
-            onGameOver();
-        }
-    }
-
-    public void handleInvalidMove(Move mv) {
-        Position pos = controller.getGame().getPosition();
-        if ((pos.isInCheck() || pos.isPinned((byte) selectedPiece)) &&
-                pos.isFriendly((byte) selectedPiece) && (mv.getFrom() != mv.getTo())) {
-            SoundManager.playInvalidMoveSound();
-        }
-    }
-
-    private void setPaneSize(Pane pane, int size) {
-        pane.setPrefSize(size, size);
-        pane.setMinSize(size, size);
-        pane.setMaxSize(size, size);
-    }
-
-    private void setBoardSize(int size) {
-        int squareSize = size / 8;
-        int actualBoardSize = squareSize * 8;
-
-        setPaneSize(boardPane, actualBoardSize);
-
-        for (Canvas canvas : List.of(boardCanvas, coordsCanvas, piecesCanvas,
-                draggingCanvas, coloredSquaresCanvas, drawingCanvas, arrowsCanvas, bitboardCanvas)) {
-            canvas.setWidth(actualBoardSize);
-            canvas.setHeight(actualBoardSize);
-        }
-
-        setPaneSize(boardMaskPane, actualBoardSize);
+        setBoardSize();
     }
 
     public void init() {
-        setBoardSize((int) (SCREEN_SIZE * 0.85));
-        loadGraphics();
+        preloadSprites();
         renderBoard();
         renderCoordinates();
         renderPieces();
@@ -178,6 +124,14 @@ public class GamePanelController implements MoveListener {
         renderPieces();
         renderDragging();
         //drawBitboard(bitboardCanvas.getGraphicsContext2D(), controller.getDebugBitboard());
+    }
+
+    public Pane getPopupLayer() {
+        return popupLayer;
+    }
+
+    public Pane getBoardMaskPane() {
+        return boardMaskPane;
     }
 
     public void refreshBoard() {
@@ -213,13 +167,83 @@ public class GamePanelController implements MoveListener {
             @Override
             public void handle(long now) {
                 if (now - lastUpdate >= NS_PER_TICK) {
-                    updateGameState();
                     renderDragging();
                     lastUpdate = now;
                 }
             }
         };
         gameLoop.start();
+    }
+
+    private void setPaneSize(Pane pane, int size) {
+        pane.setPrefSize(size, size);
+        pane.setMinSize(size, size);
+        pane.setMaxSize(size, size);
+    }
+
+    private void setBoardSize() {
+        setPaneSize(boardPane, Constants.REAL_BOARD_SIZE);
+
+        for (Canvas canvas : List.of(boardCanvas, coordsCanvas, piecesCanvas,
+                draggingCanvas, coloredSquaresCanvas, drawingCanvas, arrowsCanvas, bitboardCanvas)) {
+            canvas.setWidth(Constants.REAL_BOARD_SIZE);
+            canvas.setHeight(Constants.REAL_BOARD_SIZE);
+        }
+
+        setPaneSize(boardMaskPane, Constants.REAL_BOARD_SIZE);
+        setPaneSize(popupLayer, Constants.REAL_BOARD_SIZE);
+    }
+
+    @Override
+    public void onMovePlayed(Move move) {
+        if (move.isCapture()) SoundManager.playCaptureSound();
+        else SoundManager.playMoveSound();
+    }
+
+    @Override
+    public void onGameOver() {
+        setInteractionsEnabled(false);
+        EndGamePopup.show(controller, popupLayer, (int) (boardCanvas.getWidth() / 8));
+    }
+
+    @Override
+    public void onGameStarted() {
+        setInteractionsEnabled(true);
+    }
+
+    public void flipBoard() {
+        isBoardReversed = !isBoardReversed;
+        renderCoordinates();
+        renderColoredSquares();
+        renderPieces();
+        renderDragging();
+    }
+
+    public void setInteractionsEnabled(boolean enabled) {
+        boardMaskPane.setDisable(!enabled);
+    }
+
+    public void playMove(Move mv) {
+        Game game = controller.getGame();
+        game.playMoveGUI(mv);
+        if (mv.isCapture()) SoundManager.playCaptureSound();
+        else SoundManager.playMoveSound();
+
+        if (game.cannotPlay()) {
+            onGameOver();
+        }
+    }
+
+    public void handleInvalidMove(Move mv) {
+        Position pos = controller.getGame().getPosition();
+        if ((pos.isInCheck() || pos.isPinned((byte) selectedPiece)) &&
+                pos.isFriendly((byte) selectedPiece) && (mv.getFrom() != mv.getTo())) {
+            SoundManager.playInvalidMoveSound();
+            AnimationManager.playCheckAnimation(
+                    getRow(pos.getKingSquare(pos.getFriendlyColor())),
+                    getCol(pos.getKingSquare(pos.getFriendlyColor())), coloredSquaresCanvas
+            );
+        }
     }
 
     private void renderBoard() {
@@ -257,10 +281,7 @@ public class GamePanelController implements MoveListener {
         }
     }
 
-    private void updateGameState() {
-    }
-
-    public void loadGraphics() {
+    public void preloadSprites() {
         int squareSize = (int) ((boardCanvas.getWidth()) / 8);
         spritesLoader = new GameSpritesLoader(squareSize);
     }
@@ -523,10 +544,10 @@ public class GamePanelController implements MoveListener {
         GraphicsContext gc = arrowsCanvas.getGraphicsContext2D();
         int squareSize = (int)(arrowsCanvas.getWidth() / 8);
 
-        Point2D start = getSquareCenter(arrow.fromSquare, squareSize);
-        Point2D end = getSquareCenter(arrow.toSquare, squareSize);
+        Point2D start = getSquareCenter(arrow.getFromSquare(), squareSize);
+        Point2D end = getSquareCenter(arrow.getToSquare(), squareSize);
 
-        gc.setStroke(arrow.color);
+        gc.setStroke(arrow.getColor());
         gc.setLineWidth(0.14 * squareSize);
         gc.setLineCap(StrokeLineCap.ROUND);
 
@@ -541,6 +562,8 @@ public class GamePanelController implements MoveListener {
 
     private void handleMoveCreation(Position pos, byte selectedPiece, byte squarePos, byte piece, byte color,
                                     Consumer<Move> onMoveReady) {
+        if (controller.getGame().hasTimeout()) return;
+
         int promotionRow = color == PieceIndex.WHITE_PIECES.id ? 7 : 0;
         boolean isPawnMoving = piece == PieceIndex.PAWNS.id;
         boolean hasToPlay = (promotionRow == 7 && pos.isWhiteSideToPlay) || (promotionRow == 0 && !pos.isWhiteSideToPlay);

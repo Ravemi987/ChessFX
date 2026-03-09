@@ -2,6 +2,157 @@
     -fx-background-color: rgb(49, 46, 43);
 }
 
+.centerContainer {
+    -fx-background-color: transparent;
+}
+
+.rightContainer {
+    -fx-background-color: rgb(38, 37, 34);
+    -fx-border-color: rgb(38, 37, 34);
+    -fx-background-radius: 8px;
+    -fx-border-width: 2px;
+    -fx-border-radius: 8px;
+    -fx-padding: 20px;
+}
+
+.rightStackPane {
+    -fx-background-color: transparent;
+    -fx-padding: 50px;
+}
+
 BorderPane > .center {
     -fx-margin: 20px;
+}
+
+.toolbar {
+    -fx-background-color: transparent;
+    -height: 75px;
+    -fx-min-height: -height;
+    -fx-max-height: -height;
+}
+
+.centerBar {
+    -fx-background-color: transparent;
+}
+
+.clock {
+    -fx-background-color: rgb(56,54,52);
+    -fx-text-fill: rgb(199,198,198);
+    -fx-background-radius: 8px;
+    -fx-border-color: rgb(56,54,52);
+    -fx-border-width: 2px;
+    -fx-border-radius: 8px;
+
+    -fx-min-height: 80px;
+    -fx-max-height: 80px;
+}
+
+.button {
+    -fx-cursor: hand;
+}
+
+.newGameButton, .flipBoardButton, .firstMoveButton, .lastMoveButton, .nextMoveButton, .prevMoveButton {
+    -icon-paint: rgb(199,198,198);
+    -color: rgb(56,54,52);
+    -fx-background-color: -color;
+    -fx-border-width: 4px;
+    -fx-border-color: -color;
+    -fx-border-radius: 20px;
+    -fx-padding: 10px;
+
+    -w: 100px;
+    -h: 50px;
+    -fx-min-height: -h;
+    -fx-min-width: -w;
+    -fx-max-height: -h;
+    -fx-max-width: -w;
+}
+
+.newGameButton:hover, .flipBoardButton:hover, .firstMoveButton:hover,
+.lastMoveButton:hover, .nextMoveButton:hover, .prevMoveButton:hover {
+    -icon-paint: rgb(226,226,225);
+    -color: rgb(64,63,61);
+    -fx-background-color: -color;
+    -fx-border-color: -color;
+}
+
+.newGameButton .icon, .flipBoardButton .icon, .firstMoveButton .icon,
+.lastMoveButton .icon {
+    -fx-background-color: -icon-paint;
+    -size: 25px;
+    -fx-min-height: -size;
+    -fx-min-width: -size;
+    -fx-max-height: -size;
+    -fx-max-width: -size;
+}
+
+.nextMoveButton .icon, .prevMoveButton .icon {
+    -fx-background-color: -icon-paint;
+    -h: 25px;
+    -w: 15px;
+    -fx-min-height: -h;
+    -fx-min-width: -w;
+    -fx-max-height: -h;
+    -fx-max-width: -w;
+}
+
+.newGameButton .icon {
+    -fx-shape: "M480,224H288V32c0-17.673-14.327-32-32-32s-32,14.327-32,32v192H32c-17.673,0-32,14.327-32,32s14.327,32,32,32h192v192   c0,17.673,14.327,32,32,32s32-14.327,32-32V288h192c17.673,0,32-14.327,32-32S497.673,224,480,224z";
+}
+
+.flipBoardButton .icon {
+    -fx-shape: "m23,17.187v4.52c0,.705-.852,1.058-1.35.559l-1.491-1.491c-2.2,2.042-5.103,3.225-8.158,3.225C6.066,24,.868,19.577.029,13.712c-.117-.82.453-1.58,1.273-1.697.816-.122,1.579.453,1.697,1.272.628,4.397,4.55,7.712,9,7.712,2.254,0,4.4-.856,6.041-2.342l-1.308-1.308c-.498-.498-.145-1.35.559-1.35h4.52c.656,0,1.187.531,1.187,1.187ZM1,6.813V2.293c0-.705.852-1.058,1.35-.559l1.491,1.491C6.042,1.183,8.945,0,12,0c5.934,0,11.132,4.423,11.971,10.288.117.82-.453,1.58-1.273,1.697-.816.122-1.579-.453-1.697-1.272-.628-4.397-4.55-7.712-9-7.712-2.254,0-4.4.856-6.041,2.342l1.308,1.308c.498.498.145,1.35-.559,1.35H2.187c-.656,0-1.187-.531-1.187-1.187Z";
+
+}
+
+.firstMoveButton .icon {
+    -fx-shape: "M12,24a1.493,1.493,0,0,1-1.06-.439L3.264,15.889a5.5,5.5,0,0,1,0-7.778L10.936.439a1.5,1.5,0,1,1,2.121,2.122L5.385,10.232a2.5,2.5,0,0,0,0,3.536l7.672,7.671A1.5,1.5,0,0,1,12,24Z M21.542,24a1.5,1.5,0,0,1-1.061-.439L11.4,14.475a3.505,3.505,0,0,1,0-4.95L20.481.439A1.5,1.5,0,0,1,22.6,2.561l-9.086,9.085a.5.5,0,0,0,0,.708L22.6,21.439A1.5,1.5,0,0,1,21.542,24Z";
+}
+
+.lastMoveButton .icon {
+    -fx-shape: "M11.832,24a1.5,1.5,0,0,1-1.061-2.561l7.672-7.671a2.5,2.5,0,0,0,0-3.536L10.771,2.561A1.5,1.5,0,0,1,12.893.439l7.671,7.672a5.5,5.5,0,0,1,0,7.778l-7.671,7.672A1.5,1.5,0,0,1,11.832,24Z M2.287,24a1.5,1.5,0,0,1-1.06-2.561l9.085-9.085a.5.5,0,0,0,0-.708L1.227,2.561A1.5,1.5,0,0,1,3.348.439l9.086,9.086a3.507,3.507,0,0,1,0,4.949L3.348,23.561A1.5,1.5,0,0,1,2.287,24Z";
+}
+
+.nextMoveButton .icon {
+    -fx-shape: "M6.079,22.5a1.5,1.5,0,0,1,.44-1.06l7.672-7.672a2.5,2.5,0,0,0,0-3.536L6.529,2.565A1.5,1.5,0,0,1,8.65.444l7.662,7.661a5.506,5.506,0,0,1,0,7.779L8.64,23.556A1.5,1.5,0,0,1,6.079,22.5Z";
+}
+
+.prevMoveButton .icon {
+    -fx-shape: "M17.921,1.505a1.5,1.5,0,0,1-.44,1.06L9.809,10.237a2.5,2.5,0,0,0,0,3.536l7.662,7.662a1.5,1.5,0,0,1-2.121,2.121L7.688,15.9a5.506,5.506,0,0,1,0-7.779L15.36.444a1.5,1.5,0,0,1,2.561,1.061Z";
+}
+
+/* ---------------- */
+
+.closeButton {
+    -icon-paint: rgb(199,198,198);
+    -color: rgb(56,54,52);
+    -fx-background-color: -color;
+    -fx-border-width: 4px;
+    -fx-border-color: -color;
+    -fx-border-radius: 20px;
+    -fx-padding: 10px;
+
+    -w: 100px;
+    -h: 50px;
+    -fx-min-height: -h;
+    -fx-min-width: -w;
+    -fx-max-height: -h;
+    -fx-max-width: -w;
+}
+
+.closeButton:hover {
+    -icon-paint: rgb(226,226,225);
+    -color: rgb(64,63,61);
+    -fx-background-color: -color;
+    -fx-border-color: -color;
+}
+
+.closeButton .icon {
+    -fx-background-color: -icon-paint;
+    -size: 20px;
+    -fx-min-height: -size;
+    -fx-min-width: -size;
+    -fx-max-height: -size;
+    -fx-max-width: -size;
+    -fx-shape: "M301.258,256.01L502.645,54.645c12.501-12.501,12.501-32.769,0-45.269c-12.501-12.501-32.769-12.501-45.269,0l0,0   L256.01,210.762L54.645,9.376c-12.501-12.501-32.769-12.501-45.269,0s-12.501,32.769,0,45.269L210.762,256.01L9.376,457.376   c-12.501,12.501-12.501,32.769,0,45.269s32.769,12.501,45.269,0L256.01,301.258l201.365,201.387   c12.501,12.501,32.769,12.501,45.269,0c12.501-12.501,12.501-32.769,0-45.269L301.258,256.01z";
 }

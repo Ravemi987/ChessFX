@@ -1,7 +1,5 @@
 package fr.chessproject.chessfx.model.UCI;
 
-import fr.chessproject.chessfx.model.CommandListenerObserver;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;

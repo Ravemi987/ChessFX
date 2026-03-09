@@ -14,4 +14,5 @@
     <Canvas fx:id="draggingCanvas" styleClass="canvas-style" />
     <Canvas fx:id="bitboardCanvas" styleClass="canvas-style" />
     <Pane fx:id="boardMaskPane"/>
+    <Pane fx:id="popupLayer" pickOnBounds="false" />
 </StackPane>

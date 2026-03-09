@@ -1,11 +1,17 @@
 package fr.chessproject.chessfx.controller;
 
-import fr.chessproject.chessfx.main.Divide;
-import fr.chessproject.chessfx.main.Perft;
-import fr.chessproject.chessfx.model.*;
+import fr.chessproject.chessfx.model.Engine.Divide;
+import fr.chessproject.chessfx.model.Engine.Perft;
+import fr.chessproject.chessfx.model.Game.Game;
+import fr.chessproject.chessfx.model.Board.Move;
+import fr.chessproject.chessfx.model.Board.Piece;
+import fr.chessproject.chessfx.model.Board.Zobrist;
+import fr.chessproject.chessfx.model.UCI.CommandListenerObserver;
 import fr.chessproject.chessfx.view.Config;
 import fr.chessproject.chessfx.view.MainFrameController;
 import fr.chessproject.chessfx.view.Theme;
+import javafx.application.Platform;
+import javafx.scene.layout.StackPane;
 
 import java.util.function.Supplier;
 
@@ -28,7 +34,7 @@ public class ChessController implements CommandListenerObserver {
     }
 
     @Override
-    public void onCommandReceived(String command, String[] args) {
+    public void onCommandReceived(String command, String... args) {
         switch (command) {
             case "display":
                 handleDisplayCommand();
@@ -45,12 +51,16 @@ public class ChessController implements CommandListenerObserver {
         }
     }
 
+    private void updateFrame() {
+        Platform.runLater(() -> frameController.updateBoard());
+    }
+
     private void handleDisplayCommand() {
         game.getPosition().printBoard();
         System.out.print("\n");
         System.out.println("Fen: " + game.getFen());
         System.out.println("Zobrist Key: " + game.getPosition().getHash());
-        System.out.println("Recomputer Zobrist Key: " + Zobrist.computeHash(game.getPosition()));
+        System.out.println("Recomputed Zobrist Key: " + Zobrist.computeHash(game.getPosition()));
     }
 
     private void handlePositionCommand(String[] s) {
@@ -64,7 +74,7 @@ public class ChessController implements CommandListenerObserver {
         }
 
         if (movesStr == null) {
-            frameController.updateBoard();
+            updateFrame();
             return;
         }
 
@@ -76,7 +86,7 @@ public class ChessController implements CommandListenerObserver {
             game.playMoveCLI(finalMove);
 
         }
-        frameController.updateBoard();
+        updateFrame();
     }
 
     private void handleGoCommand(String[] s) {
@@ -93,6 +103,15 @@ public class ChessController implements CommandListenerObserver {
         if (s[0].equals("threads")) {
             nThreads = Integer.parseInt(s[1]);
         }
+    }
+
+    public void setGameClocks(StackPane clk1, StackPane clk2) {
+        game.setClocks(clk1, clk2);
+    }
+
+    public void startNewGame() {
+        game.reset();
+        game.startCompetitiveGame();
     }
 
     public void setFrameController(MainFrameController frameController) {
