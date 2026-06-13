@@ -25,8 +25,10 @@ module fr.chessproject.chessfx {
     opens fr.chessproject.chessfx.model.board to javafx.fxml;
     exports fr.chessproject.chessfx.model.game;
     opens fr.chessproject.chessfx.model.game to javafx.fxml;
-    exports fr.chessproject.chessfx.view.manager;
-    opens fr.chessproject.chessfx.view.manager to javafx.fxml;
+    exports fr.chessproject.chessfx.view.animation;
+    opens fr.chessproject.chessfx.view.animation to javafx.fxml;
     exports fr.chessproject.chessfx.view.components;
     opens fr.chessproject.chessfx.view.components to javafx.fxml;
+    exports fr.chessproject.chessfx.service;
+    opens fr.chessproject.chessfx.service to javafx.fxml;
 }

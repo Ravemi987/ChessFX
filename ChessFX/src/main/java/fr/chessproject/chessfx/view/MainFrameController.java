@@ -3,6 +3,7 @@ package fr.chessproject.chessfx.view;
 import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.model.uci.CommandListenerObserver;
 import fr.chessproject.chessfx.view.components.ButtonUtilities;
+import fr.chessproject.chessfx.view.components.ClockView;
 import fr.chessproject.chessfx.view.components.EndGamePopup;
 import fr.chessproject.chessfx.view.components.PromotionPopup;
 import javafx.application.Platform;
@@ -54,6 +55,9 @@ public class MainFrameController implements CommandListenerObserver {
 
     private GamePanelController gamePanelController;
 
+    private ClockView whiteClockView;
+    private ClockView blackClockView;
+
     public MainFrameController() {
         //System.out.println("MainFrameController created");
     }
@@ -100,6 +104,9 @@ public class MainFrameController implements CommandListenerObserver {
         }
 
         toolbar.setMaxWidth(Region.USE_PREF_SIZE);
+
+        whiteClockView = new ClockView(clock_pane_1);
+        blackClockView = new ClockView(clock_pane_2);
     }
 
     public void init() {
@@ -129,6 +136,16 @@ public class MainFrameController implements CommandListenerObserver {
         closePopups();
     }
 
+    public void setChessController(ChessController chessController) {
+        this.controller = chessController;
+        gamePanelController.setChessController(controller);
+    }
+
+    public void refreshClocks() {
+        whiteClockView.update(controller.getGame().getWhiteClock());
+        blackClockView.update(controller.getGame().getBlackClock());
+    }
+
     private void goToFirstMove() {
         closePopups();
     }
@@ -143,12 +160,6 @@ public class MainFrameController implements CommandListenerObserver {
 
     private void goToLastMove() {
         closePopups();
-    }
-
-    public void setChessController(ChessController chessController) {
-        this.controller = chessController;
-        controller.setGameClocks(clock_pane_1, clock_pane_2);
-        gamePanelController.setChessController(controller);
     }
 
     public void updateBoard() {

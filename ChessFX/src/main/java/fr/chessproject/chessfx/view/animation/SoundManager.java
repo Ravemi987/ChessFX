@@ -1,4 +1,4 @@
-package fr.chessproject.chessfx.view.manager;
+package fr.chessproject.chessfx.view.animation;
 
 import javax.sound.sampled.*;
 import java.io.IOException;

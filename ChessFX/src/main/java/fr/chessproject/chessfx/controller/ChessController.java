@@ -1,5 +1,6 @@
 package fr.chessproject.chessfx.controller;
 
+import fr.chessproject.chessfx.model.board.PieceIndex;
 import fr.chessproject.chessfx.model.engine.Divide;
 import fr.chessproject.chessfx.model.engine.Perft;
 import fr.chessproject.chessfx.model.game.Game;
@@ -7,9 +8,10 @@ import fr.chessproject.chessfx.model.board.Move;
 import fr.chessproject.chessfx.model.board.Piece;
 import fr.chessproject.chessfx.model.board.Zobrist;
 import fr.chessproject.chessfx.model.uci.CommandListenerObserver;
-import fr.chessproject.chessfx.view.Config;
+import fr.chessproject.chessfx.service.ClockService;
 import fr.chessproject.chessfx.view.MainFrameController;
-import fr.chessproject.chessfx.view.Theme;
+import fr.chessproject.chessfx.view.components.ChessPopUp;
+import fr.chessproject.chessfx.view.components.Theme;
 import javafx.application.Platform;
 // import javafx.scene.layout.StackPane;
 
@@ -19,10 +21,13 @@ public class ChessController implements CommandListenerObserver {
 
     private MainFrameController frameController;
     private final Game game;
-    private final Config config;
+    private final ChessPopUp.Config config;
     private int nThreads;
     public static long[][] rookMovesLookup;
     public static long[][] bishopMovesLookup;
+
+    private final ClockService whiteClockService;
+    private final ClockService blackClockService;
 
     public ChessController() {
         rookMovesLookup = Piece.generateMovesLookup(false);
@@ -30,7 +35,18 @@ public class ChessController implements CommandListenerObserver {
         Zobrist.generateKeys();
         nThreads = Runtime.getRuntime().availableProcessors();
         this.game = new Game();
-        this.config = new Config();
+        this.config = new ChessPopUp.Config();
+
+        this.whiteClockService = new ClockService(game.getWhiteClock());
+        this.blackClockService = new ClockService(game.getBlackClock());
+
+        whiteClockService.setTimeoutCallback(
+                () -> game.onTimeout(PieceIndex.WHITE_PIECES)
+        );
+
+        blackClockService.setTimeoutCallback(
+                () -> game.onTimeout(PieceIndex.BLACK_PIECES)
+        );
     }
 
     @Override
@@ -49,10 +65,6 @@ public class ChessController implements CommandListenerObserver {
             default:
                 break;
         }
-    }
-
-    private void updateFrame() {
-        Platform.runLater(() -> frameController.updateBoard());
     }
 
     private void handleDisplayCommand() {
@@ -74,7 +86,7 @@ public class ChessController implements CommandListenerObserver {
         }
 
         if (movesStr == null) {
-            updateFrame();
+            Platform.runLater(() -> frameController.updateBoard());
             return;
         }
 
@@ -86,7 +98,7 @@ public class ChessController implements CommandListenerObserver {
             game.playMoveCLI(finalMove);
 
         }
-        updateFrame();
+        Platform.runLater(() -> frameController.updateBoard());
     }
 
     private void handleGoCommand(String[] s) {
@@ -105,17 +117,22 @@ public class ChessController implements CommandListenerObserver {
         }
     }
 
-    public void setGameClocks(StackPane clk1, StackPane clk2) {
-        game.setClocks(clk1, clk2);
-    }
-
     public void startNewGame() {
         game.reset();
         game.startCompetitiveGame();
     }
 
+    public void updateClocks(long now) {
+        whiteClockService.update(now);
+        blackClockService.update(now);
+    }
+
     public void setFrameController(MainFrameController frameController) {
         this.frameController = frameController;
+    }
+
+    public MainFrameController getFrameController() {
+        return this.frameController;
     }
 
     public void enableDebugMode() {

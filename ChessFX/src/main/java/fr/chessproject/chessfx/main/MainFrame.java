@@ -1,7 +1,7 @@
 package fr.chessproject.chessfx.main;
 
 import fr.chessproject.chessfx.controller.ChessController;
-import fr.chessproject.chessfx.view.manager.GameInitializer;
+import fr.chessproject.chessfx.view.GameInitializer;
 import fr.chessproject.chessfx.model.uci.CommandListener;
 import fr.chessproject.chessfx.view.MainFrameController;
 import javafx.application.Application;

@@ -1,4 +1,4 @@
-package fr.chessproject.chessfx.view;
+package fr.chessproject.chessfx.view.components;
 
 import javafx.scene.paint.Color;
 

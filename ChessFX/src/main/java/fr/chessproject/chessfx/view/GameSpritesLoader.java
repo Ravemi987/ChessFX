@@ -1,4 +1,4 @@
-package fr.chessproject.chessfx.view.manager;
+package fr.chessproject.chessfx.view;
 
 import fr.chessproject.chessfx.model.board.PieceType;
 import javafx.scene.image.*;

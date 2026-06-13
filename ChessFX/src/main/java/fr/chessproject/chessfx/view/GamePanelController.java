@@ -5,12 +5,9 @@ import fr.chessproject.chessfx.helpers.Constants;
 import fr.chessproject.chessfx.model.board.*;
 import fr.chessproject.chessfx.model.game.Game;
 import fr.chessproject.chessfx.model.game.MoveListener;
-import fr.chessproject.chessfx.view.components.Arrow;
-import fr.chessproject.chessfx.view.components.EndGamePopup;
-import fr.chessproject.chessfx.view.components.PromotionPopup;
-import fr.chessproject.chessfx.view.manager.AnimationManager;
-import fr.chessproject.chessfx.view.manager.GameSpritesLoader;
-import fr.chessproject.chessfx.view.manager.SoundManager;
+import fr.chessproject.chessfx.view.components.*;
+import fr.chessproject.chessfx.view.animation.AnimationManager;
+import fr.chessproject.chessfx.view.animation.SoundManager;
 import javafx.animation.AnimationTimer;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
@@ -169,6 +166,8 @@ public class GamePanelController implements MoveListener {
                 if (now - lastUpdate >= NS_PER_TICK) {
                     renderDragging();
                     lastUpdate = now;
+                    controller.updateClocks(now);
+                    controller.getFrameController().refreshClocks();
                 }
             }
         };
@@ -544,10 +543,10 @@ public class GamePanelController implements MoveListener {
         GraphicsContext gc = arrowsCanvas.getGraphicsContext2D();
         int squareSize = (int)(arrowsCanvas.getWidth() / 8);
 
-        Point2D start = getSquareCenter(arrow.getFromSquare(), squareSize);
-        Point2D end = getSquareCenter(arrow.getToSquare(), squareSize);
+        Point2D start = getSquareCenter(arrow.fromSquare(), squareSize);
+        Point2D end = getSquareCenter(arrow.toSquare(), squareSize);
 
-        gc.setStroke(arrow.getColor());
+        gc.setStroke(arrow.color());
         gc.setLineWidth(0.14 * squareSize);
         gc.setLineCap(StrokeLineCap.ROUND);
 

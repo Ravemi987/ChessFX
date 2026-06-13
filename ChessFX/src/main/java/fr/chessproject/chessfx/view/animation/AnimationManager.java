@@ -1,4 +1,4 @@
-package fr.chessproject.chessfx.view.manager;
+package fr.chessproject.chessfx.view.animation;
 
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;

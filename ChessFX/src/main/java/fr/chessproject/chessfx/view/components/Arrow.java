@@ -7,16 +7,7 @@ import javafx.geometry.Point2D;
 
 import java.util.Objects;
 
-public class Arrow {
-    final int fromSquare;
-    final int toSquare;
-    final Color color;
-
-    public Arrow(int fromSquare, int toSquare, Color color) {
-        this.fromSquare = fromSquare;
-        this.toSquare = toSquare;
-        this.color = color;
-    }
+public record Arrow(int fromSquare, int toSquare, Color color) {
 
     public void draw(GraphicsContext gc, Point2D start, Point2D end, int squareSize) {
         gc.strokeLine(start.getX(), start.getY(), end.getX(), end.getY());
@@ -32,18 +23,6 @@ public class Arrow {
 
         gc.strokeLine(end.getX(), end.getY(), x1, y1);
         gc.strokeLine(end.getX(), end.getY(), x2, y2);
-    }
-
-    public int getFromSquare() {
-        return fromSquare;
-    }
-
-    public int getToSquare() {
-        return toSquare;
-    }
-
-    public Color getColor() {
-        return color;
     }
 
     @Override

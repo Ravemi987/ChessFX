@@ -4,8 +4,6 @@ import fr.chessproject.chessfx.model.board.Move;
 import fr.chessproject.chessfx.model.board.MoveList;
 import fr.chessproject.chessfx.model.board.PieceIndex;
 import fr.chessproject.chessfx.model.board.Position;
-import fr.chessproject.chessfx.view.components.Clock;
-import javafx.scene.layout.StackPane;
 
 import java.util.*;
 
@@ -22,10 +20,11 @@ public class Game {
     private GameMode gameMode = GameMode.FREE_PLAY;
     private GameState gameState = GameState.NOT_STARTED;
 
-    private Clock clock1;
-    private Clock clock2;
-    private double initialTimePerPlayer = 300;
+    private double initialTimePerPlayer = 10;
     private double incrementPerMove = 2;
+
+    private ClockModel whiteClock = new ClockModel(initialTimePerPlayer);
+    private ClockModel blackClock = new ClockModel(initialTimePerPlayer);
 
     public Game() {
         reset();
@@ -35,13 +34,6 @@ public class Game {
         currentPos = new Position();
         currentPos.loadFEN(fen);
         initMoves();
-    }
-
-    public void setClocks(StackPane clk1, StackPane clk2) {
-        this.clock1 = new Clock(clk1, PieceIndex.WHITE_PIECES, false, this);
-        this.clock2 = new Clock(clk2, PieceIndex.BLACK_PIECES, false, this);;
-        clock1.init(initialTimePerPlayer);
-        clock2.init(initialTimePerPlayer);
     }
 
     public void reset() {
@@ -62,14 +54,14 @@ public class Game {
         this.gameMode = GameMode.COMPETITIVE;
         this.gameState = GameState.IN_PROGRESS;
 
-        clock1.reset(initialTimePerPlayer);
-        clock2.reset(initialTimePerPlayer);
+        whiteClock.reset(initialTimePerPlayer);
+        blackClock.reset(initialTimePerPlayer);
 
         for (MoveListener listener: moveListeners) {
             listener.onGameStarted();
         }
 
-        clock1.resume();
+        whiteClock.start();
     }
 
     public String getFen() {
@@ -84,10 +76,18 @@ public class Game {
         return gameState;
     }
 
-    public void onTimeout() {
-        if (clock1.hasTimeout()) {
+    public ClockModel getWhiteClock() {
+        return whiteClock;
+    }
+
+    public ClockModel getBlackClock() {
+        return blackClock;
+    }
+
+    public void onTimeout(PieceIndex loser) {
+        if (loser == PieceIndex.WHITE_PIECES) {
             gameState = GameState.WHITE_TIMEOUT;
-        } else if (clock2.hasTimeout()) {
+        } else {
             gameState = GameState.BLACK_TIMEOUT;
         }
 
@@ -139,17 +139,17 @@ public class Game {
         }
     }
 
-    private void switchClock(Clock old, Clock now) {
-        old.pause();
-        old.setTime(old.getTime() + incrementPerMove);
-        now.resume();
+    private void switchClock(ClockModel old, ClockModel now) {
+        old.stop();
+        old.addTime(incrementPerMove);
+        now.start();
     }
 
     public void updateClocks() {
-        if (clock1.isTicking()) {
-            switchClock(clock1, clock2);
+        if (whiteClock.isTicking()) {
+            switchClock(whiteClock, blackClock);
         } else {
-            switchClock(clock2, clock1);
+            switchClock(blackClock, whiteClock);
         }
     }
 

@@ -2,7 +2,7 @@ package fr.chessproject.chessfx.view.components;
 
 import fr.chessproject.chessfx.model.board.PieceIndex;
 import fr.chessproject.chessfx.model.board.PieceType;
-import fr.chessproject.chessfx.view.manager.GameSpritesLoader;
+import fr.chessproject.chessfx.view.GameSpritesLoader;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
