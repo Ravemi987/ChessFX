@@ -2,10 +2,7 @@ package fr.chessproject.chessfx.view;
 
 import fr.chessproject.chessfx.controller.ChessController;
 import fr.chessproject.chessfx.model.uci.CommandListenerObserver;
-import fr.chessproject.chessfx.view.components.ButtonUtilities;
-import fr.chessproject.chessfx.view.components.ClockView;
-import fr.chessproject.chessfx.view.components.EndGamePopup;
-import fr.chessproject.chessfx.view.components.PromotionPopup;
+import fr.chessproject.chessfx.view.components.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -14,11 +11,10 @@ import fr.chessproject.chessfx.helpers.Constants;
 
 import java.util.List;
 
-
 public class MainFrameController implements CommandListenerObserver {
 
     @FXML
-    public BorderPane mainFrame;
+    public GridPane mainFrame;
     @FXML
     public Pane boardPane;
     @FXML
@@ -35,31 +31,29 @@ public class MainFrameController implements CommandListenerObserver {
     public Button lastMoveButton;
 
     @FXML
+    public VBox leftContainer;
+    @FXML
     public VBox centerContainer;
     @FXML
     public VBox rightContainer;
-
     @FXML
-    public HBox topbar;
-    @FXML
-    public HBox bottombar;
+    public VBox gameControlArea;
     @FXML
     public HBox toolbar;
 
     @FXML
-    public StackPane clock_pane_1;
+    public StackPane clockPane1;
     @FXML
-    public StackPane clock_pane_2;
+    public StackPane clockPane2;
 
     private ChessController controller;
-
     private GamePanelController gamePanelController;
-
     private ClockView whiteClockView;
     private ClockView blackClockView;
+    private final Config config;
 
     public MainFrameController() {
-        //System.out.println("MainFrameController created");
+        this.config = new Config();
     }
 
     @Override
@@ -70,30 +64,25 @@ public class MainFrameController implements CommandListenerObserver {
         }
     }
 
-    private void initCenterContainer() {
-        centerContainer.setMaxWidth(Constants.BOARD_SIZE);
-        centerContainer.setMinWidth(Constants.BOARD_SIZE);
-        centerContainer.setPrefWidth(Constants.BOARD_SIZE);
+    private void initSideContainers() {
+        double targetHeight = Constants.BOARD_SIZE;
 
-        topbar.setPrefHeight(Constants.SCREEN_SIZE - ((double) Constants.REAL_BOARD_SIZE / 2) - 10);
-        bottombar.setPrefHeight(Constants.SCREEN_SIZE - ((double) Constants.REAL_BOARD_SIZE / 2) - 10);
+        leftContainer.setPrefHeight(targetHeight);
+        leftContainer.setMinHeight(targetHeight);
+        leftContainer.setMaxHeight(targetHeight);
+        leftContainer.setMaxWidth(Double.MAX_VALUE);
 
-        clock_pane_1.setPrefWidth(1.7 * ((double) Constants.REAL_BOARD_SIZE / 8));
-        clock_pane_2.setPrefWidth(1.7 * ((double) Constants.REAL_BOARD_SIZE / 8));
-    }
-
-    private void initRightContainer() {
-        rightContainer.setMaxHeight(Constants.BOARD_SIZE);
-        rightContainer.setMinHeight(Constants.BOARD_SIZE);
-        rightContainer.setPrefHeight(Constants.BOARD_SIZE);
+        rightContainer.setPrefHeight(targetHeight);
+        rightContainer.setMinHeight(targetHeight);
+        rightContainer.setMaxHeight(targetHeight);
+        rightContainer.setMaxWidth(Double.MAX_VALUE);
     }
 
     @FXML
     public void initialize() {
-        //System.out.println("MainFrameController initialized");
         gamePanelController = (GamePanelController) boardPane.getProperties().get("controller");
-        initCenterContainer();
-        initRightContainer();
+
+        initSideContainers();
 
         toolbar.setSpacing(10);
 
@@ -101,12 +90,15 @@ public class MainFrameController implements CommandListenerObserver {
                 newGameButton, flipBoardButton, firstMoveButton,
                 prevMoveButton, nextMoveButton, lastMoveButton)) {
             ButtonUtilities.loadButtonIcon(btn);
+            HBox.setHgrow(btn, Priority.ALWAYS);
+            btn.setMaxWidth(Double.MAX_VALUE);
         }
 
-        toolbar.setMaxWidth(Region.USE_PREF_SIZE);
+        toolbar.setMaxWidth(Double.MAX_VALUE);
 
-        whiteClockView = new ClockView(clock_pane_1);
-        blackClockView = new ClockView(clock_pane_2);
+        whiteClockView = new ClockView(clockPane1);
+        blackClockView = new ClockView(clockPane2);
+
     }
 
     public void init() {
@@ -136,9 +128,9 @@ public class MainFrameController implements CommandListenerObserver {
         closePopups();
     }
 
-    public void setChessController(ChessController chessController) {
-        this.controller = chessController;
-        gamePanelController.setChessController(controller);
+    public void setChessController(ChessController controller) {
+        this.controller = controller;
+        gamePanelController.setChessController(controller, config.getTheme());
     }
 
     public void refreshClocks() {
@@ -170,7 +162,5 @@ public class MainFrameController implements CommandListenerObserver {
         gamePanelController.preloadSprites();
     }
 
-    public void enableDebugMode() {
-        // Implementation for enabling debug mode
-    }
+    public void enableDebugMode() {}
 }

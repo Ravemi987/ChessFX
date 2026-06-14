@@ -1,9 +1,19 @@
 #mainFrame {
     -fx-background-color: rgb(49, 46, 43);
+    -fx-padding: 40px;
 }
 
 .centerContainer {
     -fx-background-color: transparent;
+    -fx-alignment: center;
+}
+
+.leftContainer {
+    -fx-background-color: transparent;
+    -fx-alignment: center;
+    -fx-spacing: 40px;
+    -fx-padding: 40px;
+    -fx-max-width: 99999px;
 }
 
 .rightContainer {
@@ -13,38 +23,33 @@
     -fx-border-width: 2px;
     -fx-border-radius: 8px;
     -fx-padding: 20px;
-}
-
-.rightStackPane {
-    -fx-background-color: transparent;
-    -fx-padding: 50px;
-}
-
-BorderPane > .center {
-    -fx-margin: 20px;
-}
-
-.toolbar {
-    -fx-background-color: transparent;
-    -height: 75px;
-    -fx-min-height: -height;
-    -fx-max-height: -height;
-}
-
-.centerBar {
-    -fx-background-color: transparent;
+    -fx-max-width: 99999px;
 }
 
 .clock {
     -fx-background-color: rgb(56,54,52);
     -fx-text-fill: rgb(199,198,198);
     -fx-background-radius: 8px;
+    -fx-font-family: "Courier Prime";
+    -fx-font-size: 2.2em;
+    -fx-font-weight: bold;
     -fx-border-color: rgb(56,54,52);
     -fx-border-width: 2px;
     -fx-border-radius: 8px;
+    -fx-min-width: 150px;
+    -fx-min-height: 120px;
+    -fx-alignment: center;
+}
 
-    -fx-min-height: 80px;
-    -fx-max-height: 80px;
+.game-control-area {
+    -fx-background-color: rgb(30, 29, 27);
+    -fx-background-radius: 6px;
+}
+
+.toolbar {
+    -fx-background-color: transparent;
+    -fx-spacing: 8px;
+    -fx-padding: 15px 0px 0px 0px;
 }
 
 .button {
@@ -60,12 +65,11 @@ BorderPane > .center {
     -fx-border-radius: 20px;
     -fx-padding: 10px;
 
-    -w: 100px;
     -h: 50px;
     -fx-min-height: -h;
-    -fx-min-width: -w;
     -fx-max-height: -h;
-    -fx-max-width: -w;
+    -fx-min-width: 46px;
+    -fx-max-width: 9999px;
 }
 
 .newGameButton:hover, .flipBoardButton:hover, .firstMoveButton:hover,
@@ -76,10 +80,9 @@ BorderPane > .center {
     -fx-border-color: -color;
 }
 
-.newGameButton .icon, .flipBoardButton .icon, .firstMoveButton .icon,
-.lastMoveButton .icon {
+.newGameButton .icon, .flipBoardButton .icon, .firstMoveButton .icon, .lastMoveButton .icon {
     -fx-background-color: -icon-paint;
-    -size: 25px;
+    -size: 22px;
     -fx-min-height: -size;
     -fx-min-width: -size;
     -fx-max-height: -size;
@@ -88,8 +91,8 @@ BorderPane > .center {
 
 .nextMoveButton .icon, .prevMoveButton .icon {
     -fx-background-color: -icon-paint;
-    -h: 25px;
-    -w: 15px;
+    -h: 22px;
+    -w: 14px;
     -fx-min-height: -h;
     -fx-min-width: -w;
     -fx-max-height: -h;

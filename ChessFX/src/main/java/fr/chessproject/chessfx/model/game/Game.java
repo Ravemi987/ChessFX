@@ -166,7 +166,7 @@ public class Game {
         }
     }
 
-    public void playMoveCLI(Move mv) {
+    public void playMove(Move mv) {
         if (cannotPlay()) return;
         changeTurn(mv);
 
@@ -177,11 +177,6 @@ public class Game {
                 listener.onMovePlayed(mv);
             }
         }
-    }
-
-    public void playMoveGUI(Move mv) {
-        if (cannotPlay()) return;
-        changeTurn(mv);
     }
 
     public Move getLastMove() {
@@ -231,8 +226,6 @@ public class Game {
             gameState = GameState.IN_PROGRESS;
         }
     }
-
-    // Helpers
 
     public long getAttackInfoCheckMask() {
         return currentPos.getAttackInfo().checkRay;

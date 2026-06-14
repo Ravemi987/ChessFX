@@ -18,23 +18,6 @@ public class ClockService {
         this.timeoutCallback = timeoutCallback;
     }
 
-    public void reset(double initialTime) {
-        model.reset(initialTime);
-        lastUpdate = 0;
-    }
-
-    public void start() {
-        model.start();
-    }
-
-    public void stop() {
-        model.stop();
-    }
-
-    public void addIncrement(double increment) {
-        model.addTime(increment);
-    }
-
     public void update(long now) {
 
         if (!model.isTicking() || lastUpdate == 0) {

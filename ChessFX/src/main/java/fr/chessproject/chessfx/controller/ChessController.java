@@ -9,25 +9,20 @@ import fr.chessproject.chessfx.model.board.Piece;
 import fr.chessproject.chessfx.model.board.Zobrist;
 import fr.chessproject.chessfx.model.uci.CommandListenerObserver;
 import fr.chessproject.chessfx.service.ClockService;
-import fr.chessproject.chessfx.view.MainFrameController;
-import fr.chessproject.chessfx.view.components.ChessPopUp;
-import fr.chessproject.chessfx.view.components.Theme;
-import javafx.application.Platform;
-// import javafx.scene.layout.StackPane;
 
 import java.util.function.Supplier;
 
 public class ChessController implements CommandListenerObserver {
 
-    private MainFrameController frameController;
     private final Game game;
-    private final ChessPopUp.Config config;
     private int nThreads;
     public static long[][] rookMovesLookup;
     public static long[][] bishopMovesLookup;
 
-    private final ClockService whiteClockService;
-    private final ClockService blackClockService;
+    private ClockService whiteClockService;
+    private ClockService blackClockService;
+
+    private Runnable onBoardUpdated;
 
     public ChessController() {
         rookMovesLookup = Piece.generateMovesLookup(false);
@@ -35,8 +30,11 @@ public class ChessController implements CommandListenerObserver {
         Zobrist.generateKeys();
         nThreads = Runtime.getRuntime().availableProcessors();
         this.game = new Game();
-        this.config = new ChessPopUp.Config();
+        initClockServices();
 
+    }
+
+    private void initClockServices() {
         this.whiteClockService = new ClockService(game.getWhiteClock());
         this.blackClockService = new ClockService(game.getBlackClock());
 
@@ -47,6 +45,44 @@ public class ChessController implements CommandListenerObserver {
         blackClockService.setTimeoutCallback(
                 () -> game.onTimeout(PieceIndex.BLACK_PIECES)
         );
+    }
+
+    public void setOnBoardUpdated(Runnable callback) {
+        this.onBoardUpdated = callback;
+    }
+
+    public void startNewGame() {
+        game.reset();
+        game.startCompetitiveGame();
+    }
+
+    public void updateClocks(long now) {
+        whiteClockService.update(now);
+        blackClockService.update(now);
+    }
+
+    public Game getGame() {
+        return game;
+    }
+
+    public long getAttackInfoCheckMask() {
+        return game.getAttackInfoCheckMask();
+    }
+
+    public long getAttackInfoAttackMask() {
+        return game.getAttackInfoAttackMask();
+    }
+
+    public long getAttackInfoPinnedPices() {
+        return game.getAttackInfoPinnedPieces();
+    }
+
+    public long getEpBitboard() {
+        return game.getEpBitboard();
+    }
+
+    public Supplier<Long> getDebugBitboard() {
+        return this::getEpBitboard;
     }
 
     @Override
@@ -86,7 +122,7 @@ public class ChessController implements CommandListenerObserver {
         }
 
         if (movesStr == null) {
-            Platform.runLater(() -> frameController.updateBoard());
+            if (onBoardUpdated != null) onBoardUpdated.run();
             return;
         }
 
@@ -95,10 +131,10 @@ public class ChessController implements CommandListenerObserver {
             if (finalMove == null) {
                 return;
             }
-            game.playMoveCLI(finalMove);
+            game.playMove(finalMove);
 
         }
-        Platform.runLater(() -> frameController.updateBoard());
+        if (onBoardUpdated != null) onBoardUpdated.run();
     }
 
     private void handleGoCommand(String[] s) {
@@ -115,57 +151,5 @@ public class ChessController implements CommandListenerObserver {
         if (s[0].equals("threads")) {
             nThreads = Integer.parseInt(s[1]);
         }
-    }
-
-    public void startNewGame() {
-        game.reset();
-        game.startCompetitiveGame();
-    }
-
-    public void updateClocks(long now) {
-        whiteClockService.update(now);
-        blackClockService.update(now);
-    }
-
-    public void setFrameController(MainFrameController frameController) {
-        this.frameController = frameController;
-    }
-
-    public MainFrameController getFrameController() {
-        return this.frameController;
-    }
-
-    public void enableDebugMode() {
-        frameController.enableDebugMode();
-    }
-
-    public Game getGame() {
-        return game;
-    }
-
-    public Theme getTheme() {
-        return config.getTheme();
-    }
-
-    // Helpers
-
-    public long getAttackInfoCheckMask() {
-        return game.getAttackInfoCheckMask();
-    }
-
-    public long getAttackInfoAttackMask() {
-        return game.getAttackInfoAttackMask();
-    }
-
-    public long getAttackInfoPinnedPices() {
-        return game.getAttackInfoPinnedPieces();
-    }
-
-    public long getEpBitboard() {
-        return game.getEpBitboard();
-    }
-
-    public Supplier<Long> getDebugBitboard() {
-        return this::getEpBitboard;
     }
 }

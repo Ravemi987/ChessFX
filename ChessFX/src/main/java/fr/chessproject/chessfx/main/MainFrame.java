@@ -5,11 +5,10 @@ import fr.chessproject.chessfx.view.GameInitializer;
 import fr.chessproject.chessfx.model.uci.CommandListener;
 import fr.chessproject.chessfx.view.MainFrameController;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
-import javafx.stage.Screen;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -36,15 +35,15 @@ public class MainFrame extends Application {
     @Override
     public void start(Stage primaryStage) throws IOException {
         ChessController controller = new ChessController();
-
         FXMLLoader mainFrameLoader = new FXMLLoader(getClass().getResource("/fr/chessproject/chessfx/main/MainFrame.fxml"));
-        BorderPane root = mainFrameLoader.load();
+
+        GridPane root = mainFrameLoader.load();
         MainFrameController frameController = mainFrameLoader.getController();
 
-        //System.out.println("MainFrameController loaded");
-
-        controller.setFrameController(frameController);
         frameController.setChessController(controller);
+        controller.setOnBoardUpdated(() -> {
+            Platform.runLater(frameController::updateBoard);
+        });
 
         if (commandListener != null) {
             commandListener.addObserver(controller);
@@ -52,24 +51,13 @@ public class MainFrame extends Application {
         }
 
         GameInitializer.preloadAll(frameController);
-
-        //System.out.println("ChessController set in MainFrameController");
         frameController.init();
 
-        if (debugMode) {
-            controller.enableDebugMode();
-        }
+        Scene scene = new Scene(root);
 
-        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-        double screenWidth = screenBounds.getWidth();
-        double screenHeight = screenBounds.getHeight();
-
-        Scene scene = new Scene(root, screenWidth, screenHeight);
-
-        primaryStage.centerOnScreen();
         primaryStage.setTitle("Chess");
         primaryStage.setScene(scene);
-        primaryStage.setMaximized(true);
+        primaryStage.setFullScreen(true);
         primaryStage.show();
 
         primaryStage.setOnCloseRequest(event -> {

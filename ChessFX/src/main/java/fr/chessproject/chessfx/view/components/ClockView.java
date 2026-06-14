@@ -5,7 +5,6 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 
 public class ClockView {
 
@@ -14,11 +13,7 @@ public class ClockView {
     private final Label label;
 
     public ClockView(StackPane root) {
-        Font courierPrimeBold = Font.loadFont(getClass().getResourceAsStream("/fonts/courier-prime.bold.ttf"), 30);
-
         label = new Label();
-        label.setFont(Font.font(courierPrimeBold.getName(), 30));
-
         StackPane.setAlignment(label, Pos.CENTER);
         root.getChildren().add(label);
     }

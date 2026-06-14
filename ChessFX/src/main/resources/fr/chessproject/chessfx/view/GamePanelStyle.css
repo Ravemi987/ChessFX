@@ -1,9 +1,14 @@
+#boardPane {
+    -fx-background-color: rgb(49, 46, 43);
+    -fx-alignment: center;
+}
+
 #boardMaskPane {
     -fx-background-color: transparent;
     -fx-border-color: rgb(38, 37, 34);
     -fx-border-width: 4px;
-    -fx-border-radius: 8px;
-    -fx-border-insets: -4px;
+    -fx-border-radius: 11px;
+    -fx-border-insets: -2px;
 }
 
 .canvas-style {

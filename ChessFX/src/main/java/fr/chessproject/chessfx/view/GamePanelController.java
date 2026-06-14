@@ -21,11 +21,13 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 
 public class GamePanelController implements MoveListener {
 
@@ -37,6 +39,8 @@ public class GamePanelController implements MoveListener {
     public Pane boardMaskPane;
     @FXML
     public Pane popupLayer;
+    @FXML
+    private Pane boardContainer;
 
     //Canvas
 
@@ -57,12 +61,13 @@ public class GamePanelController implements MoveListener {
     @FXML
     public Canvas arrowsCanvas;
 
-    private ChessController controller;
-
     private static final double TICKS_PER_SECOND = 120;
     private static final double NS_PER_TICK = 1_000_000_000 / TICKS_PER_SECOND;
+    private final DoubleProperty boardSize = new SimpleDoubleProperty(0);
+    private final DoubleProperty squareSize = new SimpleDoubleProperty(0);
 
     private Theme theme;
+    private ChessController controller;
     private GameSpritesLoader spritesLoader;
 
     private boolean[] isSquareColored;
@@ -82,7 +87,6 @@ public class GamePanelController implements MoveListener {
     private final List<Arrow> arrows = new ArrayList<>();
 
     public GamePanelController() {
-        //System.out.println("GamePanelController created");
         isSquareColored = new boolean[64];
         controller = null;
         theme = null;
@@ -101,7 +105,6 @@ public class GamePanelController implements MoveListener {
 
     @FXML
     public void initialize() {
-        //System.out.println("GamePanelController initialized");
         boardPane.getProperties().put("controller", this);
         setBoardSize();
     }
@@ -166,31 +169,57 @@ public class GamePanelController implements MoveListener {
                 if (now - lastUpdate >= NS_PER_TICK) {
                     renderDragging();
                     lastUpdate = now;
-                    controller.updateClocks(now);
-                    controller.getFrameController().refreshClocks();
                 }
             }
         };
         gameLoop.start();
     }
 
-    private void setPaneSize(Pane pane, int size) {
-        pane.setPrefSize(size, size);
-        pane.setMinSize(size, size);
-        pane.setMaxSize(size, size);
-    }
-
     private void setBoardSize() {
-        setPaneSize(boardPane, Constants.REAL_BOARD_SIZE);
+        boardPane.setPrefSize(Constants.BOARD_SIZE, Constants.BOARD_SIZE);
+        boardPane.setMinSize(Pane.USE_PREF_SIZE, Pane.USE_PREF_SIZE);
 
-        for (Canvas canvas : List.of(boardCanvas, coordsCanvas, piecesCanvas,
-                draggingCanvas, coloredSquaresCanvas, drawingCanvas, arrowsCanvas, bitboardCanvas)) {
-            canvas.setWidth(Constants.REAL_BOARD_SIZE);
-            canvas.setHeight(Constants.REAL_BOARD_SIZE);
+        boardSize.bind(Bindings.max(
+                Constants.BOARD_SIZE,
+                Bindings.min(
+                        boardPane.widthProperty().subtract(32),
+                        boardPane.heightProperty().subtract(32)
+                )
+        ));
+
+        squareSize.bind(boardSize.divide(8.0));
+
+        boardContainer.prefWidthProperty().bind(boardSize);
+        boardContainer.prefHeightProperty().bind(boardSize);
+
+        List<Canvas> canvases = List.of(boardCanvas, coordsCanvas, piecesCanvas,
+                draggingCanvas, coloredSquaresCanvas, drawingCanvas, arrowsCanvas, bitboardCanvas);
+
+        for (Canvas canvas : canvases) {
+            canvas.widthProperty().bind(boardSize);
+            canvas.heightProperty().bind(boardSize);
         }
 
-        setPaneSize(boardMaskPane, Constants.REAL_BOARD_SIZE);
-        setPaneSize(popupLayer, Constants.REAL_BOARD_SIZE);
+        boardMaskPane.prefWidthProperty().bind(boardSize);
+        boardMaskPane.prefHeightProperty().bind(boardSize);
+        popupLayer.prefWidthProperty().bind(boardSize);
+        popupLayer.prefHeightProperty().bind(boardSize);
+
+        boardSize.addListener((obs, oldVal, newVal) -> {
+            if (newVal.doubleValue() > 0) {
+                preloadSprites();
+                renderBoard();
+                renderCoordinates();
+                render();
+            }
+        });
+
+        javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
+        clip.widthProperty().bind(boardContainer.prefWidthProperty());
+        clip.heightProperty().bind(boardContainer.prefHeightProperty());
+        clip.setArcWidth(16);
+        clip.setArcHeight(16);
+        boardContainer.setClip(clip);
     }
 
     @Override
@@ -224,7 +253,7 @@ public class GamePanelController implements MoveListener {
 
     public void playMove(Move mv) {
         Game game = controller.getGame();
-        game.playMoveGUI(mv);
+        game.playMove(mv);
         if (mv.isCapture()) SoundManager.playCaptureSound();
         else SoundManager.playMoveSound();
 
@@ -281,12 +310,11 @@ public class GamePanelController implements MoveListener {
     }
 
     public void preloadSprites() {
-        int squareSize = (int) ((boardCanvas.getWidth()) / 8);
-        spritesLoader = new GameSpritesLoader(squareSize);
+        spritesLoader = new GameSpritesLoader((int)squareSize.get());
     }
 
     private void showHover(GraphicsContext gc) {
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
+        int size = (int) squareSize.get();
         byte hoveredSquare = getSquareFromPos(mouseXOnBoard, mouseYOnBoard);
         if (selectedPiece != -1) {
             int row = getRow(hoveredSquare);
@@ -307,12 +335,12 @@ public class GamePanelController implements MoveListener {
             gc.setLineCap(StrokeLineCap.ROUND);
 
             double offset = width / 2.0;
-            gc.strokeRect(col * squareSize + offset,row  * squareSize + offset, squareSize - width, squareSize - width);
+            gc.strokeRect(col * size + offset,row  * size + offset, size - width, size - width);
         }
     }
 
     private void showValidMoves(GraphicsContext gc) {
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
+        int size = (int) squareSize.get();
         if (selectedPiece != -1) {
             MoveList validMoves = controller.getGame().getValidMoves();
             for (int i = 0; i < validMoves.getMvCount(); i++) {
@@ -321,7 +349,7 @@ public class GamePanelController implements MoveListener {
                     int row = getRow(mv.getTo());
                     int col = getCol(mv.getTo());
                     gc.setFill(((row + col) % 2 == 0 ) ? theme.getValidMoveLightSquare() : theme.getValidMoveDarkSquare());
-                    gc.fillRect(col * squareSize,row  * squareSize, squareSize, squareSize);
+                    gc.fillRect(col * size,row  * size, size, size);
                 }
             }
         }
@@ -330,41 +358,41 @@ public class GamePanelController implements MoveListener {
     private void showLastMove(GraphicsContext gc) {
         Move lastMove = controller.getGame().getLastMove();
         if (lastMove != null) {
-            int squareSize = (int) (boardCanvas.getWidth() / 8);
+            int size = (int) squareSize.get();
             int fromRow = getRow(lastMove.getFrom()), toRow = getRow(lastMove.getTo());
             int fromCol = getCol(lastMove.getFrom()), toCol = getCol(lastMove.getTo());
             gc.setFill(((fromRow + fromCol) % 2 == 0 ) ? theme.getLastMoveLightStartSquare() : theme.getLastMoveDarkStartSquare());
-            gc.fillRect(fromCol * squareSize,fromRow  * squareSize, squareSize, squareSize);
+            gc.fillRect(fromCol * size,fromRow  * size, size, size);
             gc.setFill(((toRow + toCol) % 2 == 0 ) ? theme.getLastMoveLightEndSquare() : theme.getLastMoveDarkEndSquare());
-            gc.fillRect(toCol * squareSize,toRow  * squareSize, squareSize, squareSize);
+            gc.fillRect(toCol * size,toRow  * size, size, size);
         }
     }
 
     private void showSelectedPiece(GraphicsContext gc) {
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
+        int size = (int) squareSize.get();
         if (selectedPiece != -1) {
             int row = getRow(selectedPiece);
             int col = getCol(selectedPiece);
             gc.setFill(((row + col) % 2 == 0 ) ? theme.getSelectedLightSquare() : theme.getSelectedDarkSquare());
-            gc.fillRect(col * squareSize,row  * squareSize, squareSize, squareSize);
+            gc.fillRect(col * size,row  * size, size, size);
         }
     }
 
     private void drawPiece(GraphicsContext gc, byte piece, int x, int y) {
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
-        gc.drawImage(spritesLoader.getPieceSprite(piece), x, y, squareSize, squareSize);
+        int size = (int) squareSize.get();
+        gc.drawImage(spritesLoader.getPieceSprite(piece), x, y, size, size);
     }
 
     private void drawSelectedPiece(GraphicsContext gc, byte piece, int x, int y) {
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
-        int scaledWidth = (int) (squareSize * 1.05);
-        int scaledHeight = (int) (squareSize * 1.05);
+        int size = (int) squareSize.get();
+        int scaledWidth = (int) (size * 1.05);
+        int scaledHeight = (int) (size * 1.05);
 
         gc.drawImage(spritesLoader.getPieceSprite(piece), x, y, scaledWidth, scaledHeight);
     }
 
     private void drawPieces(GraphicsContext gc) {
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
+        int size = (int) squareSize.get();
         Position position = controller.getGame().getPosition();
 
         for (int i = 0; i < 64; i++) {
@@ -372,44 +400,44 @@ public class GamePanelController implements MoveListener {
             if (piece != PieceType.NONE && i != draggedPiece) {
                 int row = getRow(i);
                 int col = getCol(i);
-                drawPiece(gc, piece.id, col * squareSize, row * squareSize);
+                drawPiece(gc, piece.id, col * size, row * size);
             }
         }
     }
 
     private void draggerUpdateBlit(GraphicsContext gc) {
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
+        int size = (int) squareSize.get();
         Position position = controller.getGame().getPosition();
         drawSelectedPiece(gc, position.pieceOnSquare((byte) selectedPiece).id,
-                (int) (mouseXOnBoard - (1.05*squareSize) / 2),
-                (int) (mouseYOnBoard - (1.05*squareSize) / 2));
+                (int) (mouseXOnBoard - (1.05*size) / 2),
+                (int) (mouseYOnBoard - (1.05*size) / 2));
     }
 
     private void drawCoordinates(GraphicsContext gc) {
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
+        int size = (int) squareSize.get();
         double fontSize = 24;
 
         gc.setFont(new Font("Arial", fontSize));
 
         for (int row = 0; row < 8; row++) {
             gc.setFill(((row % 2) == 0) ? theme.getDarkSquare() : theme.getLightSquare());
-            gc.fillText(String.valueOf(isBoardReversed ? row + 1 : 8 - row), 10, row * squareSize + fontSize);
+            gc.fillText(String.valueOf(isBoardReversed ? row + 1 : 8 - row), 10, row * size + fontSize);
         }
 
         for (int col = 0; col < 8; col++) {
             gc.setFill(((col % 2) == 0) ? theme.getLightSquare() : theme.getDarkSquare());
             gc.fillText(String.valueOf(isBoardReversed ? (char) ('h' - col) : (char) ('a' + col)),
-                    col * squareSize + (squareSize - fontSize), boardCanvas.getHeight() - (fontSize / 2));
+                    col * size + (size - fontSize), boardCanvas.getHeight() - (fontSize / 2));
         }
     }
 
     private void drawBoard(GraphicsContext gc) {
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
+        int size = (int) squareSize.get();
 
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 gc.setFill(((row + col) % 2 == 0 ) ? theme.getLightSquare() : theme.getDarkSquare());
-                gc.fillRect(col*squareSize, row*squareSize, squareSize, squareSize);
+                gc.fillRect(col * size, row * size, size, size);
             }
         }
     }
@@ -418,8 +446,8 @@ public class GamePanelController implements MoveListener {
         long bitboard = bitboardSupplier.get();
         gc.clearRect(0, 0, bitboardCanvas.getWidth(), bitboardCanvas.getHeight());
 
-        double squareSize = bitboardCanvas.getWidth() / 8;
-        gc.setFont(new Font("Arial", squareSize / 2));
+        double size = squareSize.get();
+        gc.setFont(new Font("Arial",size / 2));
         double alpha = 0.8;
 
         for (int i = 0; i < 64; i++) {
@@ -433,15 +461,15 @@ public class GamePanelController implements MoveListener {
             int row = getRow(i);
             int col = getCol(i);
 
-            int x = (int) (col * squareSize + squareSize / 2 - textWidth / 2);
-            int y = (int) (row * squareSize + squareSize / 2 + textHeight / 4);
+            int x = (int) (col * size + size / 2 - textWidth / 2);
+            int y = (int) (row * size + size / 2 + textHeight / 4);
 
             if (bit == '0') {
                 gc.setFill((row + col) % 2 == 0 ? Color.rgb(89, 171, 221, alpha) : Color.rgb(62, 144, 195, alpha));
-                gc.fillRect(col*squareSize, row*squareSize, squareSize, squareSize);
+                gc.fillRect(col*size, row*size, size, size);
             } else {
                 gc.setFill((row + col) % 2 == 0 ?  Color.rgb(234,89,102, alpha) : Color.rgb(201,51,69, alpha));
-                gc.fillRect(col*squareSize, row*squareSize, squareSize, squareSize);
+                gc.fillRect(col*size, row*size, size, size);
             }
 
             gc.setFill(Color.rgb(255, 255, 255, alpha));
@@ -485,9 +513,9 @@ public class GamePanelController implements MoveListener {
     }
 
     public byte getSquareFromPos(int x, int y) {
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
-        int col = Math.min(7, Math.max(0, isBoardReversed ? 7 - (x / squareSize) : x / squareSize));
-        int row = Math.min(7, Math.max(0, isBoardReversed ? y / squareSize : 7 - (y / squareSize)));
+        int size = (int) squareSize.get();
+        int col = Math.min(7, Math.max(0, isBoardReversed ? 7 - (x / size) : x / size));
+        int row = Math.min(7, Math.max(0, isBoardReversed ? y / size : 7 - (y / size)));
         int squareIndex = col % 8 + row * 8;
         return (byte) squareIndex;
     }
@@ -504,7 +532,7 @@ public class GamePanelController implements MoveListener {
 
     private void drawHighlight() {
         GraphicsContext gc = drawingCanvas.getGraphicsContext2D();
-        int squareSize = (int) (drawingCanvas.getWidth() / 8);
+        int size = (int) squareSize.get();
 
         int square = getSquareFromPos(mouseXOnBoard, mouseYOnBoard);
         isSquareColored[square] = !isSquareColored[square];
@@ -513,10 +541,10 @@ public class GamePanelController implements MoveListener {
 
         if (isSquareColored[square]) {
             gc.setFill((row + col) % 2 == 0 ? theme.getDrawingLightSquare() : theme.getDrawingDarkSquare());
-            gc.fillRect(col * squareSize, row * squareSize, squareSize, squareSize);
+            gc.fillRect(col * size, row * size, size, size);
         } else {
             double inset = 0.05;
-            gc.clearRect(col * squareSize + inset, row * squareSize + inset, squareSize - 2 * inset, squareSize - 2 * inset);
+            gc.clearRect(col * size + inset, row * size + inset, size - 2 * inset, size - 2 * inset);
         }
     }
 
@@ -541,16 +569,16 @@ public class GamePanelController implements MoveListener {
 
     private void renderArrow(Arrow arrow) {
         GraphicsContext gc = arrowsCanvas.getGraphicsContext2D();
-        int squareSize = (int)(arrowsCanvas.getWidth() / 8);
+        int size = (int) squareSize.get();
 
-        Point2D start = getSquareCenter(arrow.fromSquare(), squareSize);
-        Point2D end = getSquareCenter(arrow.toSquare(), squareSize);
+        Point2D start = getSquareCenter(arrow.fromSquare(), size);
+        Point2D end = getSquareCenter(arrow.toSquare(), size);
 
         gc.setStroke(arrow.color());
-        gc.setLineWidth(0.14 * squareSize);
+        gc.setLineWidth(0.14 * size);
         gc.setLineCap(StrokeLineCap.ROUND);
 
-        arrow.draw(gc, start, end, squareSize);
+        arrow.draw(gc, start, end, size);
     }
 
     private void resetSelection() {
@@ -568,15 +596,15 @@ public class GamePanelController implements MoveListener {
         boolean hasToPlay = (promotionRow == 7 && pos.isWhiteSideToPlay) || (promotionRow == 0 && !pos.isWhiteSideToPlay);
 
         Move mv = new Move(selectedPiece, squarePos, piece, color);
-        int squareSize = (int) (boardCanvas.getWidth() / 8);
+        int size = (int) squareSize.get();
         int row = getRow(mv.getTo());
         int col = getCol(mv.getTo());
 
         if (mv.getTo() / 8 == promotionRow && isPawnMoving && hasToPlay) {
             mv.setPromoted((byte) 6);
             if (!controller.getGame().isLegal(mv)) return;
-            PromotionPopup.showPromotionVBox(boardMaskPane, spritesLoader, color, squareSize, isBoardReversed,
-                    col * squareSize, row * squareSize, promotedPiece -> {
+            PromotionPopup.showPromotionVBox(boardMaskPane, spritesLoader, color, size, isBoardReversed,
+                    col * size, row * size, promotedPiece -> {
                 mv.setPromoted(promotedPiece);
                 onMoveReady.accept(mv);
                 render();
@@ -710,9 +738,9 @@ public class GamePanelController implements MoveListener {
         updateMousePos(mouseEvent);
     }
 
-    public void setChessController(ChessController controller) {
+    public void setChessController(ChessController controller, Theme theme) {
         this.controller = controller;
-        this.theme = controller.getTheme();
+        this.theme = theme;
         controller.getGame().addMoveListener(this);
     }
 }

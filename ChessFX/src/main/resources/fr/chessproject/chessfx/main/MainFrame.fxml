@@ -1,36 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.HBox?>
-
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.layout.StackPane?>
-<BorderPane id="mainFrame" fx:id="mainFrame" stylesheets="@MainFrameStyle.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fr.chessproject.chessfx.view.MainFrameController">
-    <center>
-        <VBox id="centerContainer" fx:id="centerContainer" alignment="CENTER" styleClass="centerContainer">
-            <HBox id="topbar" fx:id="topbar" alignment="CENTER_RIGHT" styleClass="centerBar">
-                <StackPane id="clock_pane_2" fx:id="clock_pane_2" alignment="CENTER_RIGHT" styleClass="clock"> </StackPane>
-            </HBox>
-            <fx:include fx:id="boardPane" source="../view/GamePanel.fxml" />
-            <HBox id="bottombar" fx:id="bottombar" alignment="CENTER_RIGHT" styleClass="centerBar">
-                <StackPane id="clock_pane_1" fx:id="clock_pane_1" alignment="CENTER_RIGHT" styleClass="clock"> </StackPane>
-            </HBox>
-        </VBox>
-    </center>
+<?import javafx.scene.layout.Region?>
 
-    <right>
-        <StackPane id="rightStackPane" styleClass="rightStackPane">
-            <VBox id="rightContainer" fx:id="rightContainer" alignment="BOTTOM_CENTER" styleClass="rightContainer">
-                <HBox id="toolbar" fx:id="toolbar" alignment="CENTER" styleClass="toolbar">
-                    <Button id="newGameButton" fx:id="newGameButton"/>
-                    <Button id="flipBoardButton" fx:id="flipBoardButton"/>
-                    <Button id="firstMoveButton" fx:id="firstMoveButton"/>
-                    <Button id="prevMoveButton" fx:id="prevMoveButton"/>
-                    <Button id="nextMoveButton" fx:id="nextMoveButton"/>
-                    <Button id="lastMoveButton" fx:id="lastMoveButton"/>
-                </HBox>
-            </VBox>
-        </StackPane>
-    </right>
-</BorderPane>
+<GridPane id="mainFrame" fx:id="mainFrame" stylesheets="@MainFrameStyle.css" alignment="CENTER"
+          xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1"
+          fx:controller="fr.chessproject.chessfx.view.MainFrameController">
+
+    <columnConstraints>
+        <ColumnConstraints percentWidth="15.0" halignment="RIGHT" />
+        <ColumnConstraints percentWidth="60.0" halignment="LEFT" />
+        <ColumnConstraints percentWidth="25.0" halignment="LEFT" />
+    </columnConstraints>
+
+    <VBox id="leftContainer" fx:id="leftContainer" alignment="CENTER" styleClass="leftContainer" GridPane.columnIndex="0">
+        <StackPane id="clockPane2" fx:id="clockPane2" styleClass="clock"> </StackPane>
+        <Region style="-fx-min-height: 50px; -fx-pref-height: 80px;" />
+        <StackPane id="clockPane1" fx:id="clockPane1" styleClass="clock"> </StackPane>
+    </VBox>
+
+    <VBox id="centerContainer" fx:id="centerContainer" alignment="CENTER" styleClass="centerContainer" GridPane.columnIndex="1" VBox.vgrow="ALWAYS">
+        <fx:include fx:id="boardPane" source="../view/GamePanel.fxml" VBox.vgrow="ALWAYS" />
+    </VBox>
+
+    <VBox id="rightContainer" fx:id="rightContainer" alignment="BOTTOM_CENTER" styleClass="rightContainer" GridPane.columnIndex="2">
+        <VBox fx:id="gameControlArea" styleClass="game-control-area" VBox.vgrow="ALWAYS">
+        </VBox>
+
+        <HBox id="toolbar" fx:id="toolbar" alignment="CENTER" styleClass="toolbar">
+            <Button id="newGameButton" fx:id="newGameButton"/>
+            <Button id="flipBoardButton" fx:id="flipBoardButton"/>
+            <Button id="firstMoveButton" fx:id="firstMoveButton"/>
+            <Button id="prevMoveButton" fx:id="prevMoveButton"/>
+            <Button id="nextMoveButton" fx:id="nextMoveButton"/>
+            <Button id="lastMoveButton" fx:id="lastMoveButton"/>
+        </HBox>
+    </VBox>
+</GridPane>

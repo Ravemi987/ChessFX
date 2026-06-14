@@ -4,15 +4,21 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.Pane?>
 
-<StackPane id="boardPane" fx:id="boardPane" stylesheets="@GamePanelStyle.css" xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1" fx:controller="fr.chessproject.chessfx.view.GamePanelController">
-    <Canvas fx:id="boardCanvas" styleClass="canvas-style" />
-    <Canvas fx:id="coloredSquaresCanvas" styleClass="canvas-style" />
-    <Canvas fx:id="drawingCanvas" styleClass="canvas-style" />
-    <Canvas fx:id="coordsCanvas" styleClass="canvas-style" />
-    <Canvas fx:id="piecesCanvas" styleClass="canvas-style" />
-    <Canvas fx:id="arrowsCanvas" styleClass="canvas-style" />
-    <Canvas fx:id="draggingCanvas" styleClass="canvas-style" />
-    <Canvas fx:id="bitboardCanvas" styleClass="canvas-style" />
-    <Pane fx:id="boardMaskPane"/>
-    <Pane fx:id="popupLayer" pickOnBounds="false" />
+<StackPane id="boardPane" fx:id="boardPane" stylesheets="@GamePanelStyle.css"
+           xmlns="http://javafx.com/javafx/22" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="fr.chessproject.chessfx.view.GamePanelController">
+
+    <Pane fx:id="boardContainer" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
+        <Canvas fx:id="boardCanvas" styleClass="canvas-style" />
+        <Canvas fx:id="coloredSquaresCanvas" styleClass="canvas-style" />
+        <Canvas fx:id="drawingCanvas" styleClass="canvas-style" />
+        <Canvas fx:id="coordsCanvas" styleClass="canvas-style" />
+        <Canvas fx:id="piecesCanvas" styleClass="canvas-style" />
+        <Canvas fx:id="arrowsCanvas" styleClass="canvas-style" />
+        <Canvas fx:id="draggingCanvas" styleClass="canvas-style" />
+        <Canvas fx:id="bitboardCanvas" styleClass="canvas-style" />
+
+        <Pane fx:id="boardMaskPane"/>
+        <Pane fx:id="popupLayer" pickOnBounds="false" />
+    </Pane>
 </StackPane>
